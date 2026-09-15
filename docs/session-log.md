@@ -519,3 +519,37 @@ the repository public, which fixes it with no change to the README.
 Checked before recommending that: nothing sensitive is committed. No `.env`, no
 keys or tokens, and no exported data. The only tracked JSON is `tsconfig.json`.
 Deadlines never reach the repository by design.
+
+---
+
+## 2026-09-15: CI proven to fail, and a papercut it exposed
+
+**The badge was confirmed rather than trusted.** Once the repository went
+public, fetching the badge endpoint anonymously returned "passing", which is
+what "no status" had been hiding.
+
+**CI was then proven to gate, not just to run.** A one-line whitespace change
+was pushed on purpose. The GitHub API for that run reports: Typecheck green,
+Lint green, **Format check failed**, and unit tests, Playwright install,
+end-to-end and build all skipped. The failure-only report upload ran.
+
+The change was whitespace inside an existing used line rather than a stray
+`const`, deliberately. A stray `const` trips `noUnusedLocals` in Typecheck,
+which runs first, so the job would have died before Format check executed and
+proven nothing about the formatting gate.
+
+Reverted in `a3ce48e`.
+
+**The revert exposed a real local papercut.** `format:check` still failed after
+reverting, and the cause was line endings, not the revert. `core.autocrlf=true`
+plus `* text=auto` in `.gitattributes` means git hands Windows a CRLF working
+copy, while Prettier defaults to `endOfLine: "lf"`. CI never saw it, because
+Linux checks out LF. Locally it would have failed after every revert, branch
+switch and merge.
+
+Fixed with `"endOfLine": "auto"` in `.prettierrc`. The repository still stores
+LF, because `.gitattributes` normalises on commit, so Prettier checking line
+endings as well was redundant and was the thing producing the false failure.
+
+Worth noting how this surfaced: the CI failure test found a bug that was not
+the bug it was testing for.
