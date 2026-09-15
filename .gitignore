@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/
+*.local
+
+# Exported data. Never commit deadlines, notes, or anything from the app.
+# See the security posture in docs/mvp.md.
+*-export.json
+export-*.json
+personal-tracker-*.json
