@@ -80,23 +80,32 @@ test('AC-05.3 add an item and finish it without touching the mouse', async ({
 }) => {
   await page.goto('/');
 
-  // Whole flow on the keyboard: type, tab, submit, tab to the item, activate.
+  // A native date control takes locale-ordered digits, not an ISO string, so
+  // this is what a keyboard user really presses: month, day, year.
+  const today = new Date();
+  const digits =
+    String(today.getMonth() + 1).padStart(2, '0') +
+    String(today.getDate()).padStart(2, '0') +
+    String(today.getFullYear());
+
   await page.getByLabel('Title').click();
   await page.keyboard.type('Rent');
   await page.keyboard.press('Tab');
-  await page.keyboard.type(isoDate(0));
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  await page.keyboard.type(digits);
   await page.keyboard.press('Enter');
 
   await expect(page.getByText('Rent', { exact: true })).toBeVisible();
 
+  // Tab count is not asserted on purpose: Chromium exposes each segment of the
+  // date and time controls as its own stop, so a fixed number would encode a
+  // browser detail. What AC-05.3 needs is that the control is reachable.
+  const done = page.getByRole('button', { name: 'Mark Rent done' });
   await page.getByLabel('Title').focus();
-  for (let i = 0; i < 5; i += 1) await page.keyboard.press('Tab');
-  await expect(
-    page.getByRole('button', { name: 'Mark Rent done' }),
-  ).toBeFocused();
+  for (let i = 0; i < 20; i += 1) {
+    if (await done.evaluate((node) => node === document.activeElement)) break;
+    await page.keyboard.press('Tab');
+  }
+  await expect(done).toBeFocused();
 
   await page.keyboard.press('Enter');
   await expect(page.getByText('Nothing due yet.')).toBeVisible();

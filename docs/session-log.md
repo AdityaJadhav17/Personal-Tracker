@@ -592,3 +592,42 @@ example of an unreadable version. Version 2 is now the current version, so the
 test needed a genuinely unknown one and moved to version 3.
 
 **Next in M4.** US-13 the sidebar, US-07 courses, US-19 the date picker.
+
+---
+
+## 2026-09-15: US-19, the date picker
+
+**Shipped.** The typed due-date field is now a native date control with an
+optional time control beside it. `toDueAt` replaces `parseDueDate`, which is
+deleted along with its month-name table, its time splitter and about twenty of
+its tests. 202 unit and component tests, 60 Playwright specs, all six gates
+green.
+
+Net effect on the codebase is a deletion. `dates.ts` lost more than it gained.
+
+**AC-01.4 is superseded by AC-19.1 through AC-19.4,** which is recorded in
+[v2-plan.md](product/v2-plan.md). Typing "oct 3 2pm" no longer works, and that
+was a deliberate trade Aditya asked for.
+
+**The form is five controls now, not four.** Phase 4 capped it at four, and the
+time control breaks that cap. The constraint existed so adding an item stays one
+screen and stays fast, which five controls on one row still satisfies. The
+alternative was `datetime-local`, a single control, but it forces a time on
+every item and most deadlines are a day rather than a moment.
+
+**A real finding from the browser, not from a test.** Chromium exposes each
+segment of a date or time control as its own tab stop, so the picker added
+roughly six stops to the keyboard path between the title and the Add button.
+The US-05 keyboard spec had counted tabs; it now presses Tab until the control
+it wants has focus and asserts reachability, because a fixed count encodes a
+browser detail rather than the requirement. Worth watching: US-05 exists because
+Aditya wants to add and finish an item without the mouse, and the picker made
+that path longer.
+
+**Three smaller things the browser caught.** The five fields wrapped Priority
+and Add onto a second row until the flex basis stopped the controls stretching.
+`<input type="time">` rejects "9:00" and needs "09:00". And a native date
+control takes locale-ordered digits rather than an ISO string, so the keyboard
+spec types month, day, year.
+
+**Next in M4.** US-07 courses, then US-13 the sidebar.

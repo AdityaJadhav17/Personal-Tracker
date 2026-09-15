@@ -6,11 +6,19 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-async function addItem(title: string, due: string) {
+async function addItem(title: string, due: string, time = '') {
   const user = userEvent.setup();
   // user-event rejects an empty string, so an omitted field is just not typed.
   if (title) await user.type(screen.getByLabelText('Title'), title);
-  if (due) await user.type(screen.getByLabelText('Due'), due);
+  // Date and time inputs take a value rather than keystrokes.
+  if (due) {
+    fireEvent.change(screen.getByLabelText('Due'), { target: { value: due } });
+  }
+  if (time) {
+    fireEvent.change(screen.getByLabelText('Time'), {
+      target: { value: time },
+    });
+  }
   await user.click(screen.getByRole('button', { name: 'Add' }));
 }
 

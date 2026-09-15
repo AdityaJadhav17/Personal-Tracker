@@ -1,4 +1,4 @@
-import { formatDue, groupOf, isUpcoming, parseDueDate } from './dates';
+import { formatDue, groupOf, isUpcoming, toDueAt } from './dates';
 
 /** Tuesday 15 September 2026, 10:00 local. Every test pins the clock here. */
 const NOW = new Date(2026, 8, 15, 10, 0, 0, 0);
@@ -15,154 +15,15 @@ function local(iso: string) {
   };
 }
 
-describe('parseDueDate', () => {
-  test('AC-01.4 parses the ISO form "2026-10-03"', () => {
-    const iso = parseDueDate('2026-10-03', NOW);
-    expect(iso).not.toBeNull();
-    expect(local(iso!)).toMatchObject({ year: 2026, month: 10, day: 3 });
-  });
-
-  test('AC-01.4 parses the numeric form "10/3" using the current year', () => {
-    const iso = parseDueDate('10/3', NOW);
-    expect(iso).not.toBeNull();
-    expect(local(iso!)).toMatchObject({ year: 2026, month: 10, day: 3 });
-  });
-
-  test('AC-01.4 parses the month-name form "oct 3"', () => {
-    const iso = parseDueDate('oct 3', NOW);
-    expect(iso).not.toBeNull();
-    expect(local(iso!)).toMatchObject({ year: 2026, month: 10, day: 3 });
-  });
-
-  test('AC-01.4 the three accepted forms produce the same instant', () => {
-    expect(parseDueDate('10/3', NOW)).toBe(parseDueDate('2026-10-03', NOW));
-    expect(parseDueDate('oct 3', NOW)).toBe(parseDueDate('2026-10-03', NOW));
-  });
-
-  test('AC-01.4 a date with no time means 23:59 local that day', () => {
-    const iso = parseDueDate('2026-10-03', NOW);
-    expect(local(iso!)).toMatchObject({ hours: 23, minutes: 59 });
-  });
-
-  test('AC-01.4 returns a UTC instant, not a local wall-clock string', () => {
-    expect(parseDueDate('2026-10-03', NOW)).toMatch(/Z$/);
-  });
-
-  test('AC-01.4 accepts the full month name "october 3"', () => {
-    expect(parseDueDate('october 3', NOW)).toBe(
-      parseDueDate('2026-10-03', NOW),
-    );
-  });
-
-  test('AC-01.4 ignores surrounding whitespace and case', () => {
-    expect(parseDueDate('  OCT 3  ', NOW)).toBe(
-      parseDueDate('2026-10-03', NOW),
-    );
-  });
-
-  test('AC-01.4 returns null for empty input', () => {
-    expect(parseDueDate('', NOW)).toBeNull();
-    expect(parseDueDate('   ', NOW)).toBeNull();
-  });
-
-  test('AC-01.4 returns null for unparseable input', () => {
-    expect(parseDueDate('sometime next week', NOW)).toBeNull();
-    expect(parseDueDate('tomorrow', NOW)).toBeNull();
-  });
-
-  test('AC-01.4 returns null for a day that does not exist', () => {
-    expect(parseDueDate('2026-02-30', NOW)).toBeNull();
-    expect(parseDueDate('13/1', NOW)).toBeNull();
-    expect(parseDueDate('feb 30', NOW)).toBeNull();
-  });
-
-  test('AC-01.4 keeps a past date in the past rather than rolling it forward', () => {
-    // US-03 needs overdue items, so entering a date that has already passed
-    // must record that date, not silently jump to next year.
-    const iso = parseDueDate('1/5', NOW);
-    expect(local(iso!)).toMatchObject({ year: 2026, month: 1, day: 5 });
-    expect(new Date(iso!).getTime()).toBeLessThan(NOW.getTime());
-  });
-
-  test('AC-01.4 accepts an explicit year in the numeric form', () => {
-    const iso = parseDueDate('10/3/2027', NOW);
-    expect(local(iso!)).toMatchObject({ year: 2027, month: 10, day: 3 });
-  });
-});
-
 describe('formatDue', () => {
   test('renders an instant in the device zone, month day and time', () => {
-    const iso = parseDueDate('2026-10-03', NOW)!;
+    const iso = toDueAt('2026-10-03', '')!;
     expect(formatDue(iso)).toBe('Oct 3, 11:59 PM');
   });
 
   test('renders a morning time without a leading zero on the hour', () => {
     const morning = new Date(2026, 9, 3, 9, 5, 0, 0).toISOString();
     expect(formatDue(morning)).toBe('Oct 3, 9:05 AM');
-  });
-});
-
-describe('parseDueDate with a time', () => {
-  test('AC-01.4 accepts a 24-hour time after the date', () => {
-    expect(local(parseDueDate('2026-10-03 14:00', NOW)!)).toMatchObject({
-      year: 2026,
-      month: 10,
-      day: 3,
-      hours: 14,
-      minutes: 0,
-    });
-  });
-
-  test('AC-01.4 accepts a bare hour with am or pm', () => {
-    expect(local(parseDueDate('oct 3 2pm', NOW)!)).toMatchObject({
-      day: 3,
-      hours: 14,
-      minutes: 0,
-    });
-  });
-
-  test('AC-01.4 accepts minutes with am or pm', () => {
-    expect(local(parseDueDate('10/3 2:30pm', NOW)!)).toMatchObject({
-      day: 3,
-      hours: 14,
-      minutes: 30,
-    });
-  });
-
-  test('AC-01.4 accepts a morning time', () => {
-    expect(local(parseDueDate('oct 3 9:05am', NOW)!)).toMatchObject({
-      hours: 9,
-      minutes: 5,
-    });
-  });
-
-  test('AC-01.4 reads 12am as midnight and 12pm as noon', () => {
-    expect(local(parseDueDate('oct 3 12am', NOW)!).hours).toBe(0);
-    expect(local(parseDueDate('oct 3 12pm', NOW)!).hours).toBe(12);
-  });
-
-  test('AC-01.4 tolerates a space before am or pm and mixed case', () => {
-    expect(parseDueDate('oct 3 2 PM', NOW)).toBe(
-      parseDueDate('oct 3 14:00', NOW),
-    );
-  });
-
-  test('AC-01.4 still defaults to 23:59 when no time is given', () => {
-    expect(local(parseDueDate('oct 3', NOW)!)).toMatchObject({
-      hours: 23,
-      minutes: 59,
-    });
-  });
-
-  test('AC-01.4 rejects a trailing number that is not clearly a time', () => {
-    // "oct 3 3" could be a day or an hour. Refuse rather than guess.
-    expect(parseDueDate('oct 3 3', NOW)).toBeNull();
-  });
-
-  test('AC-01.4 rejects an impossible time', () => {
-    expect(parseDueDate('oct 3 25:00', NOW)).toBeNull();
-    expect(parseDueDate('oct 3 10:75', NOW)).toBeNull();
-    expect(parseDueDate('oct 3 13pm', NOW)).toBeNull();
   });
 });
 
@@ -255,5 +116,72 @@ describe('isUpcoming', () => {
     const morning = new Date(2026, 8, 15, 6, 0, 0, 0);
     const night = new Date(2026, 8, 15, 22, 0, 0, 0);
     expect(isUpcoming(at(2), morning)).toBe(isUpcoming(at(2), night));
+  });
+});
+
+describe('toDueAt', () => {
+  test('AC-19.2 a date with no time means 23:59 local that day', () => {
+    expect(local(toDueAt('2026-10-03', '')!)).toMatchObject({
+      year: 2026,
+      month: 10,
+      day: 3,
+      hours: 23,
+      minutes: 59,
+    });
+  });
+
+  test('AC-19.3 a date and a time mean that local time', () => {
+    expect(local(toDueAt('2026-10-03', '14:30')!)).toMatchObject({
+      day: 3,
+      hours: 14,
+      minutes: 30,
+    });
+  });
+
+  test('AC-19.3 the result is a UTC instant, not a local string', () => {
+    expect(toDueAt('2026-10-03', '14:30')).toMatch(/Z$/);
+  });
+
+  test('AC-19.3 midnight and one minute to midnight both survive', () => {
+    expect(local(toDueAt('2026-10-03', '00:00')!).hours).toBe(0);
+    expect(local(toDueAt('2026-10-03', '23:59')!).minutes).toBe(59);
+  });
+
+  test('AC-19.3 5pm stays 5pm across the daylight saving change', () => {
+    // 1 November 2026 is the Sunday US daylight saving ends, and rent is due
+    // 5pm on the 1st of every month. These two are an hour apart in real time
+    // and both must read as 5pm.
+    expect(local(toDueAt('2026-10-01', '17:00')!).hours).toBe(17);
+    expect(local(toDueAt('2026-11-01', '17:00')!).hours).toBe(17);
+  });
+
+  test('AC-19.4 an empty date has no answer', () => {
+    expect(toDueAt('', '')).toBeNull();
+    expect(toDueAt('', '14:30')).toBeNull();
+  });
+
+  test('AC-19.4 a malformed date has no answer', () => {
+    expect(toDueAt('tomorrow', '')).toBeNull();
+    expect(toDueAt('2026-10', '')).toBeNull();
+  });
+
+  test('AC-19.4 a day that does not exist has no answer', () => {
+    expect(toDueAt('2026-02-30', '')).toBeNull();
+    expect(toDueAt('2026-13-01', '')).toBeNull();
+  });
+
+  test('AC-19.4 a malformed time has no answer, rather than falling back', () => {
+    expect(toDueAt('2026-10-03', 'lunchtime')).toBeNull();
+    expect(toDueAt('2026-10-03', '25:00')).toBeNull();
+    expect(toDueAt('2026-10-03', '10:75')).toBeNull();
+  });
+
+  test('a date already in the past is kept there, not rolled forward', () => {
+    // US-03 needs you to be able to record something you already missed.
+    expect(local(toDueAt('2020-01-05', '')!)).toMatchObject({
+      year: 2020,
+      month: 1,
+      day: 5,
+    });
   });
 });

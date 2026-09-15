@@ -14,12 +14,9 @@ async function add(
   daysFromToday: number,
   options: { priority?: string; time?: string } = {},
 ) {
-  const due = options.time
-    ? `${isoDate(daysFromToday)} ${options.time}`
-    : isoDate(daysFromToday);
-
   await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(due);
+  await page.getByLabel('Due').fill(isoDate(daysFromToday));
+  if (options.time) await page.getByLabel('Time').fill(options.time);
   if (options.priority) {
     await page.getByLabel('Priority').selectOption(options.priority);
   }
@@ -48,7 +45,7 @@ test('AC-04.2 same priority and day, the 9am item comes first', async ({
   await page.goto('/');
 
   await add(page, 'evening lab', 3, { time: '17:00' });
-  await add(page, 'morning quiz', 3, { time: '9:00' });
+  await add(page, 'morning quiz', 3, { time: '09:00' });
 
   await expect(page.getByRole('listitem')).toContainText([
     'morning quiz',
@@ -61,8 +58,8 @@ test('AC-04.3 two items due at the same minute both render, stably', async ({
 }) => {
   await page.goto('/');
 
-  await add(page, 'first thing', 3, { time: '9:00' });
-  await add(page, 'second thing', 3, { time: '9:00' });
+  await add(page, 'first thing', 3, { time: '09:00' });
+  await add(page, 'second thing', 3, { time: '09:00' });
 
   await expect(page.getByRole('listitem')).toHaveCount(2);
   await expect(page.getByRole('listitem')).toContainText([

@@ -1,25 +1,20 @@
 import { useState } from 'react';
-import { parseDueDate } from '../domain/dates';
+import { toDueAt } from '../domain/dates';
 import type { Category, ItemDraft, Priority } from '../domain/types';
 
 const TITLE_REQUIRED = 'Give it a title.';
-const DUE_UNREADABLE = 'Try "oct 3", "10/3", or "oct 3 2pm".';
+const DUE_REQUIRED = 'Pick a date.';
 
 interface AddItemFormProps {
   onAdd: (draft: ItemDraft) => void;
-  /** Passed in so the clock is never read implicitly. See docs/plan.md. */
-  now: Date;
   /** Lets the empty state hand focus to the first field. */
   titleRef: React.RefObject<HTMLInputElement>;
 }
 
-export default function AddItemForm({
-  onAdd,
-  now,
-  titleRef,
-}: AddItemFormProps) {
+export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
   const [title, setTitle] = useState('');
-  const [due, setDue] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [dueTime, setDueTime] = useState('');
   const [category, setCategory] = useState<Category>('academic');
   const [priority, setPriority] = useState<Priority>('normal');
   const [titleError, setTitleError] = useState('');
@@ -29,10 +24,10 @@ export default function AddItemForm({
     event.preventDefault();
 
     const trimmed = title.trim();
-    const dueAt = parseDueDate(due, now);
+    const dueAt = toDueAt(dueDate, dueTime);
 
     setTitleError(trimmed ? '' : TITLE_REQUIRED);
-    setDueError(dueAt ? '' : DUE_UNREADABLE);
+    setDueError(dueAt ? '' : DUE_REQUIRED);
     if (!trimmed || !dueAt) return;
 
     onAdd({ title: trimmed, dueAt, category, priority });
@@ -40,7 +35,8 @@ export default function AddItemForm({
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.
     setTitle('');
-    setDue('');
+    setDueDate('');
+    setDueTime('');
     setCategory('academic');
     setPriority('normal');
   }
@@ -73,9 +69,9 @@ export default function AddItemForm({
         <input
           className="form__input"
           id="due"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
-          placeholder="oct 3 2pm"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
           aria-describedby={dueError ? 'due-error' : undefined}
         />
         {dueError && (
@@ -83,6 +79,23 @@ export default function AddItemForm({
             {dueError}
           </p>
         )}
+      </div>
+
+      {/*
+        Optional, because most deadlines are a day rather than a moment. Left
+        empty it means 23:59, which is what AC-19.2 asks for.
+      */}
+      <div className="form__field form__field--time">
+        <label className="form__label" htmlFor="due-time">
+          Time
+        </label>
+        <input
+          className="form__input"
+          id="due-time"
+          type="time"
+          value={dueTime}
+          onChange={(e) => setDueTime(e.target.value)}
+        />
       </div>
 
       <div className="form__field">

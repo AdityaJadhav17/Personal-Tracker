@@ -37,7 +37,10 @@ test('AC-11.1 the empty state is replaced once an item exists', async ({
   await page.goto('/');
 
   await page.getByLabel('Title').fill('Rent');
-  await page.getByLabel('Due').fill('oct 1');
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  await page.getByLabel('Due').fill(`${today.getFullYear()}-${month}-${day}`);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(page.getByText('Nothing due yet.')).toHaveCount(0);

@@ -179,7 +179,7 @@ export default function App() {
     <main className="app">
       <h1 className="app__title">Personal Tracker</h1>
 
-      <AddItemForm onAdd={handleAdd} now={current} titleRef={titleRef} />
+      <AddItemForm onAdd={handleAdd} titleRef={titleRef} />
 
       <p className="status" role="status">
         {undoableTitle ? `Marked ${undoableTitle} done. Press u to undo.` : ''}

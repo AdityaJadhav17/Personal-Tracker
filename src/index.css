@@ -100,15 +100,23 @@ button {
   border-radius: var(--radius);
 }
 
+/*
+ * Only the title grows. The date, time and select controls have a natural
+ * width, and letting them stretch pushed Priority and Add onto a second row.
+ */
 .form__field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  flex: 1 1 130px;
+  flex: 0 1 auto;
 }
 
 .form__field--title {
-  flex: 3 1 220px;
+  flex: 1 1 160px;
+}
+
+.form__field--time {
+  flex: 0 0 auto;
 }
 
 .form__label {
