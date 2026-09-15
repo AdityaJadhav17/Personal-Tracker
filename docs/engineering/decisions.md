@@ -13,7 +13,7 @@ and asked whether Motion can be used for animation alongside extra CSS.
 **Status.** Not approved and not installed. Every dependency gets named and
 approved before it lands, and this one has no caller yet.
 
-**Where the reasoning lives.** [ui-reference.md](ui-reference.md), together
+**Where the reasoning lives.** [../design/ui-reference.md](../design/ui-reference.md), together
 with the design notes from the screenshots.
 
 **Recommendation carried into Phase 4.** Style with CSS first. Add Motion only

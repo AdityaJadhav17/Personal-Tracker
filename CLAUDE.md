@@ -3,10 +3,8 @@
 A local-first deadline and notes tracker Aditya runs on his own laptop. School
 and life in one list. No accounts, no server, no data leaving the machine.
 
-Read [docs/mvp.md](docs/mvp.md) for scope, [docs/plan.md](docs/plan.md) for the
-data model and architecture, [docs/decisions.md](docs/decisions.md) for why
-things are the way they are, and
-[docs/definition-of-done.md](docs/definition-of-done.md) for the bar.
+Start at [docs/README.md](docs/README.md), which indexes the rest: scope, data
+model, the decision log, and the definition of done.
 
 ## Commands
 

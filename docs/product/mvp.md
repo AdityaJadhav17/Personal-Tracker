@@ -159,7 +159,7 @@ like `Math 20C: prove f(x) < g(x)` and buys nothing.
 ## Decisions made since this document was drafted
 
 All four are recorded in full, with their reasoning and their reversal
-conditions, in [decisions.md](decisions.md).
+conditions, in [../engineering/decisions.md](../engineering/decisions.md).
 
 - **Storage is `localStorage` with a plain module.** No `StorageAdapter`
   interface, no IndexedDB, no `fake-indexeddb`.

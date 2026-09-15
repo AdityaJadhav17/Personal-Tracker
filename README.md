@@ -76,7 +76,7 @@ test proves against a real downloaded file.
 have installed. The app stores plain text and does not encrypt anything, on the
 reasoning that full-disk encryption already covers the realistic threat and a
 passphrase prompt would wreck an app whose whole value is being quick to check.
-[docs/decisions.md](docs/decisions.md) records that trade in full.
+[docs/engineering/decisions.md](docs/engineering/decisions.md) records that trade in full.
 
 Exported files match a pattern in `.gitignore`, so you cannot commit your own
 deadlines by accident.
@@ -93,7 +93,7 @@ category so that today's export files stay readable once filtering arrives.
 The honest limitation: a browser tab on a laptop cannot reach your phone without
 a server, so this version reminds you only while you have it open. Calendar
 export is the leading candidate for fixing that, and
-[docs/decisions.md](docs/decisions.md) explains why it waited.
+[docs/engineering/decisions.md](docs/engineering/decisions.md) explains why it waited.
 
 ## How it is built
 
@@ -101,9 +101,9 @@ React 18 and TypeScript on Vite. Vitest with React Testing Library for unit and
 component tests, Playwright for end to end. No component library, no state
 library, no router, no date library.
 
-[docs/plan.md](docs/plan.md) has the data model and the directory layout.
-[docs/decisions.md](docs/decisions.md) explains why each choice went the way it
-did, including the ones that were wrong first.
+[docs/](docs/README.md) holds the rest: the user research every test ID traces
+back to, the data model, and a decision log that explains why each choice went
+the way it did, including the ones that were wrong first.
 
 ## Licence
 

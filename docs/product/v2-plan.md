@@ -1,7 +1,7 @@
 # Version 2: the personal dashboard
 
 Scope derived from the four dashboard screenshots in
-[ui-reference.md](ui-reference.md) plus Aditya's brief: goals, activities, class
+[../design/ui-reference.md](../design/ui-reference.md) plus Aditya's brief: goals, activities, class
 information, a date selector, and a sidebar. Nothing built yet.
 
 Version 1 tracked deadlines. Version 2 is the dashboard those screenshots show.

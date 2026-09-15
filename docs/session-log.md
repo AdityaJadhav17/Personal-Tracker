@@ -3,7 +3,7 @@
 Newest first. What happened, what broke, what to pick up next.
 
 During the three days of real use required by
-[definition-of-done.md](definition-of-done.md), this is also where you record
+[engineering/definition-of-done.md](engineering/definition-of-done.md), this is also where you record
 what annoyed you and what you reached for that was not there.
 
 ---
@@ -287,7 +287,7 @@ title and wraps badly. It is unstyled markup, not a logic problem.
 
 **UI reference recorded.** Aditya supplied four dashboard screenshots as a
 visual direction and asked about using Motion (motion.dev) for animation.
-Written up in [ui-reference.md](ui-reference.md) with what transfers, what does
+Written up in [design/ui-reference.md](design/ui-reference.md) with what transfers, what does
 not, and the Motion tradeoff. Motion is not installed and not approved: it is a
 dependency with no caller yet, and the recommendation is CSS first, Motion only
 if a specific transition still feels wrong once the page is styled.
@@ -404,8 +404,8 @@ and watched the imported high-priority item slot in above the existing
 low-priority one.
 
 **Next.** The feature set is complete but v1 is not done. Outstanding against
-[definition-of-done.md](definition-of-done.md): Phase 4 styling with the
-`ui-ux-pro-max` skill against [ui-reference.md](ui-reference.md), Phase 5
+[engineering/definition-of-done.md](engineering/definition-of-done.md): Phase 4 styling with the
+`ui-ux-pro-max` skill against [design/ui-reference.md](design/ui-reference.md), Phase 5
 documentation, self-hosted fonts, three real school days of use logged here,
 and CI proven green on a push.
 
@@ -441,7 +441,7 @@ it. Worth remembering: a test that reads a file through the bundler can be
 quietly disarmed by the bundler.
 
 **Three of the skill's recommendations were rejected, with reasons in
-[ui-plan.md](ui-plan.md).** Its layout pattern was for a marketing landing page.
+[design/ui-plan.md](design/ui-plan.md).** Its layout pattern was for a marketing landing page.
 Inter is served from Google Fonts, which the security posture forbids and an
 existing spec would have caught. GSAP is a dependency. The system font stack is
 used instead and `public/` is gone, since it only held an empty fonts folder.
@@ -561,7 +561,7 @@ the bug it was testing for.
 Aditya widened the product: goals, activities, class information, a date
 selector and a sidebar, with the four dashboard screenshots as the
 specification. Written up as eight new stories with IDed acceptance criteria in
-[v2-plan.md](v2-plan.md). "Activities" reads as the daily reflection log, which
+[product/v2-plan.md](product/v2-plan.md). "Activities" reads as the daily reflection log, which
 is the series the reference app's Trends screen plots.
 
 **The migration landed first, before any feature that needs it.** `Database`

@@ -12,7 +12,7 @@ you are about to build. Then write the smallest code that makes it pass.
 A test that passes the first time you run it has not tested anything yet. You
 have no evidence it would catch the bug it exists for.
 
-Every acceptance criterion in [docs/user-research.md](docs/user-research.md) has
+Every acceptance criterion in [docs/product/user-research.md](docs/product/user-research.md) has
 an ID, and its tests carry that ID in the name, so `npm test -- AC-04.2` finds
 exactly one test.
 

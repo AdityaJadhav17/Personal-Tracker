@@ -3,7 +3,7 @@
 Every decision below names the pain point or story ID it serves. Nothing here
 is built yet. Aditya approves this before any CSS is written.
 
-Inputs: the personas in [user-research.md](user-research.md), the screenshots
+Inputs: the personas in [../product/user-research.md](../product/user-research.md), the screenshots
 in [ui-reference.md](ui-reference.md), and a `ui-ux-pro-max` design system run
 for a dense, low-motion productivity dashboard.
 
@@ -24,7 +24,7 @@ stack: zero bytes, zero requests, spec stays green. `public/fonts/` stays
 empty and can go.
 
 **GSAP is a dependency.** Same argument as Motion in
-[decisions.md](decisions.md). CSS transitions only.
+[../engineering/decisions.md](../engineering/decisions.md). CSS transitions only.
 
 ## The three-second test
 
@@ -149,7 +149,7 @@ Transitions on colour and background only, 150ms, and everything wrapped in
 
 The one place motion would genuinely help is an item leaving the list when
 marked done, which currently snaps. That is the Motion decision from
-[decisions.md](decisions.md), and it stays deferred until the page is styled
+[../engineering/decisions.md](../engineering/decisions.md), and it stays deferred until the page is styled
 and we can see whether it still feels abrupt.
 
 ## Responsive

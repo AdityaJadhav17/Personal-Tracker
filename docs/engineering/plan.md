@@ -10,7 +10,7 @@ state lives in one `Database` object held in `App.tsx` and persisted to
 import validation are pure functions that take an explicit `now`, so they test
 without a DOM and without a clock.
 
-**Spec.** [mvp.md](mvp.md) and [user-research.md](user-research.md).
+**Spec.** [../product/mvp.md](../product/mvp.md) and [../product/user-research.md](../product/user-research.md).
 **Done means.** [definition-of-done.md](definition-of-done.md).
 **Decisions.** [decisions.md](decisions.md).
 
