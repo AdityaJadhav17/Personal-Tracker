@@ -491,3 +491,31 @@ cloning.
 **Left for Aditya.** Add the GitHub remote and push. Prove CI by pushing a
 deliberately badly formatted file and watching the job go red. Then three real
 school days with actual deadlines, logged here.
+
+---
+
+## 2026-09-15: first push, CI green
+
+Aditya pushed to GitHub. The `check` job passed on the first run in 1m23s:
+checkout, setup-node, install, typecheck, lint, format check, unit tests,
+Playwright browser install, end-to-end, build. The Playwright report upload
+step correctly skipped, since it only runs on failure.
+
+**Green is half the proof.** A job that has never been seen to fail has not
+been shown to gate anything. Phase 2 step 3 asks for a deliberately badly
+formatted push that turns the Format check step red, and that is still
+outstanding.
+
+**One unexplained warning** appeared under Annotations on the run. Not yet
+read. Worth reading once rather than learning to ignore it.
+
+**Badge showed "no status" because the repo was private.** The URL was correct:
+owner, repository, workflow filename and default branch all matched the remote.
+GitHub renders README images through its camo proxy, which fetches without
+credentials, so a private repository's badge endpoint returns 404 and the badge
+falls back to "no status" for everyone, including the owner. Aditya is making
+the repository public, which fixes it with no change to the README.
+
+Checked before recommending that: nothing sensitive is committed. No `.env`, no
+keys or tokens, and no exported data. The only tracked JSON is `tsconfig.json`.
+Deadlines never reach the repository by design.
