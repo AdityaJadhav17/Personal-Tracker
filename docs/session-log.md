@@ -461,3 +461,33 @@ note expanding to a full editor on focus.
 **Next.** Phase 5: README with a screenshot, CONTRIBUTING, MIT LICENSE, CI
 badge, all run through `stop-slop`. Then the three real school days, and
 proving CI green on a push.
+
+---
+
+## 2026-09-15: Phase 5, documentation
+
+**Shipped.** `README.md`, `CONTRIBUTING.md`, an MIT `LICENSE`, a CI badge, and
+`docs/screenshot.png`. All prose run through `stop-slop`. 193 unit and
+component tests, 58 Playwright specs, all six gates still green.
+
+**The screenshot is seeded demo data, not Aditya's.** Captured with Playwright
+at a 2x device scale so it stays sharp, eight items across all four groups,
+showing the priority bar, the Soon marker, category tags and two notes. Replace
+it with real data whenever that feels less like a stranger's list.
+
+**`.gitignore` was verified rather than assumed.** Wrote a file matching the
+export pattern, confirmed `git status` does not show it, deleted it.
+
+**Two placeholders that need Aditya's confirmation.** The CI badge URL assumes
+`AdityaJadhav17/Personal-Tracker`, and the `LICENSE` copyright reads "Aditya
+Jadhav". Neither is verified, and there is no git remote yet to check against.
+
+**The README states the limitation plainly** rather than burying it: a browser
+tab on a laptop cannot reach a phone without a server, so this version reminds
+you only while it is open. That is the thing most likely to make the app fail
+in real use, and a stranger reading the README deserves to know it before
+cloning.
+
+**Left for Aditya.** Add the GitHub remote and push. Prove CI by pushing a
+deliberately badly formatted file and watching the job go red. Then three real
+school days with actual deadlines, logged here.
