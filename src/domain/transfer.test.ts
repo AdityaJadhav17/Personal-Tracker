@@ -12,39 +12,42 @@ function anItem(overrides: Partial<Item> = {}): Item {
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
     completedAt: null,
+    goalId: null,
+    courseId: null,
     ...overrides,
   };
 }
 
+/** A current-version database holding these items and nothing else. */
+function aDatabase(items: Item[] = [anItem()]): Database {
+  return { version: 2, items, goals: [], courses: [], reflections: [] };
+}
+
 describe('serialize', () => {
   test('AC-09.1 the output parses as JSON', () => {
-    const text = serialize({ version: 1, items: [anItem()] });
+    const text = serialize(aDatabase());
     expect(() => JSON.parse(text) as unknown).not.toThrow();
   });
 
   test('AC-09.1 every item survives with every field intact', () => {
-    const db: Database = {
-      version: 1,
-      items: [
-        anItem({ id: 'a', note: 'Zelle, not Venmo' }),
-        anItem({
-          id: 'b',
-          status: 'done',
-          completedAt: '2026-09-16T01:00:00.000Z',
-          priority: 'high',
-          category: 'personal',
-        }),
-      ],
-    };
+    const db: Database = aDatabase([
+      anItem({ id: 'a', note: 'Zelle, not Venmo' }),
+      anItem({
+        id: 'b',
+        status: 'done',
+        completedAt: '2026-09-16T01:00:00.000Z',
+        priority: 'high',
+        category: 'personal',
+      }),
+    ]);
 
     expect(JSON.parse(serialize(db))).toEqual(db);
   });
 
   test('AC-09.1 done items are exported too, not only open ones', () => {
-    const db: Database = {
-      version: 1,
-      items: [anItem({ id: 'done-one', status: 'done' })],
-    };
+    const db: Database = aDatabase([
+      anItem({ id: 'done-one', status: 'done' }),
+    ]);
 
     const parsed = JSON.parse(serialize(db)) as Database;
     expect(parsed.items).toHaveLength(1);
@@ -52,26 +55,26 @@ describe('serialize', () => {
   });
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
-    const parsed = JSON.parse(serialize({ version: 1, items: [] })) as Database;
-    expect(parsed.version).toBe(1);
+    const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
+    expect(parsed.version).toBe(2);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
-    const text = serialize({ version: 1, items: [] });
-    expect(JSON.parse(text)).toEqual({ version: 1, items: [] });
+    const text = serialize(aDatabase([]));
+    expect(JSON.parse(text)).toEqual(aDatabase([]));
   });
 
   test('AC-09.1 titles containing quotes and markup survive', () => {
     const title = '<script>alert("x")</script> & "quotes" \\ backslash';
     const parsed = JSON.parse(
-      serialize({ version: 1, items: [anItem({ title })] }),
+      serialize(aDatabase([anItem({ title })])),
     ) as Database;
 
     expect(parsed.items[0]?.title).toBe(title);
   });
 
   test('the file is indented, because you are meant to be able to read it', () => {
-    expect(serialize({ version: 1, items: [anItem()] })).toContain('\n  ');
+    expect(serialize(aDatabase())).toContain('\n  ');
   });
 });
 
@@ -96,7 +99,7 @@ describe('exportFilename', () => {
 });
 
 describe('parseImport', () => {
-  const good: Database = { version: 1, items: [anItem()] };
+  const good: Database = aDatabase();
 
   function reject(text: string) {
     const result = parseImport(text);
@@ -111,27 +114,24 @@ describe('parseImport', () => {
   });
 
   test('AC-10.1 a database with every field populated round trips', () => {
-    const db: Database = {
-      version: 1,
-      items: [
-        anItem({ id: 'a', note: 'Zelle, not Venmo', priority: 'high' }),
-        anItem({
-          id: 'b',
-          status: 'done',
-          completedAt: '2026-09-16T01:00:00.000Z',
-          category: 'personal',
-          priority: 'low',
-        }),
-      ],
-    };
+    const db: Database = aDatabase([
+      anItem({ id: 'a', note: 'Zelle, not Venmo', priority: 'high' }),
+      anItem({
+        id: 'b',
+        status: 'done',
+        completedAt: '2026-09-16T01:00:00.000Z',
+        category: 'personal',
+        priority: 'low',
+      }),
+    ]);
 
     const result = parseImport(serialize(db));
     expect(result.ok && result.db).toEqual(db);
   });
 
   test('AC-10.1 an empty database round trips', () => {
-    const result = parseImport(serialize({ version: 1, items: [] }));
-    expect(result.ok && result.db).toEqual({ version: 1, items: [] });
+    const result = parseImport(serialize(aDatabase([])));
+    expect(result.ok && result.db).toEqual(aDatabase([]));
   });
 
   test('AC-10.2 a file that is not JSON is refused, saying so', () => {
@@ -163,7 +163,7 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    expect(reject('{"version": 2, "items": []}')).toMatch(/version/i);
+    expect(reject('{"version": 3, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -235,5 +235,154 @@ describe('parseImport', () => {
     );
 
     expect(result.ok && result.db.items[0]?.title).toBe(title);
+  });
+});
+
+describe('parseImport of a version 1 file', () => {
+  /** Exactly what version 1 exported: no goals, courses or reflections. */
+  const v1File = JSON.stringify({
+    version: 1,
+    items: [
+      {
+        id: 'old-1',
+        title: 'Rent',
+        dueAt: '2026-10-02T00:00:00.000Z',
+        category: 'personal',
+        priority: 'high',
+        status: 'open',
+        note: 'Zelle, not Venmo',
+        createdAt: '2026-09-15T17:00:00.000Z',
+        completedAt: null,
+      },
+    ],
+  });
+
+  test('an export taken before goals existed still imports', () => {
+    const result = parseImport(v1File);
+    expect(result.ok).toBe(true);
+  });
+
+  test('it comes back at the current version with empty collections', () => {
+    const result = parseImport(v1File);
+
+    expect(result.ok && result.db.version).toBe(2);
+    expect(result.ok && result.db.goals).toEqual([]);
+    expect(result.ok && result.db.courses).toEqual([]);
+    expect(result.ok && result.db.reflections).toEqual([]);
+  });
+
+  test('its items gain a null goal and course, keeping everything else', () => {
+    const result = parseImport(v1File);
+    const item = result.ok ? result.db.items[0] : undefined;
+
+    expect(item).toMatchObject({
+      id: 'old-1',
+      title: 'Rent',
+      note: 'Zelle, not Venmo',
+      priority: 'high',
+      goalId: null,
+      courseId: null,
+    });
+  });
+
+  test('a version 1 file carrying goals is refused, because it cannot', () => {
+    const result = parseImport('{"version": 1, "items": [], "goals": []}');
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.error).toMatch(/goals/);
+  });
+});
+
+describe('parseImport of the new collections', () => {
+  function v2File(extra: Record<string, unknown>) {
+    return JSON.stringify({
+      version: 2,
+      items: [],
+      goals: [],
+      courses: [],
+      reflections: [],
+      ...extra,
+    });
+  }
+
+  const goal = {
+    id: 'g1',
+    name: 'Finish the term',
+    description: 'Pass everything',
+    targetAt: '2026-12-15T08:00:00.000Z',
+    createdAt: '2026-09-15T17:00:00.000Z',
+  };
+
+  const course = {
+    id: 'c1',
+    name: 'CSE 100',
+    meetingLocation: 'Center Hall 101',
+    professorEmail: 'prof@ucsd.edu',
+    officeHours: 'Tue 2-4pm',
+    createdAt: '2026-09-15T17:00:00.000Z',
+  };
+
+  const reflection = {
+    id: 'r1',
+    day: '2026-09-15',
+    score: 4,
+    note: 'long lab',
+    createdAt: '2026-09-15T17:00:00.000Z',
+  };
+
+  test('goals, courses and reflections survive a round trip', () => {
+    const result = parseImport(
+      v2File({ goals: [goal], courses: [course], reflections: [reflection] }),
+    );
+
+    expect(result.ok && result.db.goals[0]).toEqual(goal);
+    expect(result.ok && result.db.courses[0]).toEqual(course);
+    expect(result.ok && result.db.reflections[0]).toEqual(reflection);
+  });
+
+  test('a version 2 file missing a collection is refused by name', () => {
+    const result = parseImport('{"version": 2, "items": [], "goals": []}');
+    expect(result.ok === false && result.error).toMatch(/courses/);
+  });
+
+  test('a goal with no name is refused, naming which one', () => {
+    const result = parseImport(v2File({ goals: [{ ...goal, name: '  ' }] }));
+    expect(result.ok === false && result.error).toMatch(/goal 1.*name/i);
+  });
+
+  test('a course missing office hours is refused', () => {
+    const bad: Record<string, unknown> = { ...course };
+    delete bad.officeHours;
+    const result = parseImport(v2File({ courses: [bad] }));
+    expect(result.ok === false && result.error).toMatch(/office hours/i);
+  });
+
+  test('a reflection score outside 1 to 5 is refused', () => {
+    const result = parseImport(
+      v2File({ reflections: [{ ...reflection, score: 9 }] }),
+    );
+    expect(result.ok === false && result.error).toMatch(/score/i);
+  });
+
+  test('a reflection day that is not a date is refused', () => {
+    const result = parseImport(
+      v2File({ reflections: [{ ...reflection, day: 'yesterday' }] }),
+    );
+    expect(result.ok === false && result.error).toMatch(/day/i);
+  });
+
+  test('two reflections for the same day are refused, naming the day', () => {
+    const result = parseImport(
+      v2File({
+        reflections: [reflection, { ...reflection, id: 'r2' }],
+      }),
+    );
+    expect(result.ok === false && result.error).toMatch(/2026-09-15/);
+  });
+
+  test('extra fields inside a goal are dropped, not carried through', () => {
+    const result = parseImport(
+      v2File({ goals: [{ ...goal, evil: 'payload' }] }),
+    );
+    expect(result.ok && result.db.goals[0]).not.toHaveProperty('evil');
   });
 });

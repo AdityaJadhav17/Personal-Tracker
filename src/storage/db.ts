@@ -1,13 +1,14 @@
-import type { Database } from '../domain/types';
+import { upgrade } from '../domain/migrate';
+import type { Course, Database, Goal, Item, Reflection } from '../domain/types';
 
 export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
-  return { version: 1, items: [] };
+  return { version: 2, items: [], goals: [], courses: [], reflections: [] };
 }
 
 /**
- * Read the whole database.
+ * Read the whole database, upgrading it if it was written by an older version.
  *
  * Returns an empty database when the key is absent, when the stored string
  * does not parse, or when it parses into something that is not shaped like a
@@ -17,6 +18,9 @@ function emptyDatabase(): Database {
  * This deliberately does not catch a localStorage that is itself unavailable,
  * which happens in a browser with site data blocked. US-11 handles that as the
  * error state, and swallowing it here would hide it.
+ *
+ * The storage key still says v1. Renaming it would orphan every database
+ * already written, which is the one thing a migration exists to avoid.
  */
 export function load(): Database {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -29,8 +33,8 @@ export function load(): Database {
     return emptyDatabase();
   }
 
-  // A shallow shape check, not validation. US-10 introduces the real
-  // validator for import, where the file comes from outside and is hostile.
+  // A shallow shape check, not validation. US-10 has the real validator for
+  // import, where the file comes from outside and is hostile.
   if (
     typeof parsed !== 'object' ||
     parsed === null ||
@@ -40,7 +44,26 @@ export function load(): Database {
     return emptyDatabase();
   }
 
-  return parsed as Database;
+  const stored = parsed as Record<string, unknown>;
+  const items = stored.items as Item[];
+
+  // Read each collection explicitly. Rebuilding the object from version and
+  // items alone silently dropped goals, courses and reflections.
+  if (stored.version === 2) {
+    return {
+      version: 2,
+      items,
+      goals: Array.isArray(stored.goals) ? (stored.goals as Goal[]) : [],
+      courses: Array.isArray(stored.courses)
+        ? (stored.courses as Course[])
+        : [],
+      reflections: Array.isArray(stored.reflections)
+        ? (stored.reflections as Reflection[])
+        : [],
+    };
+  }
+
+  return upgrade({ version: 1, items });
 }
 
 /** Write the whole database. Called on submit and on blur, never per keystroke. */

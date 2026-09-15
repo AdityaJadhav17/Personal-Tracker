@@ -27,6 +27,8 @@ function anItem(title: string, daysFromNow: number, rest: Partial<Item> = {}) {
     note: '',
     createdAt: NOW.toISOString(),
     completedAt: null,
+    goalId: null,
+    courseId: null,
     ...rest,
   };
   return item;

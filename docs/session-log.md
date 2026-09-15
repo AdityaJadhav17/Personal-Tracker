@@ -553,3 +553,42 @@ endings as well was redundant and was the thing producing the false failure.
 
 Worth noting how this surfaced: the CI failure test found a bug that was not
 the bug it was testing for.
+
+---
+
+## 2026-09-15: version 2 begins, with the migration
+
+Aditya widened the product: goals, activities, class information, a date
+selector and a sidebar, with the four dashboard screenshots as the
+specification. Written up as eight new stories with IDed acceptance criteria in
+[v2-plan.md](v2-plan.md). "Activities" reads as the daily reflection log, which
+is the series the reference app's Trends screen plots.
+
+**The migration landed first, before any feature that needs it.** `Database`
+goes to version 2 with `goals`, `courses` and `reflections`, and items gain
+`goalId` and `courseId`. `upgrade` in `src/domain/migrate.ts` is pure and
+idempotent, with seven tests of its own. Both `load` and `parseImport` route
+through it, so a version 1 database in the browser and a version 1 export file
+taken this morning both still open.
+
+212 unit and component tests, 58 Playwright specs, all six gates green.
+
+**A real bug, caught by an existing test.** The first version of `load`
+rebuilt the database from `version` and `items` alone, which silently discarded
+goals, courses and reflections on every read. The round-trip test in
+`db.test.ts` failed immediately: save wrote five collections, load returned two.
+`load` now reads each collection explicitly.
+
+That test was written for US-09 and had nothing to do with migrations. It
+caught this anyway, which is the argument for round-trip tests over field-by-field
+ones.
+
+**Tests that changed, and why each was legitimate.** Four unit tests and two
+Playwright specs asserted `version: 1` or built v1 database literals. Those
+encode the old data model, and the model changed by an approved story, so
+updating them is correct rather than convenient. One is worth naming: a test
+called "a file from a different version is refused" used version 2 as its
+example of an unreadable version. Version 2 is now the current version, so the
+test needed a genuinely unknown one and moved to version 3.
+
+**Next in M4.** US-13 the sidebar, US-07 courses, US-19 the date picker.

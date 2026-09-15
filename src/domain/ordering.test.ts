@@ -19,6 +19,8 @@ function anItem(
     note: '',
     createdAt: NOW.toISOString(),
     completedAt: null,
+    goalId: null,
+    courseId: null,
   };
 }
 

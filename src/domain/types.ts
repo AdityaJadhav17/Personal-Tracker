@@ -22,13 +22,51 @@ export interface Item {
   createdAt: string;
   /** Instant, UTC. Null while status is "open". */
   completedAt: string | null;
+  /** The goal this belongs to, or null. Added in version 2. */
+  goalId: string | null;
+  /** The course this belongs to, or null. Added in version 2. */
+  courseId: string | null;
+}
+
+/** Something to get to by a date, that items belong to. */
+export interface Goal {
+  id: string;
+  name: string;
+  description: string;
+  /** UTC instant. */
+  targetAt: string;
+  createdAt: string;
+}
+
+/** The details you would otherwise dig out of email every week. */
+export interface Course {
+  id: string;
+  name: string;
+  meetingLocation: string;
+  professorEmail: string;
+  officeHours: string;
+  createdAt: string;
+}
+
+/** How one day went. One per day, keyed by local calendar day. */
+export interface Reflection {
+  id: string;
+  /** Local calendar day, "2026-09-15". Unique across the collection. */
+  day: string;
+  /** 1 terrible through 5 great, matching the five faces in the reference. */
+  score: 1 | 2 | 3 | 4 | 5;
+  note: string;
+  createdAt: string;
 }
 
 /** Everything the app owns. This object is the export file. */
 export interface Database {
-  /** Bumped only when the shape changes in a way import must handle. */
-  version: 1;
+  /** Bumped when the shape changes in a way import has to handle. */
+  version: 2;
   items: Item[];
+  goals: Goal[];
+  courses: Course[];
+  reflections: Reflection[];
 }
 
 /** What the add form produces, before the app assigns identity and time. */

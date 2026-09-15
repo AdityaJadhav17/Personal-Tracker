@@ -44,7 +44,7 @@ export default function App() {
       if (!db || !undoable) return;
 
       commit({
-        version: 1,
+        ...db,
         items: db.items.map((item) =>
           item.id === undoable
             ? { ...item, status: 'open', completedAt: null }
@@ -67,6 +67,10 @@ export default function App() {
     );
   }
 
+  // Narrowed once here: a function declared below does not keep the narrowing
+  // from the null check above, because it could be called at any time.
+  const data: Database = db;
+
   function handleAdd(draft: ItemDraft) {
     const item: Item = {
       id: crypto.randomUUID(),
@@ -78,15 +82,17 @@ export default function App() {
       note: '',
       createdAt: now().toISOString(),
       completedAt: null,
+      goalId: null,
+      courseId: null,
     };
 
-    commit({ version: 1, items: [...(db?.items ?? []), item] });
+    commit({ ...data, items: [...data.items, item] });
   }
 
   function handleDone(id: string) {
     commit({
-      version: 1,
-      items: (db?.items ?? []).map((item) =>
+      ...data,
+      items: data.items.map((item) =>
         item.id === id
           ? { ...item, status: 'done', completedAt: now().toISOString() }
           : item,
@@ -97,15 +103,15 @@ export default function App() {
 
   function handleNoteChange(id: string, note: string) {
     commit({
-      version: 1,
-      items: (db?.items ?? []).map((item) =>
+      ...data,
+      items: data.items.map((item) =>
         item.id === id ? { ...item, note } : item,
       ),
     });
   }
 
   function handleExport() {
-    const blob = new Blob([serialize(db ?? { version: 1, items: [] })], {
+    const blob = new Blob([serialize(data)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -128,11 +134,11 @@ export default function App() {
   }
 
   function mergeImport(next: Database) {
-    const existing = new Set((db?.items ?? []).map((item) => item.id));
+    const existing = new Set(data.items.map((item) => item.id));
     applyImport({
-      version: 1,
+      ...next,
       items: [
-        ...(db?.items ?? []),
+        ...data.items,
         // Dropping ids we already hold is what makes importing your own
         // export twice a no-op rather than a way to duplicate everything.
         ...next.items.filter((item) => !existing.has(item.id)),
@@ -155,7 +161,7 @@ export default function App() {
       }
       setImportError('');
       // AC-10.4. Nothing is written while there is data that could be lost.
-      if ((db?.items.length ?? 0) > 0) setPendingImport(result.db);
+      if (data.items.length > 0) setPendingImport(result.db);
       else applyImport(result.db);
     };
     reader.onerror = () => setImportError('That file could not be read.');
