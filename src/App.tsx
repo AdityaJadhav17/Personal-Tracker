@@ -162,7 +162,7 @@ export default function App() {
     reader.readAsText(file);
   }
 
-  const current = now();
+  const    current   =    now( );
   const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
   // Based on open items rather than on the array being empty, so finishing
