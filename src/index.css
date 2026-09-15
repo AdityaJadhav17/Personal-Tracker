@@ -483,3 +483,90 @@ button {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Views ---------- */
+
+/*
+ * A plain row for now. US-13 turns this into the sidebar from the reference
+ * screenshots, once Goals and Reflections exist to put in it.
+ */
+.nav {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav__item {
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: color var(--speed) ease;
+}
+
+.nav__item:hover {
+  color: var(--text);
+}
+
+.nav__item--current {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Courses ---------- */
+
+.course-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.course__name {
+  margin: 0 0 var(--space-3);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.course__details {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+}
+
+.course__details dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.course__details dd {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.item__course {
+  flex: none;
+  max-width: 120px;
+  padding: 1px var(--space-1);
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}

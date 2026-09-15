@@ -631,3 +631,42 @@ control takes locale-ordered digits rather than an ISO string, so the keyboard
 spec types month, day, year.
 
 **Next in M4.** US-07 courses, then US-13 the sidebar.
+
+---
+
+## 2026-09-15: US-07, course reference cards
+
+**Shipped.** A courses view with a card per course, a course control on every
+item, and deletion that keeps the work. 230 unit and component tests, 67
+Playwright specs, all six gates green.
+
+**Deleting a course is the only part with real logic,** so `deleteCourse` in
+`src/domain/courses.ts` is pure and tested without a DOM: the course goes, its
+items stay, and their `courseId` returns to null, which is exactly the state an
+item has before it is assigned. Adding a course is a one-liner in `App` and did
+not earn a module.
+
+**AC-20.3 arrived early,** because deleting without asking is how you lose a
+term's work to a misclick. The trigger names the course, the confirmation says
+"Delete CSE 100? Its items stay.", and nothing is removed until you answer.
+
+**The course control only renders once a course exists.** An empty select on
+every row would join the tab order and lengthen the keyboard path for someone
+who never uses courses, which is the same cost US-19 just paid with the date
+picker.
+
+**Navigation is a plain tab row for now,** not the sidebar. US-13 replaces it
+once Goals and Reflections exist to put in it. The view state it introduces is
+the part that survives.
+
+**A fifth selector collision, same family as the others.** The confirmation
+line contains the course name, so `getByText('CSE 100')` matched both the card
+heading and the question. Course names in the specs now go through
+`getByRole('heading')`. Every collision this session has come from adding
+user-visible text that contains something a selector already matched.
+
+**Still open from the interview.** The class schedule is not built. AC-07.1
+lists four details and a weekly schedule is recurrence machinery, which is
+deferred.
+
+**Next in M4.** US-13, the sidebar.

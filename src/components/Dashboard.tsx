@@ -1,7 +1,7 @@
 import { groupOf } from '../domain/dates';
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
-import type { Item } from '../domain/types';
+import type { Course, Item } from '../domain/types';
 import ItemRow from './ItemRow';
 
 /** Render order. Overdue sits above everything, which is AC-03.1. */
@@ -18,6 +18,8 @@ interface DashboardProps {
   now: Date;
   onDone: (id: string) => void;
   onNoteChange: (id: string, note: string) => void;
+  courses: Course[];
+  onCourseChange: (id: string, courseId: string | null) => void;
 }
 
 export default function Dashboard({
@@ -25,6 +27,8 @@ export default function Dashboard({
   now,
   onDone,
   onNoteChange,
+  courses,
+  onCourseChange,
 }: DashboardProps) {
   const open = items.filter((item) => item.status === 'open');
 
@@ -58,6 +62,8 @@ export default function Dashboard({
                   now={now}
                   onDone={onDone}
                   onNoteChange={onNoteChange}
+                  courses={courses}
+                  onCourseChange={onCourseChange}
                 />
               ))}
             </ul>

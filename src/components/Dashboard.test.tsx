@@ -40,6 +40,8 @@ test('AC-02.1 items land in Overdue, Today, This week, and Later', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('Missed lab', -1),
         anItem('Quiz', 0),
@@ -69,6 +71,8 @@ test('AC-02.2 a group with no items renders no heading', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -91,6 +95,8 @@ test('AC-02.3 an item marked done is not shown in its group', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('Quiz', 0),
         anItem('Already handed in', 0, {
@@ -111,6 +117,8 @@ test('AC-02.3 a group whose only item is done renders no heading', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Handed in', 0, { status: 'done' })]}
     />,
   );
@@ -126,6 +134,8 @@ test('AC-02.1 Overdue is rendered above Today', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Quiz', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -142,6 +152,8 @@ test('each item shows its due date', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -154,6 +166,8 @@ test('AC-03.1 an overdue open item appears in Overdue, above Today', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Quiz today', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -172,6 +186,8 @@ test('AC-03.2 with nothing overdue the Overdue group is not rendered', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Quiz today', 0)]}
     />,
   );
@@ -187,6 +203,8 @@ test('AC-03.2 an overdue item that is done does not bring back the group', () =>
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Handed in late', -3, { status: 'done' })]}
     />,
   );
@@ -202,6 +220,8 @@ test('AC-03.3 overdue items render most overdue first', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('one day late', -1),
         anItem('twelve days late', -12),
@@ -236,6 +256,8 @@ test('AC-04.1 inside a group, high comes before normal before low', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('bb normal', 3, { priority: 'normal' }),
         anItem('cc low', 3, { priority: 'low' }),
@@ -253,6 +275,8 @@ test('AC-04.2 same priority and day, the 9am item is listed first', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('bb evening', 3, { dueAt: hoursOn(3, 17) }),
         anItem('aa morning', 3, { dueAt: hoursOn(3, 9) }),
@@ -269,6 +293,8 @@ test('AC-04.3 two items due at the same minute are both rendered', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('aa first', 3, { dueAt: hoursOn(3, 9) }),
         anItem('bb second', 3, { dueAt: hoursOn(3, 9) }),
@@ -286,6 +312,8 @@ test('AC-04.4 grouping wins over priority', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('Laundry', 0, { priority: 'low' }),
         anItem('Midterm', 6, { priority: 'high' }),
@@ -307,6 +335,8 @@ test('AC-04.1 priority ordering applies inside Overdue too', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('bb twelve', -12, { priority: 'low' }),
         anItem('aa one', -1, { priority: 'high' }),
@@ -323,6 +353,8 @@ test('AC-05.1 every open item offers a done control naming that item', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -339,7 +371,14 @@ test('AC-05.1 activating the control reports the item id', async () => {
   const rent = anItem('Rent', 0);
 
   render(
-    <Dashboard now={NOW} onDone={onDone} onNoteChange={noop} items={[rent]} />,
+    <Dashboard
+      now={NOW}
+      onDone={onDone}
+      onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
+      items={[rent]}
+    />,
   );
   await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
 
@@ -352,6 +391,8 @@ test('AC-05.3 the done controls follow the order the items are displayed', () =>
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('cc low', 3, { priority: 'low' }),
         anItem('aa high', 3, { priority: 'high' }),
@@ -377,6 +418,8 @@ test('AC-06.1 each item offers a note field that names the item', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -393,6 +436,8 @@ test('AC-06.1 an existing note is shown in the field', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Rent', 0, { note: 'Zelle, not Venmo' })]}
     />,
   );
@@ -412,6 +457,8 @@ test('AC-06.1 the note is reported on blur, not on every keystroke', async () =>
       now={NOW}
       onDone={noop}
       onNoteChange={onNoteChange}
+      courses={[]}
+      onCourseChange={noop}
       items={[rent]}
     />,
   );
@@ -433,6 +480,8 @@ test('AC-12.1 an item due in two days carries the upcoming marker', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Midterm', 2)]}
     />,
   );
@@ -446,6 +495,8 @@ test('AC-12.2 an item due in nine days carries no marker', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Finals', 9)]}
     />,
   );
@@ -459,6 +510,8 @@ test('AC-12.3 priority does not suppress the marker', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[anItem('Laundry', 2, { priority: 'low' })]}
     />,
   );
@@ -472,6 +525,8 @@ test('AC-12.1 only the items inside the window are marked', () => {
       now={NOW}
       onDone={noop}
       onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
       items={[
         anItem('Late thing', -2),
         anItem('Today thing', 0),
@@ -484,4 +539,103 @@ test('AC-12.1 only the items inside the window are marked', () => {
   const markers = screen.getAllByText('Soon');
   expect(markers).toHaveLength(1);
   expect(markers[0]?.closest('li')).toHaveTextContent('Soon thing');
+});
+
+const CSE100 = {
+  id: 'c1',
+  name: 'CSE 100',
+  meetingLocation: 'Center Hall 101',
+  professorEmail: 'prof@ucsd.edu',
+  officeHours: 'Tue 2-4pm',
+  createdAt: NOW.toISOString(),
+};
+
+test('AC-07.2 an item shows which course it belongs to', () => {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[CSE100]}
+      onCourseChange={noop}
+      items={[anItem('Project', 3, { courseId: 'c1' })]}
+    />,
+  );
+
+  expect(screen.getByLabelText('Course for Project')).toHaveValue('c1');
+  expect(
+    screen.getByRole('option', { name: 'CSE 100', selected: true }),
+  ).toBeInTheDocument();
+});
+
+test('AC-07.2 an item with no course says so', () => {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[CSE100]}
+      onCourseChange={noop}
+      items={[anItem('Rent', 3)]}
+    />,
+  );
+
+  expect(screen.getByLabelText('Course for Rent')).toHaveValue('');
+});
+
+test('AC-07.2 choosing a course reports the item and the course', async () => {
+  const user = userEvent.setup();
+  const onCourseChange = vi.fn<(id: string, courseId: string | null) => void>();
+  const project = anItem('Project', 3);
+
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[CSE100]}
+      onCourseChange={onCourseChange}
+      items={[project]}
+    />,
+  );
+
+  await user.selectOptions(screen.getByLabelText('Course for Project'), 'c1');
+
+  expect(onCourseChange).toHaveBeenCalledWith(project.id, 'c1');
+});
+
+test('AC-07.2 clearing the course reports null, not an empty string', async () => {
+  const user = userEvent.setup();
+  const onCourseChange = vi.fn<(id: string, courseId: string | null) => void>();
+  const project = anItem('Project', 3, { courseId: 'c1' });
+
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[CSE100]}
+      onCourseChange={onCourseChange}
+      items={[project]}
+    />,
+  );
+
+  await user.selectOptions(screen.getByLabelText('Course for Project'), '');
+
+  expect(onCourseChange).toHaveBeenCalledWith(project.id, null);
+});
+
+test('AC-07.2 with no courses recorded, the item offers no course control', () => {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
+      items={[anItem('Rent', 3)]}
+    />,
+  );
+
+  expect(screen.queryByLabelText('Course for Rent')).not.toBeInTheDocument();
 });

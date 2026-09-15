@@ -69,6 +69,14 @@ export interface Database {
   reflections: Reflection[];
 }
 
+/** What the course form produces, before the app assigns identity and time. */
+export interface CourseDraft {
+  name: string;
+  meetingLocation: string;
+  professorEmail: string;
+  officeHours: string;
+}
+
 /** What the add form produces, before the app assigns identity and time. */
 export interface ItemDraft {
   title: string;

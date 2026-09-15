@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
 import Dashboard from './components/Dashboard';
+import CourseList from './components/CourseList';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
+import { deleteCourse } from './domain/courses';
 import { now } from './domain/dates';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
-import type { Database, Item, ItemDraft } from './domain/types';
+import type {
+  Course,
+  CourseDraft,
+  Database,
+  Item,
+  ItemDraft,
+} from './domain/types';
 import { load, save } from './storage/db';
 
 /** Undo is a plain letter, so it must not fire while you are typing. */
@@ -27,6 +35,9 @@ export default function App() {
   const [undoable, setUndoable] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<Database | null>(null);
   const [importError, setImportError] = useState('');
+  // Which view is showing. No router: four views and one piece of state, and
+  // a reload puts you back on Home, which is the view you want on open.
+  const [view, setView] = useState<'home' | 'courses'>('home');
   const titleRef = useRef<HTMLInputElement>(null);
 
   function commit(next: Database) {
@@ -168,6 +179,28 @@ export default function App() {
     reader.readAsText(file);
   }
 
+  function handleAddCourse(draft: CourseDraft) {
+    const course: Course = {
+      id: crypto.randomUUID(),
+      ...draft,
+      createdAt: now().toISOString(),
+    };
+    commit({ ...data, courses: [...data.courses, course] });
+  }
+
+  function handleDeleteCourse(id: string) {
+    commit(deleteCourse(data, id));
+  }
+
+  function handleCourseChange(id: string, courseId: string | null) {
+    commit({
+      ...data,
+      items: data.items.map((item) =>
+        item.id === id ? { ...item, courseId } : item,
+      ),
+    });
+  }
+
   const current = now();
   const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
@@ -179,21 +212,49 @@ export default function App() {
     <main className="app">
       <h1 className="app__title">Personal Tracker</h1>
 
-      <AddItemForm onAdd={handleAdd} titleRef={titleRef} />
+      <nav className="nav" aria-label="Views">
+        {(['home', 'courses'] as const).map((name) => (
+          <button
+            className={`nav__item ${view === name ? 'nav__item--current' : ''}`}
+            key={name}
+            type="button"
+            aria-current={view === name ? 'page' : undefined}
+            onClick={() => setView(name)}
+          >
+            {name === 'home' ? 'Home' : 'Courses'}
+          </button>
+        ))}
+      </nav>
 
-      <p className="status" role="status">
-        {undoableTitle ? `Marked ${undoableTitle} done. Press u to undo.` : ''}
-      </p>
-
-      {hasOpen ? (
-        <Dashboard
-          items={db.items}
-          now={current}
-          onDone={handleDone}
-          onNoteChange={handleNoteChange}
+      {view === 'courses' ? (
+        <CourseList
+          courses={data.courses}
+          onAdd={handleAddCourse}
+          onDelete={handleDeleteCourse}
         />
       ) : (
-        <EmptyState onAddFirst={() => titleRef.current?.focus()} />
+        <>
+          <AddItemForm onAdd={handleAdd} titleRef={titleRef} />
+
+          <p className="status" role="status">
+            {undoableTitle
+              ? `Marked ${undoableTitle} done. Press u to undo.`
+              : ''}
+          </p>
+
+          {hasOpen ? (
+            <Dashboard
+              items={db.items}
+              now={current}
+              onDone={handleDone}
+              onNoteChange={handleNoteChange}
+              courses={data.courses}
+              onCourseChange={handleCourseChange}
+            />
+          ) : (
+            <EmptyState onAddFirst={() => titleRef.current?.focus()} />
+          )}
+        </>
       )}
 
       {/*

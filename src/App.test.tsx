@@ -621,3 +621,95 @@ test('AC-10.4 importing into an empty database does not ask', async () => {
     screen.queryByRole('button', { name: 'Replace' }),
   ).not.toBeInTheDocument();
 });
+
+async function goTo(view: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: view }));
+}
+
+async function addCourse(name: string, location = '', email = '', hours = '') {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Course name'), name);
+  if (location) await user.type(screen.getByLabelText('Location'), location);
+  if (email) await user.type(screen.getByLabelText('Professor email'), email);
+  if (hours) await user.type(screen.getByLabelText('Office hours'), hours);
+  await user.click(screen.getByRole('button', { name: 'Add course' }));
+}
+
+test('AC-07.1 a course keeps all four details across a reload', async () => {
+  const first = render(<App />);
+  await goTo('Courses');
+  await addCourse(
+    'CSE 100',
+    'Center Hall 101',
+    'prof@ucsd.edu',
+    'Tue 2-4pm, CSE 3108',
+  );
+  first.unmount();
+
+  render(<App />);
+  await goTo('Courses');
+
+  expect(screen.getByText('CSE 100')).toBeVisible();
+  expect(screen.getByText('Center Hall 101')).toBeVisible();
+  expect(screen.getByText('prof@ucsd.edu')).toBeVisible();
+  expect(screen.getByText('Tue 2-4pm, CSE 3108')).toBeVisible();
+});
+
+test('AC-07.2 an item can be given a course, and keeps it across a reload', async () => {
+  const user = userEvent.setup();
+  const first = render(<App />);
+  await goTo('Courses');
+  await addCourse('CSE 100');
+  await goTo('Home');
+  await addItem('Project', todayIso());
+
+  await user.selectOptions(screen.getByLabelText('Course for Project'), [
+    screen.getByRole('option', { name: 'CSE 100' }),
+  ]);
+  first.unmount();
+
+  render(<App />);
+  expect(screen.getByLabelText('Course for Project')).toHaveDisplayValue(
+    'CSE 100',
+  );
+});
+
+test('AC-07.3 deleting a course keeps its items, without the course', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Courses');
+  await addCourse('CSE 100');
+  await goTo('Home');
+  await addItem('Project', todayIso());
+  await user.selectOptions(screen.getByLabelText('Course for Project'), [
+    screen.getByRole('option', { name: 'CSE 100' }),
+  ]);
+
+  await goTo('Courses');
+  await user.click(screen.getByRole('button', { name: 'Delete CSE 100' }));
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+  await goTo('Home');
+
+  expect(screen.getByText('Project')).toBeVisible();
+  // With no courses left the control is gone, and the item survived.
+  expect(screen.queryByLabelText('Course for Project')).not.toBeInTheDocument();
+});
+
+test('AC-07.1 the courses view starts empty and says so', async () => {
+  render(<App />);
+  await goTo('Courses');
+
+  expect(screen.getByText('No courses yet.')).toBeVisible();
+});
+
+test('moving between views swaps what is shown', async () => {
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  await goTo('Courses');
+  expect(screen.queryByText('Rent')).not.toBeInTheDocument();
+
+  await goTo('Home');
+  expect(screen.getByText('Rent')).toBeVisible();
+});
