@@ -1,6 +1,6 @@
 export default function ErrorState() {
   return (
-    <section>
+    <section className="error">
       <p>Your data could not be loaded.</p>
       <p>
         Personal Tracker keeps everything in this browser&rsquo;s own storage,

@@ -361,3 +361,103 @@ this file and nobody else sees it" is checked rather than asserted.
 
 **Next.** US-10, import, with the round-trip test that makes the export worth
 having. That story closes M3 and finishes the v1 feature set.
+
+---
+
+## 2026-09-15: US-10, import, closing M3 and the v1 feature set
+
+**Shipped.** `parseImport` in `src/domain/transfer.ts`, a file input, an error
+line, and the replace-or-merge prompt. 165 unit and component tests, 58
+Playwright specs, coverage 93.36%. All six gates green. Every MVP story is now
+built: US-01 through US-06, US-09 through US-12.
+
+**The round trip is proven against a real file.** The e2e spec adds items,
+notes and a completion, clicks Export, takes the path of the file Chromium
+actually wrote, clears storage, reloads, imports that exact file, and compares
+the stored database byte for byte against what it was. That is the acceptance
+criterion this milestone exists for, and nothing short of a real download and a
+real upload would have tested it.
+
+**The import file is treated as hostile.** Twenty-three unit tests cover what
+gets refused: text that is not JSON, truncated JSON, a bare array, null, a
+version that is not 1, unknown top level fields (named in the message), items
+that are not objects, and every field on an item being the wrong type or
+missing. Fields inside an item that we do not recognise are dropped rather than
+copied into storage, so a file cannot smuggle anything in. Nothing is evaluated;
+a title containing template syntax is stored as characters.
+
+**Merge drops incoming ids we already hold.** That is what makes importing your
+own export twice a no-op instead of a way to duplicate every deadline, and
+there is a test for exactly that at both the component and browser level.
+
+**@types/node avoided a second time.** Playwright's `setInputFiles` takes a
+Buffer for synthetic files, so the malformed-file specs build a `File` inside
+the page with `DataTransfer` and dispatch a change event. The round trip does
+not need it at all, since `download.path()` hands back a real path.
+
+**One lint failure at the end,** from destructuring a field off an object to
+omit it, which leaves an unused binding. Rewritten as a copy and a delete.
+
+**Verified in a real browser.** Seeded two items, uploaded a malformed file and
+saw the refusal with the data intact, then uploaded a valid one, chose Merge,
+and watched the imported high-priority item slot in above the existing
+low-priority one.
+
+**Next.** The feature set is complete but v1 is not done. Outstanding against
+[definition-of-done.md](definition-of-done.md): Phase 4 styling with the
+`ui-ux-pro-max` skill against [ui-reference.md](ui-reference.md), Phase 5
+documentation, self-hosted fonts, three real school days of use logged here,
+and CI proven green on a push.
+
+---
+
+## 2026-09-15: Phase 4, the interface
+
+**Shipped.** A token-based stylesheet, class names through every component, a
+group count beside each heading, and a contrast gate. 193 unit and component
+tests, 58 Playwright specs, coverage 93.64%. All six gates green. The CSS
+bundle is 6.05kB, 1.61kB gzipped.
+
+**Zero existing tests changed.** The count was expected to break about ten
+assertions by changing heading names from "Overdue" to "Overdue 2". Putting the
+count in a sibling span rather than inside the `h2` keeps the heading's
+accessible name and `textContent` exactly "Overdue", and the span is
+`aria-hidden` because a screen reader can count the list itself. Nothing went
+red.
+
+**The contrast gate paid for itself on its first run.** `src/design/contrast.test.ts`
+reads the colour tokens straight out of `index.css` and checks twelve
+foreground and background pairs in both palettes. It failed immediately:
+`#dc2626` on `#fef2f2` is 4.41 to 1, under the 4.5 AA floor. My own hand
+calculation had said 4.62. The light-mode danger colour is now `#b91c1c`.
+
+Making it read the real CSS matters. A test with its own copy of the palette
+would have passed while the app failed.
+
+**Vitest replaces CSS imports with an empty string by default,** so
+`import css from '../index.css?raw'` silently returned nothing and the whole
+gate passed while checking zero pairs. `css: true` in the Vitest config fixes
+it. Worth remembering: a test that reads a file through the bundler can be
+quietly disarmed by the bundler.
+
+**Three of the skill's recommendations were rejected, with reasons in
+[ui-plan.md](ui-plan.md).** Its layout pattern was for a marketing landing page.
+Inter is served from Google Fonts, which the security posture forbids and an
+existing spec would have caught. GSAP is a dependency. The system font stack is
+used instead and `public/` is gone, since it only held an empty fonts folder.
+
+**One thing the browser caught that the plan got wrong.** The note field was
+specified as one line always, but at `flex: 1 1 100%` an empty note still
+forced every row onto two lines, which defeated the density the three-second
+test needed. `:placeholder-shown:not(:focus)` collapses an empty note to a
+small inline affordance on the item's own row, and a note with text or focus
+takes a line. No extra state, no extra markup. Eight items across four groups
+now fit on one screen.
+
+**Checked in the browser:** light and dark, 390px and desktop, no horizontal
+scroll at either width, the focus ring visible on keyboard navigation, and the
+note expanding to a full editor on focus.
+
+**Next.** Phase 5: README with a screenshot, CONTRIBUTING, MIT LICENSE, CI
+badge, all run through `stop-slop`. Then the three real school days, and
+proving CI green on a push.

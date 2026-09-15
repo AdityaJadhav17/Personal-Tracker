@@ -37,9 +37,20 @@ export default function Dashboard({
         const ordered = sortWithinGroup(inGroup);
 
         return (
-          <section key={key}>
-            <h2>{heading}</h2>
-            <ul>
+          <section className={`group group--${key}`} key={key}>
+            <div className="group__head">
+              <h2 className="group__title">{heading}</h2>
+              {/*
+                The count sits beside the heading rather than inside it, so the
+                heading's accessible name and text stay exactly "Overdue".
+                Hidden from assistive tech because a screen reader can count
+                the list itself.
+              */}
+              <span className="group__count" aria-hidden="true">
+                {ordered.length}
+              </span>
+            </div>
+            <ul className="group__list">
               {ordered.map((item) => (
                 <ItemRow
                   key={item.id}

@@ -4,7 +4,7 @@ import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
 import { now } from './domain/dates';
-import { exportFilename, serialize } from './domain/transfer';
+import { exportFilename, parseImport, serialize } from './domain/transfer';
 import type { Database, Item, ItemDraft } from './domain/types';
 import { load, save } from './storage/db';
 
@@ -25,6 +25,8 @@ export default function App() {
     }
   });
   const [undoable, setUndoable] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<Database | null>(null);
+  const [importError, setImportError] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
 
   function commit(next: Database) {
@@ -58,8 +60,8 @@ export default function App() {
 
   if (db === null) {
     return (
-      <main>
-        <h1>Personal Tracker</h1>
+      <main className="app">
+        <h1 className="app__title">Personal Tracker</h1>
         <ErrorState />
       </main>
     );
@@ -119,6 +121,47 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  function applyImport(next: Database) {
+    commit(next);
+    setPendingImport(null);
+    setUndoable(null);
+  }
+
+  function mergeImport(next: Database) {
+    const existing = new Set((db?.items ?? []).map((item) => item.id));
+    applyImport({
+      version: 1,
+      items: [
+        ...(db?.items ?? []),
+        // Dropping ids we already hold is what makes importing your own
+        // export twice a no-op rather than a way to duplicate everything.
+        ...next.items.filter((item) => !existing.has(item.id)),
+      ],
+    });
+  }
+
+  function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Reset so choosing the same file again still fires a change.
+    event.target.value = '';
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = parseImport(String(reader.result));
+      if (!result.ok) {
+        setImportError(result.error);
+        return;
+      }
+      setImportError('');
+      // AC-10.4. Nothing is written while there is data that could be lost.
+      if ((db?.items.length ?? 0) > 0) setPendingImport(result.db);
+      else applyImport(result.db);
+    };
+    reader.onerror = () => setImportError('That file could not be read.');
+    reader.readAsText(file);
+  }
+
   const current = now();
   const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
@@ -127,12 +170,12 @@ export default function App() {
   const hasOpen = db.items.some((item) => item.status === 'open');
 
   return (
-    <main>
-      <h1>Personal Tracker</h1>
+    <main className="app">
+      <h1 className="app__title">Personal Tracker</h1>
 
       <AddItemForm onAdd={handleAdd} now={current} titleRef={titleRef} />
 
-      <p role="status">
+      <p className="status" role="status">
         {undoableTitle ? `Marked ${undoableTitle} done. Press u to undo.` : ''}
       </p>
 
@@ -151,9 +194,59 @@ export default function App() {
         Export sits after the list so it stays out of the add-then-finish
         keyboard path, which is the one used every day.
       */}
-      <button type="button" onClick={handleExport}>
-        Export
-      </button>
+      <div className="data">
+        <button className="data__button" type="button" onClick={handleExport}>
+          Export
+        </button>
+
+        <span className="data__import">
+          <label htmlFor="import-file">Import</label>
+          <input
+            id="import-file"
+            type="file"
+            accept="application/json"
+            onChange={handleImportFile}
+          />
+        </span>
+      </div>
+
+      {importError && (
+        <p className="alert" role="alert">
+          {importError}
+        </p>
+      )}
+
+      {pendingImport && (
+        <section className="prompt">
+          <p>
+            You already have {db.items.length} saved. Replace everything with
+            the file, or keep both?
+          </p>
+          <div className="prompt__actions">
+            <button
+              className="prompt__button"
+              type="button"
+              onClick={() => applyImport(pendingImport)}
+            >
+              Replace
+            </button>
+            <button
+              className="prompt__button"
+              type="button"
+              onClick={() => mergeImport(pendingImport)}
+            >
+              Merge
+            </button>
+            <button
+              className="prompt__button prompt__button--quiet"
+              type="button"
+              onClick={() => setPendingImport(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

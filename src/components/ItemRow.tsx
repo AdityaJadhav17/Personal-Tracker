@@ -21,22 +21,28 @@ export default function ItemRow({
   const [note, setNote] = useState(item.note);
 
   return (
-    <li>
+    // The priority modifier drives a coloured bar on the left edge. Position
+    // in the sorted list is the primary signal; the bar only confirms it.
+    <li className={`item item--${item.priority}`}>
       {/*
         The done control comes first so Tab walks the list in the order it is
         displayed. Both labels carry the title, because "Done" and "Note" on
         their own say nothing out of context.
       */}
       <button
+        className="item__done"
         type="button"
         aria-label={`Mark ${item.title} done`}
         onClick={() => onDone(item.id)}
       >
         Done
       </button>{' '}
-      <span>{item.title}</span> <span>{formatDue(item.dueAt)}</span>
-      {isUpcoming(item.dueAt, now) && <span> Soon</span>}
+      <span className="item__title">{item.title}</span>{' '}
+      <span className="item__due">{formatDue(item.dueAt)}</span>
+      {isUpcoming(item.dueAt, now) && <span className="item__soon"> Soon</span>}
+      <span className="item__tag">{item.category}</span>
       <textarea
+        className="item__note"
         aria-label={`Note for ${item.title}`}
         placeholder="Note"
         value={note}

@@ -419,3 +419,194 @@ test('AC-09.2 export is offered even when there is nothing to export', () => {
   render(<App />);
   expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled();
 });
+
+function jsonFile(text: string, name = 'personal-tracker-2026-09-15.json') {
+  return new File([text], name, { type: 'application/json' });
+}
+
+async function importFile(file: File) {
+  const user = userEvent.setup();
+  await user.upload(screen.getByLabelText('Import'), file);
+}
+
+function storedItems() {
+  const raw = localStorage.getItem('personal-tracker/v1') ?? '{"items":[]}';
+  return (JSON.parse(raw) as { items: { title: string }[] }).items;
+}
+
+test('AC-10.1 exporting and importing into an empty database restores it exactly', async () => {
+  const user = userEvent.setup();
+  const blobs = captureExport();
+
+  const first = render(<App />);
+  await addItem('Rent', todayIso());
+  await addItem('Midterm', todayIso());
+  await user.type(
+    screen.getByRole('textbox', { name: 'Note for Rent' }),
+    'Zelle',
+  );
+  await user.tab();
+  await user.click(screen.getByRole('button', { name: 'Mark Midterm done' }));
+
+  await user.click(screen.getByRole('button', { name: 'Export' }));
+  const exported = await readBlob(blobs[0]!);
+  const before = localStorage.getItem('personal-tracker/v1');
+  first.unmount();
+
+  localStorage.clear();
+  render(<App />);
+  await importFile(jsonFile(exported));
+
+  await screen.findByText('Rent');
+  expect(JSON.parse(localStorage.getItem('personal-tracker/v1')!)).toEqual(
+    JSON.parse(before!),
+  );
+});
+
+test('AC-10.2 a file that is not JSON changes nothing and says why', async () => {
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  await importFile(jsonFile('not json at all'));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(/not valid JSON/i);
+  expect(storedItems()).toHaveLength(1);
+  expect(screen.getByText('Rent')).toBeVisible();
+});
+
+test('AC-10.3 a file with no items list changes nothing and names items', async () => {
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  await importFile(jsonFile('{"version": 1}'));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(/items/i);
+  expect(storedItems()).toHaveLength(1);
+});
+
+test('AC-10.4 importing over existing items asks before writing anything', async () => {
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  await importFile(jsonFile('{"version": 1, "items": []}'));
+
+  expect(await screen.findByRole('button', { name: 'Replace' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Merge' })).toBeVisible();
+  // Nothing written while the question is still on screen.
+  expect(storedItems()).toHaveLength(1);
+});
+
+test('AC-10.4 choosing Replace swaps the database for the file', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  const incoming = {
+    version: 1,
+    items: [
+      {
+        id: 'from-file',
+        title: 'Imported thing',
+        dueAt: new Date().toISOString(),
+        category: 'academic',
+        priority: 'normal',
+        status: 'open',
+        note: '',
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    ],
+  };
+  await importFile(jsonFile(JSON.stringify(incoming)));
+  await user.click(await screen.findByRole('button', { name: 'Replace' }));
+
+  expect(storedItems().map((i) => i.title)).toEqual(['Imported thing']);
+  expect(screen.queryByText('Rent')).not.toBeInTheDocument();
+});
+
+test('AC-10.4 choosing Merge keeps both sets', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  const incoming = {
+    version: 1,
+    items: [
+      {
+        id: 'from-file',
+        title: 'Imported thing',
+        dueAt: new Date().toISOString(),
+        category: 'academic',
+        priority: 'normal',
+        status: 'open',
+        note: '',
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    ],
+  };
+  await importFile(jsonFile(JSON.stringify(incoming)));
+  await user.click(await screen.findByRole('button', { name: 'Merge' }));
+
+  expect(
+    storedItems()
+      .map((i) => i.title)
+      .sort(),
+  ).toEqual(['Imported thing', 'Rent']);
+});
+
+test('AC-10.4 merging your own export twice does not duplicate anything', async () => {
+  const user = userEvent.setup();
+  const blobs = captureExport();
+
+  render(<App />);
+  await addItem('Rent', todayIso());
+  await user.click(screen.getByRole('button', { name: 'Export' }));
+  const exported = await readBlob(blobs[0]!);
+
+  await importFile(jsonFile(exported));
+  await user.click(await screen.findByRole('button', { name: 'Merge' }));
+
+  expect(storedItems()).toHaveLength(1);
+});
+
+test('AC-10.4 Cancel writes nothing', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+
+  await importFile(jsonFile('{"version": 1, "items": []}'));
+  await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+  expect(storedItems()).toHaveLength(1);
+  expect(
+    screen.queryByRole('button', { name: 'Replace' }),
+  ).not.toBeInTheDocument();
+});
+
+test('AC-10.4 importing into an empty database does not ask', async () => {
+  render(<App />);
+
+  const incoming = {
+    version: 1,
+    items: [
+      {
+        id: 'from-file',
+        title: 'Imported thing',
+        dueAt: new Date().toISOString(),
+        category: 'academic',
+        priority: 'normal',
+        status: 'open',
+        note: '',
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      },
+    ],
+  };
+  await importFile(jsonFile(JSON.stringify(incoming)));
+
+  expect(await screen.findByText('Imported thing')).toBeVisible();
+  expect(
+    screen.queryByRole('button', { name: 'Replace' }),
+  ).not.toBeInTheDocument();
+});

@@ -46,34 +46,51 @@ export default function AddItemForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="title">Title</label>
+    <form className="form" onSubmit={handleSubmit}>
+      <div className="form__field form__field--title">
+        <label className="form__label" htmlFor="title">
+          Title
+        </label>
         <input
+          className="form__input"
           id="title"
           ref={titleRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           aria-describedby={titleError ? 'title-error' : undefined}
         />
-        {titleError && <p id="title-error">{titleError}</p>}
+        {titleError && (
+          <p className="form__error" id="title-error">
+            {titleError}
+          </p>
+        )}
       </div>
 
-      <div>
-        <label htmlFor="due">Due</label>
+      <div className="form__field">
+        <label className="form__label" htmlFor="due">
+          Due
+        </label>
         <input
+          className="form__input"
           id="due"
           value={due}
           onChange={(e) => setDue(e.target.value)}
           placeholder="oct 3 2pm"
           aria-describedby={dueError ? 'due-error' : undefined}
         />
-        {dueError && <p id="due-error">{dueError}</p>}
+        {dueError && (
+          <p className="form__error" id="due-error">
+            {dueError}
+          </p>
+        )}
       </div>
 
-      <div>
-        <label htmlFor="category">Category</label>
+      <div className="form__field">
+        <label className="form__label" htmlFor="category">
+          Category
+        </label>
         <select
+          className="form__select"
           id="category"
           value={category}
           onChange={(e) => setCategory(e.target.value as Category)}
@@ -83,9 +100,12 @@ export default function AddItemForm({
         </select>
       </div>
 
-      <div>
-        <label htmlFor="priority">Priority</label>
+      <div className="form__field">
+        <label className="form__label" htmlFor="priority">
+          Priority
+        </label>
         <select
+          className="form__select"
           id="priority"
           value={priority}
           onChange={(e) => setPriority(e.target.value as Priority)}
@@ -96,7 +116,9 @@ export default function AddItemForm({
         </select>
       </div>
 
-      <button type="submit">Add</button>
+      <button className="form__submit" type="submit">
+        Add
+      </button>
     </form>
   );
 }

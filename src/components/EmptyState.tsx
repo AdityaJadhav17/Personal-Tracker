@@ -5,13 +5,13 @@ interface EmptyStateProps {
 
 export default function EmptyState({ onAddFirst }: EmptyStateProps) {
   return (
-    <section>
+    <section className="empty">
       <p>Nothing due yet.</p>
       <p>
         Anything with a date belongs here: rent, a midterm, a dentist
         appointment, a friend&rsquo;s birthday.
       </p>
-      <button type="button" onClick={onAddFirst}>
+      <button className="empty__action" type="button" onClick={onAddFirst}>
         Add your first item
       </button>
     </section>
