@@ -1,4 +1,14 @@
-import { formatDue, groupOf, isUpcoming, toDueAt } from './dates';
+import {
+  dayLabel,
+  formatDue,
+  groupOf,
+  isUpcoming,
+  monthCells,
+  monthLabel,
+  monthValue,
+  shiftMonth,
+  toDueAt,
+} from './dates';
 
 /** Tuesday 15 September 2026, 10:00 local. Every test pins the clock here. */
 const NOW = new Date(2026, 8, 15, 10, 0, 0, 0);
@@ -183,5 +193,107 @@ describe('toDueAt', () => {
       month: 1,
       day: 5,
     });
+  });
+});
+
+describe('monthValue', () => {
+  test('is the local year and month of an instant', () => {
+    expect(monthValue(NOW)).toBe('2026-09');
+  });
+
+  test('pads a single digit month', () => {
+    expect(monthValue(new Date(2026, 0, 5, 12))).toBe('2026-01');
+  });
+
+  test('is the local month, not the UTC one', () => {
+    // 11pm local on the last day of September is already October in UTC for
+    // anyone west of Greenwich. The calendar is a local thing.
+    const lateOnTheLastDay = new Date(2026, 8, 30, 23, 30);
+    expect(monthValue(lateOnTheLastDay)).toBe('2026-09');
+  });
+});
+
+describe('shiftMonth', () => {
+  test('AC-21.3 moves forward one month', () => {
+    expect(shiftMonth('2026-09', 1)).toBe('2026-10');
+  });
+
+  test('AC-21.3 moves back one month', () => {
+    expect(shiftMonth('2026-09', -1)).toBe('2026-08');
+  });
+
+  test('AC-21.3 forward from December rolls the year', () => {
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01');
+  });
+
+  test('AC-21.3 back from January rolls the year', () => {
+    expect(shiftMonth('2026-01', -1)).toBe('2025-12');
+  });
+});
+
+describe('monthLabel', () => {
+  test('names the month and the year', () => {
+    expect(monthLabel('2026-09')).toBe('September 2026');
+  });
+
+  test('a January label carries its own year, not the previous one', () => {
+    expect(monthLabel('2027-01')).toBe('January 2027');
+  });
+});
+
+describe('monthCells', () => {
+  test('AC-21.1 every day of the month is present, in order', () => {
+    const days = monthCells('2026-09').filter((cell) => cell !== null);
+
+    expect(days).toHaveLength(30);
+    expect(days[0]).toBe('2026-09-01');
+    expect(days[29]).toBe('2026-09-30');
+  });
+
+  test('the cells before the first of the month are empty', () => {
+    // 1 September 2026 is a Tuesday, so Sunday and Monday come first.
+    const cells = monthCells('2026-09');
+
+    expect(cells.slice(0, 2)).toEqual([null, null]);
+    expect(cells[2]).toBe('2026-09-01');
+  });
+
+  test('a month starting on Sunday has no empty cells at all', () => {
+    // 1 November 2026 is a Sunday.
+    expect(monthCells('2026-11')[0]).toBe('2026-11-01');
+  });
+
+  test('the grid is whole weeks, so a 7 column layout never leaves a gap', () => {
+    expect(monthCells('2026-09').length % 7).toBe(0);
+    expect(monthCells('2026-11').length % 7).toBe(0);
+    expect(monthCells('2026-02').length % 7).toBe(0);
+  });
+
+  test('February in a leap year has 29 days', () => {
+    expect(monthCells('2028-02').filter((cell) => cell !== null)).toHaveLength(
+      29,
+    );
+  });
+
+  test('February in a common year has 28', () => {
+    expect(monthCells('2026-02').filter((cell) => cell !== null)).toHaveLength(
+      28,
+    );
+  });
+
+  test('a 31 day month keeps all 31', () => {
+    expect(monthCells('2026-10').filter((cell) => cell !== null)).toHaveLength(
+      31,
+    );
+  });
+});
+
+describe('dayLabel', () => {
+  test('names the day in full', () => {
+    expect(dayLabel('2026-09-16')).toBe('September 16, 2026');
+  });
+
+  test('does not pad the day number', () => {
+    expect(dayLabel('2026-09-01')).toBe('September 1, 2026');
   });
 });

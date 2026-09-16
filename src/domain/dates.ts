@@ -124,3 +124,69 @@ export function isUpcoming(dueAt: string, now: Date): boolean {
   const days = localDaysBetween(now, new Date(dueAt));
   return days >= 1 && days <= UPCOMING_DAYS;
 }
+
+/** The local year and month of an instant, "2026-09". */
+export function monthValue(at: Date): string {
+  return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Year and month index from "2026-09", ready for the Date constructor. */
+function parseMonth(month: string): [number, number] {
+  const [year, ordinal] = month.split('-').map(Number);
+  return [year!, ordinal! - 1];
+}
+
+/**
+ * The month `by` months away. Rolling the year is left to Date, which handles
+ * a month index of -1 or 12 correctly, rather than done by hand with modulo.
+ */
+export function shiftMonth(month: string, by: number): string {
+  const [year, index] = parseMonth(month);
+  return monthValue(new Date(year, index + by, 1));
+}
+
+/** A month named for a heading, "September 2026". */
+export function monthLabel(month: string): string {
+  const [year, index] = parseMonth(month);
+  return new Date(year, index, 1).toLocaleString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+const WEEK = 7;
+
+/**
+ * The cells of a month grid, in order, for a week that starts on Sunday.
+ *
+ * Days before the first of the month are null, and the array is padded to
+ * whole weeks, so a seven column layout never has to reason about where a row
+ * ends. Adjacent months are not shown: a blank cell says "not this month"
+ * without inviting you to read it as a deadline you have.
+ *
+ * Day zero of the next month is the last day of this one, which is how the
+ * length comes out right in February and in a leap year without a table.
+ */
+export function monthCells(month: string): (string | null)[] {
+  const [year, index] = parseMonth(month);
+  const blanks = new Date(year, index, 1).getDay();
+  const length = new Date(year, index + 1, 0).getDate();
+
+  const cells: (string | null)[] = Array(blanks).fill(null);
+  for (let day = 1; day <= length; day += 1) {
+    cells.push(toDateValue(new Date(year, index, day)));
+  }
+  while (cells.length % WEEK !== 0) cells.push(null);
+
+  return cells;
+}
+
+/** A local calendar day named in full, "September 16, 2026". */
+export function dayLabel(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year!, month! - 1, date!).toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

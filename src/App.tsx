@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
+import CalendarView from './components/CalendarView';
 import CourseList from './components/CourseList';
 import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
@@ -84,7 +85,9 @@ export default function App() {
 
   return (
     <Shell view={view} onNavigate={setView}>
-      {view === 'trends' ? (
+      {view === 'calendar' ? (
+        <CalendarView items={db.items} now={current} />
+      ) : view === 'trends' ? (
         <TrendsView series={dailySeries(db.items, db.reflections)} />
       ) : view === 'reflections' ? (
         <ReflectionView

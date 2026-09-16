@@ -899,3 +899,139 @@ button {
   font-weight: 400;
   color: var(--text-muted);
 }
+
+/* ---------- Calendar ---------- */
+
+/*
+ * Present to a screen reader, absent to the eye. Used for the full date in a
+ * calendar cell, where the number alone does not say which month it is in.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.calendar__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.calendar__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.calendar__moves {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.calendar__move {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--speed);
+}
+
+.calendar__move:hover {
+  border-color: var(--accent);
+}
+
+.calendar__grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendar__weekday {
+  padding-bottom: var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.calendar__cell {
+  height: 88px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  vertical-align: top;
+}
+
+/* Padding days belong to another month. Nothing to read, nothing to click. */
+.calendar__cell--outside {
+  border-color: transparent;
+  background: none;
+}
+
+.calendar__cell--today {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.calendar__date {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.calendar__cell--today .calendar__date {
+  color: var(--accent);
+}
+
+.calendar__item {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 2px;
+  padding: 2px var(--space-1);
+  border-left: 2px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent-soft);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.calendar__item--high {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.calendar__more {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .calendar__cell {
+    height: 64px;
+    padding: var(--space-1);
+  }
+
+  .calendar__item {
+    font-size: 10px;
+  }
+}
