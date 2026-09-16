@@ -713,3 +713,98 @@ test('moving between views swaps what is shown', async () => {
   await goTo('Home');
   expect(screen.getByText('Rent')).toBeVisible();
 });
+
+async function addGoal(name: string, description = '', target = '2026-12-15') {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Goal name'), name);
+  if (description) {
+    await user.type(screen.getByLabelText('Description'), description);
+  }
+  fireEvent.change(screen.getByLabelText('Target date'), {
+    target: { value: target },
+  });
+  await user.click(screen.getByRole('button', { name: 'Add goal' }));
+}
+
+test('AC-14.3 a goal survives a reload with its description and target', async () => {
+  const first = render(<App />);
+  await goTo('Goals');
+  await addGoal('Finish the quarter', 'No late work', '2026-12-15');
+  first.unmount();
+
+  render(<App />);
+  await goTo('Goals');
+
+  expect(
+    screen.getByRole('heading', { name: 'Finish the quarter' }),
+  ).toBeVisible();
+  expect(screen.getByText('No late work')).toBeVisible();
+  expect(screen.getByText(/Dec 15/)).toBeVisible();
+});
+
+test('AC-15.4 an item shows which goal it belongs to', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Goals');
+  await addGoal('Finish the quarter');
+  await goTo('Home');
+  await addItem('Project', todayIso());
+
+  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
+    screen.getByRole('option', { name: 'Finish the quarter' }),
+  ]);
+
+  expect(screen.getByLabelText('Goal for Project')).toHaveDisplayValue(
+    'Finish the quarter',
+  );
+});
+
+test('AC-15.3 finishing an item moves the goal count without a reload', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Goals');
+  await addGoal('Finish the quarter');
+  await goTo('Home');
+  await addItem('Project', todayIso());
+  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
+    screen.getByRole('option', { name: 'Finish the quarter' }),
+  ]);
+
+  await goTo('Goals');
+  expect(screen.getByText('0 of 1 done')).toBeVisible();
+
+  await goTo('Home');
+  await user.click(screen.getByRole('button', { name: 'Mark Project done' }));
+  await goTo('Goals');
+
+  expect(screen.getByText('1 of 1 done')).toBeVisible();
+});
+
+test('AC-20.1 deleting a goal keeps its items, without the goal', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Goals');
+  await addGoal('Finish the quarter');
+  await goTo('Home');
+  await addItem('Project', todayIso());
+  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
+    screen.getByRole('option', { name: 'Finish the quarter' }),
+  ]);
+
+  await goTo('Goals');
+  await user.click(
+    screen.getByRole('button', { name: 'Delete Finish the quarter' }),
+  );
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+  await goTo('Home');
+
+  expect(screen.getByText('Project')).toBeVisible();
+  expect(screen.queryByLabelText('Goal for Project')).not.toBeInTheDocument();
+});
+
+test('AC-14.4 the goals view starts empty and says so', async () => {
+  render(<App />);
+  await goTo('Goals');
+
+  expect(screen.getByText('No goals yet.')).toBeVisible();
+});

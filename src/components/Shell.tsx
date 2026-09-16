@@ -1,14 +1,13 @@
 import type { ReactNode } from 'react';
 
-export type View = 'home' | 'courses';
+export type View = 'home' | 'goals' | 'courses';
 
 /**
  * Every destination the sidebar offers.
  *
  * Only views that exist are listed. A nav item leading to "not built yet" is
  * chrome pointing nowhere, which is the reason the sidebar waited until there
- * was a second real view. Goals and Reflections join this list when M5 and M6
- * land, one entry each.
+ * was a second real view. Reflections joins this list when M6 lands.
  *
  * Icons are single paths on a 24x24 grid, drawn inline so nothing is fetched.
  */
@@ -17,6 +16,11 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
     id: 'home',
     label: 'Home',
     icon: 'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
+  },
+  {
+    id: 'goals',
+    label: 'Goals',
+    icon: 'M12 2v20M2 12h20M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z',
   },
   {
     id: 'courses',

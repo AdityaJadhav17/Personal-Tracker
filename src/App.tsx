@@ -3,15 +3,19 @@ import AddItemForm from './components/AddItemForm';
 import Dashboard from './components/Dashboard';
 import CourseList from './components/CourseList';
 import EmptyState from './components/EmptyState';
+import GoalList from './components/GoalList';
 import ErrorState from './components/ErrorState';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
 import { deleteCourse } from './domain/courses';
 import { now } from './domain/dates';
+import { deleteGoal } from './domain/goals';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
 import type {
   Course,
   CourseDraft,
+  Goal,
+  GoalDraft,
   Database,
   Item,
   ItemDraft,
@@ -202,6 +206,28 @@ export default function App() {
     });
   }
 
+  function handleAddGoal(draft: GoalDraft) {
+    const goal: Goal = {
+      id: crypto.randomUUID(),
+      ...draft,
+      createdAt: now().toISOString(),
+    };
+    commit({ ...data, goals: [...data.goals, goal] });
+  }
+
+  function handleDeleteGoal(id: string) {
+    commit(deleteGoal(data, id));
+  }
+
+  function handleGoalChange(id: string, goalId: string | null) {
+    commit({
+      ...data,
+      items: data.items.map((item) =>
+        item.id === id ? { ...item, goalId } : item,
+      ),
+    });
+  }
+
   const current = now();
   const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
@@ -211,7 +237,14 @@ export default function App() {
 
   return (
     <Shell view={view} onNavigate={setView}>
-      {view === 'courses' ? (
+      {view === 'goals' ? (
+        <GoalList
+          goals={data.goals}
+          items={data.items}
+          onAdd={handleAddGoal}
+          onDelete={handleDeleteGoal}
+        />
+      ) : view === 'courses' ? (
         <CourseList
           courses={data.courses}
           onAdd={handleAddCourse}
@@ -235,6 +268,8 @@ export default function App() {
               onNoteChange={handleNoteChange}
               courses={data.courses}
               onCourseChange={handleCourseChange}
+              goals={data.goals}
+              onGoalChange={handleGoalChange}
             />
           ) : (
             <EmptyState onAddFirst={() => titleRef.current?.focus()} />

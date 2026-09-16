@@ -1,24 +1,28 @@
 import { useState } from 'react';
 import { formatDue, isUpcoming } from '../domain/dates';
-import type { Course, Item } from '../domain/types';
+import type { Course, Goal, Item } from '../domain/types';
 
 interface ItemRowProps {
   item: Item;
   courses: Course[];
+  goals: Goal[];
   /** Passed in so the clock is never read implicitly. See docs/plan.md. */
   now: Date;
   onDone: (id: string) => void;
   onNoteChange: (id: string, note: string) => void;
   onCourseChange: (id: string, courseId: string | null) => void;
+  onGoalChange: (id: string, goalId: string | null) => void;
 }
 
 export default function ItemRow({
   item,
   courses,
+  goals,
   now,
   onDone,
   onNoteChange,
   onCourseChange,
+  onGoalChange,
 }: ItemRowProps) {
   // The note is held locally while you type and reported on blur, so a save
   // does not run on every keystroke. See the storage note in docs/plan.md.
@@ -62,6 +66,23 @@ export default function ItemRow({
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
               {course.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {goals.length > 0 && (
+        <select
+          className="item__course"
+          aria-label={`Goal for ${item.title}`}
+          value={item.goalId ?? ''}
+          onChange={(event) =>
+            onGoalChange(item.id, event.target.value || null)
+          }
+        >
+          <option value="">No goal</option>
+          {goals.map((goal) => (
+            <option key={goal.id} value={goal.id}>
+              {goal.name}
             </option>
           ))}
         </select>

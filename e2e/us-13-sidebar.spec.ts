@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+// Imported rather than hardcoded: adding a view must not break these.
+import { VIEWS } from '../src/components/Shell';
 
 test('AC-13.1 the sidebar lists the views and marks the current one', async ({
   page,
@@ -34,14 +36,15 @@ test('AC-13.2 moving to Courses swaps the view and the marker', async ({
   );
 });
 
-test('AC-13.3 the sidebar is the first thing Tab reaches', async ({ page }) => {
+test('AC-13.3 Tab reaches every sidebar item, in the order displayed', async ({
+  page,
+}) => {
   await page.goto('/');
 
-  await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Home' })).toBeFocused();
-
-  await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Courses' })).toBeFocused();
+  for (const { label } of VIEWS) {
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: label })).toBeFocused();
+  }
 });
 
 test('AC-13.3 a view can be opened from the keyboard alone', async ({
@@ -49,8 +52,8 @@ test('AC-13.3 a view can be opened from the keyboard alone', async ({
 }) => {
   await page.goto('/');
 
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  // Tab to the last sidebar item, then open it.
+  for (let i = 0; i < VIEWS.length; i += 1) await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
 
   await expect(page.getByText('No courses yet.')).toBeVisible();

@@ -69,6 +69,13 @@ export interface Database {
   reflections: Reflection[];
 }
 
+/** What the goal form produces, before the app assigns identity and time. */
+export interface GoalDraft {
+  name: string;
+  description: string;
+  targetAt: string;
+}
+
 /** What the course form produces, before the app assigns identity and time. */
 export interface CourseDraft {
   name: string;

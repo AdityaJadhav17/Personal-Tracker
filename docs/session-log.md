@@ -706,3 +706,40 @@ reading `aria-current` back showed Courses correctly marked, and the highlight
 was the mouse hover state.
 
 **Next.** M5: US-14 goals, US-15 progress, US-20 deletion.
+
+---
+
+## 2026-09-15: M5, goals
+
+**Shipped.** A goals view with a card per goal, a target date, derived progress,
+a goal control on every item, and deletion that keeps the work. Goals joined the
+sidebar. 273 unit and component tests, 80 Playwright specs, all six gates green.
+US-14, US-15 and US-20 are done.
+
+**Progress is derived, never stored.** `progressOf` counts an item list against
+a goal id and returns two numbers rather than a percentage, because a goal with
+no items has no percentage and the view needs to say "0 of 0" rather than divide
+by zero. Storing progress would let it drift from the items it describes, and
+AC-15.3 asks for it to move the moment an item is finished, which a derived
+value does for free.
+
+**The bar is a native `<progress>`,** so the role, the value and the screen
+reader announcement come from the browser. Only the skin is ours. `max` falls
+back to 1 when a goal has no items, so an empty bar renders instead of an
+indeterminate one.
+
+**`deleteGoal` is the same shape as `deleteCourse`** and for the same reason:
+abandoning a goal must not delete the work already done for it.
+
+**A test broke for a good reason.** Adding Goals to the sidebar moved Courses
+from second to third, and two US-13 specs had hardcoded that position. They now
+import `VIEWS` from the component and loop over it, so the next view added does
+not break them. A test that encodes a position rather than a rule is a test that
+fails on every addition.
+
+**Verified in a real browser,** with three goals at different stages: 2 of 3,
+1 of 2 and 0 of 1, bars filled to match. The current sidebar item was confirmed
+by reading `aria-current` back rather than by looking at the highlight, which is
+the mouse hover state in a screenshot.
+
+**Next.** M6: US-17 reflections and US-16 the stat row. Then M7, trends.
