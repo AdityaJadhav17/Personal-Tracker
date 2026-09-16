@@ -1001,3 +1001,48 @@ out, including ones this story never touched. Touching the file cleared it.
 Worth knowing before debugging the app when the whole suite goes red at once.
 
 **386 unit tests and 112 Playwright specs green.**
+
+---
+
+## 2026-09-15: US-23, a sidebar that fits a phone
+
+The page had a hard floor of 592px. On a 390px phone a third of it sat off the
+right edge, Export and Import included. Three options were written up and the
+third was chosen: hide the labels below the breakpoint and keep the icons.
+
+**Measuring first was worth it.** The floor was not a guess: 320px, 375px, 390px
+and 430px all rendered a 592px page, and the number stopped moving at 600px.
+That is what identified the cause, six labelled nav items measuring 568px in a
+row set to `flex-wrap: nowrap`, added by US-13 at four views and never
+re-measured when US-21 made it six.
+
+**It took three declarations, not one.**
+
+1. Hiding the labels took the floor from 592px to 324px.
+2. Four pixels short, because the narrow layout said
+   `grid-template-columns: 1fr`. A `1fr` track still refuses to shrink below its
+   content's minimum. The desktop rule had used `minmax(0, 1fr)` since US-13 and
+   the narrow one never did.
+3. Looking at the result rather than the numbers found a third: with the layout
+   in two rows, the grid's default `align-content: stretch` split the spare page
+   height between them and the sidebar became an 82px band of empty colour.
+
+Only the first was in the plan. The second was found by re-measuring after a fix
+that looked right, and the third by taking a screenshot, which no assertion
+about overflow would ever have caught.
+
+**The claim in the plan that this needed no component change was wrong.** A bare
+text node cannot be targeted by CSS, so the label is wrapped in a
+`<span className="sidebar__label">` now. One line, but a component change, and
+the plan said otherwise before it was written.
+
+**The labels are hidden from the eye, not from the accessibility tree.** Same
+`clip-path: inset(50%)` pattern US-21 added, so every icon still announces its
+view. AC-23.4 asserts that at 320px and AC-23.3 checks that tapping one still
+moves.
+
+**Two breakpoints became one.** US-21 added `@media (max-width: 720px)` for the
+calendar while the shell had used 700px since US-13. Twenty pixels apart is an
+accident, not a decision.
+
+**386 unit tests and 121 Playwright specs green.**

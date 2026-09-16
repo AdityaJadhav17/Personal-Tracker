@@ -486,10 +486,11 @@ so an item with no course costs no width and no tab stop.
 
 ---
 
-# Proposed, not approved: US-23, a sidebar that fits a phone
+# US-23, a sidebar that fits a phone
 
 Found while checking the calendar on 15 September 2026, and confirmed to predate
-it: the numbers are identical on Home.
+it: the numbers are identical on Home. Approved and built the same day, with the
+third option below.
 
 ## What is wrong
 
@@ -522,7 +523,7 @@ US-23  As someone who checks this on a phone between classes,
        I want the page to fit the screen,
        so that I can read a deadline without dragging the page sideways.
 
-Priority: Should
+Priority: Should, built
 Acceptance criteria:
   AC-23.1  Given a 320px wide screen,
            when the app loads,
@@ -540,6 +541,9 @@ Acceptance criteria:
   AC-23.5  Given a wide screen,
            when the app loads,
            then the sidebar is unchanged from what it is today.
+  AC-23.6  Given a narrow screen,
+           when I look at the sidebar,
+           then it is no taller than the row of icons in it.
 ```
 
 ## Three ways to do it, and they differ in what they cost
@@ -560,10 +564,31 @@ already draws. Six icons at roughly 32px each is 192px, which fits a 320px
 screen in one row with room to spare. AC-23.4 is why the labels are hidden
 visually rather than deleted: the accessible name survives untouched.
 
-**My recommendation is the third.** It is the only one that keeps every
-destination visible, in one row, with no vertical cost, and it scales to a
-seventh view. It is a handful of CSS in the existing media query and no
-component change. The icons are already drawn and already distinct.
+**The third was chosen.** It is the only one that keeps every destination
+visible, in one row, with no vertical cost, and it scales to a seventh view.
+
+I said it would need no component change and that was wrong. A bare text node
+cannot be targeted by CSS, so the label is now wrapped in a
+`<span className="sidebar__label">`. One line, but a component change.
+
+## What the fix actually took
+
+Hiding the labels moved the floor from 592px to 324px, four pixels short. The
+rest was a second bug in the same rule: the narrow layout said
+`grid-template-columns: 1fr`, and a `1fr` track still refuses to shrink below
+its content's minimum. The desktop rule had used `minmax(0, 1fr)` since US-13
+and the narrow one never did, so a single wide child could push the page past
+the screen no matter what the sidebar did.
+
+Two declarations, in other words, not one. The measurement is what found the
+second; the first fix looked right and the page still did not fit.
+
+A third came out of looking at the result rather than the numbers. With the
+layout in two rows, the grid's default `align-content: stretch` split the spare
+page height between them, so the sidebar became an 82px band of empty colour
+above the content. `grid-template-rows: auto minmax(0, 1fr)` pins it to its
+icons. That one predates this story and no test would have caught it, because
+nothing was overflowing. It is AC-23.6 now.
 
 ## One thing to tidy while in there
 

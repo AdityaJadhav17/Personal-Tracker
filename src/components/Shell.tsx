@@ -82,7 +82,12 @@ export default function Shell({ view, onNavigate, children }: ShellProps) {
               >
                 <path d={icon} />
               </svg>
-              {label}
+              {/*
+                Wrapped so a narrow screen can hide the words and keep the
+                icons. A bare text node cannot be targeted by CSS, and hiding
+                the label with `display: none` would take the name with it.
+              */}
+              <span className="sidebar__label">{label}</span>
             </button>
           ))}
         </nav>
