@@ -18,7 +18,7 @@ async function add(page: Page, title: string, daysFromToday = 0) {
 async function exportToDisk(page: Page) {
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export' }).click(),
+    page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
   return download.path();
 }

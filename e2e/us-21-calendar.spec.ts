@@ -59,7 +59,7 @@ async function seed(page: Page, items: Seed[]) {
     );
   }, items);
   await page.reload();
-  await page.getByRole('button', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 }
 
 /** The cell for a day, found by the full date it reads out. */
@@ -131,7 +131,7 @@ test('the calendar survives a reload, opening on the current month', async ({
   await page.getByRole('button', { name: 'Next month' }).click();
 
   await page.reload();
-  await page.getByRole('button', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
   await expect(cell(page, 2)).toContainText('Rent');
 });

@@ -56,6 +56,11 @@ the same numbers in a table underneath.
 Export everything to a JSON file you keep, and import it back on another
 machine. Files written by the first version still import.
 
+Export calendar writes an `.ics` file of every open deadline, each with a
+reminder an hour before. Import it into the calendar on your phone and the phone
+does the reminding, which is the only way this app reaches you while it is
+closed. Re-importing updates the events rather than duplicating them.
+
 ## Run it
 
 You need [Node](https://nodejs.org) 20 or newer.

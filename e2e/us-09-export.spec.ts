@@ -18,7 +18,7 @@ async function add(page: Page, title: string, daysFromToday = 0) {
 async function exportAndRead(page: Page) {
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export' }).click(),
+    page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
 
   // Read as strings rather than Buffers, which would drag @types/node in for

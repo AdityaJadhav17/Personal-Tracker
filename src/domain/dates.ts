@@ -190,3 +190,19 @@ export function dayLabel(day: string): string {
     year: 'numeric',
   });
 }
+
+/**
+ * An instant in iCalendar's UTC form, "20260916T235900Z".
+ *
+ * Pure string work on an ISO instant, so no timezone question arises. Every
+ * `dueAt` is already a UTC instant, which is why an exported calendar needs no
+ * VTIMEZONE block at all. See the date decision in docs/engineering/plan.md.
+ */
+export function toIcsStamp(iso: string): string {
+  return iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/** The same instant, moved by `minutes`, still as an ISO instant. */
+export function shiftMinutes(iso: string, minutes: number): string {
+  return new Date(Date.parse(iso) + minutes * 60_000).toISOString();
+}

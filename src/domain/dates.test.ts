@@ -6,7 +6,9 @@ import {
   monthCells,
   monthLabel,
   monthValue,
+  shiftMinutes,
   shiftMonth,
+  toIcsStamp,
   toDueAt,
 } from './dates';
 
@@ -295,5 +297,44 @@ describe('dayLabel', () => {
 
   test('does not pad the day number', () => {
     expect(dayLabel('2026-09-01')).toBe('September 1, 2026');
+  });
+});
+
+describe('toIcsStamp', () => {
+  test('AC-24.3 renders an instant in iCalendar UTC form', () => {
+    expect(toIcsStamp('2026-09-16T23:59:00.000Z')).toBe('20260916T235900Z');
+  });
+
+  test('AC-24.3 the stamp is the instant, whatever the device zone', () => {
+    // Built from local fields, so this test means the same thing in Pacific
+    // and on a UTC runner: the stamp is whatever UTC that instant is.
+    const iso = new Date(2026, 8, 16, 17, 0, 0, 0).toISOString();
+    const expected = iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+    expect(toIcsStamp(iso)).toBe(expected);
+  });
+
+  test('midnight keeps its zeroes rather than losing them', () => {
+    expect(toIcsStamp('2027-01-01T00:00:00.000Z')).toBe('20270101T000000Z');
+  });
+});
+
+describe('shiftMinutes', () => {
+  test('goes back half an hour', () => {
+    expect(shiftMinutes('2026-09-16T23:59:00.000Z', -30)).toBe(
+      '2026-09-16T23:29:00.000Z',
+    );
+  });
+
+  test('crosses midnight backwards without breaking the date', () => {
+    expect(shiftMinutes('2026-09-17T00:10:00.000Z', -30)).toBe(
+      '2026-09-16T23:40:00.000Z',
+    );
+  });
+
+  test('crosses a month boundary backwards', () => {
+    expect(shiftMinutes('2026-10-01T00:15:00.000Z', -30)).toBe(
+      '2026-09-30T23:45:00.000Z',
+    );
   });
 });

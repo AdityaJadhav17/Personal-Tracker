@@ -43,7 +43,9 @@ test('AC-13.3 Tab reaches every sidebar item, in the order displayed', async ({
 
   for (const { label } of VIEWS) {
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: label })).toBeFocused();
+    await expect(
+      page.getByRole('button', { name: label, exact: true }),
+    ).toBeFocused();
   }
 });
 

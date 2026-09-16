@@ -126,11 +126,16 @@ is being fast to check. See the decision log.
 
 ## Not built
 
-Phone notifications, calendar export, recurring items, and category filtering
-(US-08). Items still carry a `category` field so that export files stay
-importable once filtering arrives.
+Phone notifications, recurring items, and category filtering (US-08). Items
+still carry a `category` field so that export files stay importable once
+filtering arrives.
 
 Do not build toward these. When one becomes real it gets its own story.
 
-The app still only reminds you while it is open. That is the honest limitation
-and it is stated in the README rather than buried.
+The app itself still only reminds you while it is open, and push notifications
+cannot change that: they need a server, a subscription endpoint and a network
+request, and the security posture forbids all three. US-24 routes around it
+instead. `src/domain/ics.ts` writes an `.ics` file of open deadlines that you
+import into the calendar on your phone, so the reminding is done by software
+that is already allowed to run in the background. That is why calendar export is
+no longer on the list above.

@@ -1046,3 +1046,70 @@ calendar while the shell had used 700px since US-13. Twenty pixels apart is an
 accident, not a decision.
 
 **386 unit tests and 121 Playwright specs green.**
+
+---
+
+## 2026-09-15: US-24, deadlines on the phone calendar
+
+The app only ever reminded you while it was open, which is the limitation behind
+both failures in the interview. Push notifications would fix it and cannot be
+built here: a server, a subscription endpoint and a network request, all three
+forbidden. So the app writes an `.ics` file instead and the phone already in
+your pocket does the reminding. `VEVENT` and a 30 minute event, both chosen by
+Aditya from the two options in the story.
+
+**No dependency.** An iCalendar file is string work, and a library for it would
+be another package that can read your deadlines. `src/domain/ics.ts` is about
+140 lines, plus `toIcsStamp` and `shiftMinutes` in `dates.ts`.
+
+**Timezones needed nothing, which is the payoff from a call made in US-01.**
+Every `dueAt` is already a UTC instant, so each event carries a UTC stamp and
+the file has no `VTIMEZONE` block anywhere in it. Had deadlines been stored as
+wall clock times, this story would have needed a timezone database. Aditya
+reversed my recommendation on that back at the start and was right.
+
+**Both predicted bites landed, and one was worse than predicted.** The CRLF is
+written by the module rather than inherited from a platform that has already
+caused trouble here, and a test asserts no bare newline survives. Escaping had
+to do the backslash first, or it would escape its own additions. Folding was the
+one that was worse: cutting at byte 75 lands inside a multibyte character, so it
+walks code points and counts their encoded length instead of slicing the string.
+A title of sixty stars is the test that catches it.
+
+**A title cannot write its own properties.** `x\nEND:VEVENT\nBEGIN:VEVENT` as a
+title produces one event, not two. This is the same discipline as treating the
+import file as hostile, pointed the other way: the app must not write a broken
+file out either.
+
+**One test was wrong and the test got fixed, not the code.** "An item with no
+note carries no empty description" asserted `DESCRIPTION:` never appears, but a
+`VALARM` with `ACTION:DISPLAY` is required to carry one. The assertion now says
+what it meant.
+
+**Two documents were stale the moment this landed.** `CLAUDE.md` listed calendar
+export under "not built" and said the app only reminds you while it is open.
+Both are now correct, and the reason push notifications remain out is written
+down rather than left as a bare entry on a list.
+
+**A selector collision I caused, and the asymmetry behind it.** "Export
+calendar" contains "Export", and Playwright matches an accessible name by
+substring unless told otherwise, so ten existing specs suddenly resolved to two
+buttons. The same locators in Testing Library were fine, because it matches the
+whole name by default. That difference has bitten this project before and is
+worth remembering: a Playwright `getByRole` name is a substring, a Testing
+Library one is not.
+
+It surfaced four separate times before it was finished. "Export" first, then
+the sidebar's own **Calendar** item, which "Export calendar" also contains, in
+three more specs including one that builds its locator from a loop variable.
+Fourteen tests, then three, then none.
+
+Fixed with `exact: true` on the locators that mean one specific control, rather
+than renaming a button US-09 already shipped. Those locators always meant the
+exact control and only worked because nothing else had shared their words.
+Whether "Export" and "Export calendar" side by side is clear enough for a person
+to read is a question for Aditya, not something to change underneath him.
+
+**422 unit tests and 130 Playwright specs green,** and the generated file was
+read by eye as well, because no assertion proves a calendar application will
+accept it.

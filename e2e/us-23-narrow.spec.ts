@@ -49,7 +49,9 @@ test('AC-23.3 every view is reachable on a phone', async ({ page }) => {
   await page.goto('/');
 
   for (const view of VIEWS) {
-    await expect(page.getByRole('button', { name: view })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: view, exact: true }),
+    ).toBeVisible();
   }
 });
 
@@ -57,7 +59,7 @@ test('AC-23.3 tapping a view on a phone actually moves', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
   await expect(page.getByRole('button', { name: 'Next month' })).toBeVisible();
   expect(await overflow(page)).toBeLessThanOrEqual(0);
@@ -71,7 +73,9 @@ test('AC-23.4 each view still announces its name on a phone', async ({
 
   // The labels are hidden from the eye, not from the accessibility tree.
   for (const view of VIEWS) {
-    await expect(page.getByRole('button', { name: view })).toHaveCount(1);
+    await expect(
+      page.getByRole('button', { name: view, exact: true }),
+    ).toHaveCount(1);
   }
 });
 
@@ -94,7 +98,9 @@ test('AC-23.5 a wide screen still shows the labels', async ({ page }) => {
   await page.goto('/');
 
   for (const view of VIEWS) {
-    await expect(page.getByRole('button', { name: view })).toContainText(view);
+    await expect(
+      page.getByRole('button', { name: view, exact: true }),
+    ).toContainText(view);
   }
 });
 
@@ -103,7 +109,7 @@ test('AC-23.6 the sidebar is no taller than what is in it', async ({
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Calendar' }).click();
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
   const slack = await page.evaluate(() => {
     const bar = document.querySelector('.sidebar')!.getBoundingClientRect();

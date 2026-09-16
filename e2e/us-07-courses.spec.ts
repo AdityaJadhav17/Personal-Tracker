@@ -162,7 +162,7 @@ test('courses survive an export and import round trip', async ({ page }) => {
   await page.getByRole('button', { name: 'Home' }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export' }).click(),
+    page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
   const file = await download.path();
 

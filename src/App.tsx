@@ -12,6 +12,7 @@ import type { View } from './components/Shell';
 import StatRow from './components/StatRow';
 import TrendsView from './components/TrendsView';
 import { now, toDateValue } from './domain/dates';
+import { calendarFilename, toCalendar } from './domain/ics';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
 import { dailySeries } from './domain/trends';
 import type { Database } from './domain/types';
@@ -40,19 +41,32 @@ export default function App() {
   // from the null check above, because it could be called at any time.
   const data: Database = db;
 
-  function handleExport() {
-    const blob = new Blob([serialize(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+  /**
+   * Hand the browser a file to save.
+   *
+   * The anchor is appended before clicking because some browsers ignore a
+   * click on an element that is not in the document.
+   */
+  function download(text: string, filename: string, type: string) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
 
-    // The anchor is appended before clicking because some browsers ignore a
-    // click on an element that is not in the document.
     const link = document.createElement('a');
     link.href = url;
-    link.download = exportFilename(now());
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  }
+
+  function handleExport() {
+    download(serialize(data), exportFilename(now()), 'application/json');
+  }
+
+  /** US-24. The backup is for you; this one is for your phone. */
+  function handleCalendarExport() {
+    const at = now();
+    download(toCalendar(data.items, at), calendarFilename(at), 'text/calendar');
   }
 
   function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -144,6 +158,14 @@ export default function App() {
       <div className="data">
         <button className="data__button" type="button" onClick={handleExport}>
           Export
+        </button>
+
+        <button
+          className="data__button"
+          type="button"
+          onClick={handleCalendarExport}
+        >
+          Export calendar
         </button>
 
         <span className="data__import">

@@ -603,9 +603,9 @@ destinations fit on a phone; a disclosure would be chrome hiding chrome.
 
 ---
 
-# Proposed, not approved: US-24, deadlines on the phone calendar
+# US-24, deadlines on the phone calendar
 
-Written 15 September 2026. Not built.
+Written and built 15 September 2026, with VEVENT and a 30 minute event.
 
 ## Why this one and not notifications
 
@@ -628,7 +628,7 @@ US-24  As someone who misses things that are not in front of him,
        I want my deadlines as a calendar file,
        so that the phone I already carry reminds me without this app running.
 
-Priority: Should
+Priority: Should, built
 Acceptance criteria:
   AC-24.1  Given I have open items,
            when I export a calendar,
@@ -669,16 +669,14 @@ calendar application on every phone.
 - **VTODO** is honest and lands in Reminders on an iPhone, where you may or may
   not look at it.
 
-I would take `VEVENT`, because the whole point is that the reminder reaches you,
-and a thing you see is better than a thing that is correctly filed. **This one
-is yours to pick.**
+`VEVENT` was chosen: the whole point is that the reminder reaches you, and a
+thing you see is better than a thing that is correctly filed.
 
 **How long is a deadline.** A due date is a moment, not a span. Zero-length
 events are legal and rendered badly by several clients, some of which drop them.
 Options: a 30-minute event ending at the deadline, or an all-day event on that
 date. Thirty minutes keeps the time visible, which matters for a 5pm rent
-deadline; all-day loses it. **I would take 30 minutes ending at the due time,
-and this is the second one for you.**
+deadline; all-day loses it. Thirty minutes ending at the due time was chosen.
 
 **A reminder inside the file.** One `VALARM` at `TRIGGER:-PT1H`. An hour is
 enough to act on a submission and not so early it becomes noise. Without an
@@ -723,3 +721,23 @@ whole story.
 `personal-tracker-*.json` by pattern so an export cannot be committed. It must
 block `personal-tracker-*.ics` too, and for the same reason. A calendar file
 naming a doctor's appointment is the same information as the JSON.
+
+## What it took
+
+`src/domain/ics.ts`, about 140 lines, and two helpers in `dates.ts`. No
+dependency: an iCalendar file is string work, and a library for it would be a
+package that can read your deadlines.
+
+Both predicted bites landed. The CRLF is written by the module rather than
+inherited, and a test asserts no bare newline survives anywhere. Escaping and
+folding each needed their own care, and folding needed more than expected:
+cutting at byte 75 lands inside a multibyte character, so the fold walks code
+points and counts their encoded length rather than slicing the string.
+
+One test was wrong and got corrected rather than the code. "An item with no note
+carries no empty description" asserted that `DESCRIPTION:` never appears, but a
+`VALARM` with `ACTION:DISPLAY` is required to carry one. The assertion now says
+what it meant: no property with nothing after the colon.
+
+The end to end spec decodes the downloaded file with `TextDecoder` rather than
+`Buffer`, so the suite still typechecks without `@types/node`.

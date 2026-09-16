@@ -16,6 +16,7 @@ test-results/
 *-export.json
 export-*.json
 personal-tracker-*.json
+personal-tracker-*.ics
 
 # Local editor and preview tooling, not part of the app.
 .claude/
