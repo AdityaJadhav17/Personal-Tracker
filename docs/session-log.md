@@ -862,3 +862,47 @@ than it comfortably can, and it is the first thing to reconsider if the dashboar
 stops passing the three-second test in real use.
 
 **Still the only open item.** Three real school days, logged here.
+
+---
+
+## 2026-09-15: `App.tsx` gave up the database
+
+[plan.md](engineering/plan.md) promised that `App.tsx` crossing 150 lines would
+get a plan rather than a silent refactor. It was at 359. The plan is
+[refactor-usedatabase.md](engineering/refactor-usedatabase.md) and this is the
+work it describes.
+
+**The seam.** Everything that reads or writes the database moved into
+`src/state/useDatabase.ts`. Everything that touches the DOM stayed. The test for
+which side a thing belongs on is whether it would still make sense with no
+browser at all: `markDone` would, clicking a download anchor would not. So the
+export Blob, the `FileReader`, the replace-or-merge prompt and the view state all
+stayed in the component, and the twelve actions left.
+
+**What the move bought.** `App.tsx` went from 359 lines to 198, and the diff is
+41 insertions against 198 deletions. Fourteen handlers that each closed over
+`commit` became one object built once. The null database used to be checked
+inside handlers; now a single `update` helper guards it, so no action repeats the
+check and no future action can forget it.
+
+**Undo moved too.** It only exists as the inverse of `markDone`, and two halves
+of one behaviour drift when they live in different files.
+
+**How we know it worked: zero test changes.** 328 unit and component tests and 95
+Playwright specs, all green, and `git diff --name-only` matches no test file. A
+refactor that needs a test edited is not a refactor.
+
+**Driven in a browser after the suite went green,** because green unit tests are
+not the bar. Two items added, one marked done, `u` pressed to undo it, reloaded
+to prove the undo was written and not just rendered. Typing "unit quiz" into the
+title field did not undo anything, which is the guard that makes a bare letter
+safe as a shortcut. A course, a goal and a reflection recorded and attached.
+Importing the app's own export chose Merge and changed nothing, which is the
+whole point of dropping ids already held. Importing a version 1 file chose
+Replace and came back migrated to version 2. A file carrying an `evil` key was
+refused with nothing written. Deleting a course cleared the link on the item and
+kept the item. No console errors on any path.
+
+**Not fixed here, deliberately.** The item row still carries four controls. That
+is a design question about what a row should show, and it needs an answer rather
+than a refactor.
