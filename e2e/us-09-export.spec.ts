@@ -33,6 +33,15 @@ async function exportAndRead(page: Page) {
   };
 }
 
+/**
+ * Open an item's controls. US-22 put the note and the selects behind the
+ * title, so anything that edits an item clicks it open first. A reload closes
+ * every row again.
+ */
+async function open(page: Page, title: string) {
+  await page.getByRole('button', { name: title, exact: true }).click();
+}
+
 test('AC-09.1 exporting downloads a real file containing every item', async ({
   page,
 }) => {
@@ -66,6 +75,7 @@ test('AC-09.1 notes and done state are carried in the file', async ({
 }) => {
   await page.goto('/');
   await add(page, 'Rent');
+  await open(page, 'Rent');
   await page.getByLabel('Note for Rent').fill('Zelle, not Venmo');
   await page.getByLabel('Note for Rent').blur();
   await page.getByRole('button', { name: 'Mark Rent done' }).click();

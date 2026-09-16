@@ -32,6 +32,15 @@ async function addCourse(
   await page.getByRole('button', { name: 'Add course' }).click();
 }
 
+/**
+ * Open an item's controls. US-22 put the note and the selects behind the
+ * title, so anything that edits an item clicks it open first. A reload closes
+ * every row again.
+ */
+async function open(page: Page, title: string) {
+  await page.getByRole('button', { name: title, exact: true }).click();
+}
+
 test('AC-07.1 a course keeps every detail across a real reload', async ({
   page,
 }) => {
@@ -73,12 +82,17 @@ test('AC-07.2 an item can be given a course, and keeps it after a reload', async
 
   await page.getByRole('button', { name: 'Home' }).click();
   await addItem(page, 'Project', 3);
+  await open(page, 'Project');
   await page
     .getByLabel('Course for Project')
     .selectOption({ label: 'CSE 100' });
 
   await page.reload();
 
+  // Closed, the row names the course it belongs to (AC-22.1).
+  await expect(page.getByText('CSE 100')).toBeVisible();
+
+  await open(page, 'Project');
   await expect(page.getByLabel('Course for Project')).toHaveValue(/.+/);
   await expect(
     page.getByRole('option', { name: 'CSE 100', selected: true }),
@@ -90,6 +104,7 @@ test('AC-07.2 no course control appears until a course exists', async ({
 }) => {
   await page.goto('/');
   await addItem(page, 'Rent', 0);
+  await open(page, 'Rent');
 
   await expect(page.getByLabel('Course for Rent')).toHaveCount(0);
 });
@@ -103,6 +118,7 @@ test('AC-07.3 and AC-20.3 deleting asks first, then keeps the items', async ({
 
   await page.getByRole('button', { name: 'Home' }).click();
   await addItem(page, 'Project', 3);
+  await open(page, 'Project');
   await page
     .getByLabel('Course for Project')
     .selectOption({ label: 'CSE 100' });
@@ -120,6 +136,9 @@ test('AC-07.3 and AC-20.3 deleting asks first, then keeps the items', async ({
 
   await page.getByRole('button', { name: 'Home' }).click();
   await expect(page.getByText('Project')).toBeVisible();
+
+  // Opened, because a closed row hides the control either way.
+  await open(page, 'Project');
   await expect(page.getByLabel('Course for Project')).toHaveCount(0);
 });
 

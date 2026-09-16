@@ -260,14 +260,16 @@ test('AC-03.3 overdue items render most overdue first', () => {
 });
 
 /**
- * Titles in render order, across every group. Reads the title element rather
- * than slicing textContent, which broke the moment a Done button was added
- * ahead of the text.
+ * Titles in render order, across every group.
+ *
+ * Found by role: the title is the only control on a row that reports whether
+ * it is expanded, so this survives anything being added around it. Reading the
+ * first span broke the moment US-22 made the title a button.
  */
 function renderedTitles() {
   return screen
-    .getAllByRole('listitem')
-    .map((li) => li.querySelector('span')?.textContent ?? '');
+    .getAllByRole('button', { expanded: false })
+    .map((button) => button.textContent ?? '');
 }
 
 test('AC-04.1 inside a group, high comes before normal before low', () => {
@@ -437,8 +439,10 @@ test('AC-05.3 the done controls follow the order the items are displayed', () =>
     />,
   );
 
+  // Named rather than "every button", because US-22 made the title a button
+  // too and this test is about the done controls.
   const names = screen
-    .getAllByRole('button')
+    .getAllByRole('button', { name: /^Mark / })
     .map((b) => b.getAttribute('aria-label'));
 
   expect(names).toEqual([
@@ -448,7 +452,8 @@ test('AC-05.3 the done controls follow the order the items are displayed', () =>
   ]);
 });
 
-test('AC-06.1 each item offers a note field that names the item', () => {
+test('AC-06.1 each item offers a note field that names the item', async () => {
+  const user = userEvent.setup();
   render(
     <Dashboard
       now={NOW}
@@ -462,13 +467,17 @@ test('AC-06.1 each item offers a note field that names the item', () => {
     />,
   );
 
+  await openItem(user, 'Rent');
   expect(screen.getByRole('textbox', { name: 'Note for Rent' })).toBeVisible();
+
+  await openItem(user, 'Midterm');
   expect(
     screen.getByRole('textbox', { name: 'Note for Midterm' }),
   ).toBeVisible();
 });
 
-test('AC-06.1 an existing note is shown in the field', () => {
+test('AC-06.1 an existing note is shown in the field', async () => {
+  const user = userEvent.setup();
   render(
     <Dashboard
       now={NOW}
@@ -482,6 +491,10 @@ test('AC-06.1 an existing note is shown in the field', () => {
     />,
   );
 
+  // AC-22.7: a note you wrote is readable without opening anything.
+  expect(screen.getByText('Zelle, not Venmo')).toBeVisible();
+
+  await openItem(user, 'Rent');
   expect(screen.getByRole('textbox', { name: 'Note for Rent' })).toHaveValue(
     'Zelle, not Venmo',
   );
@@ -505,6 +518,7 @@ test('AC-06.1 the note is reported on blur, not on every keystroke', async () =>
     />,
   );
 
+  await openItem(user, 'Rent');
   await user.type(
     screen.getByRole('textbox', { name: 'Note for Rent' }),
     'Zelle',
@@ -600,6 +614,19 @@ const CSE100 = {
   createdAt: NOW.toISOString(),
 };
 
+/**
+ * Open an item's controls. US-22 put the selects and the note behind the
+ * title, so anything that edits an item clicks it open first.
+ */
+async function openItem(
+  user: ReturnType<typeof userEvent.setup>,
+  title: string,
+) {
+  await user.click(
+    screen.getByRole('button', { name: title, expanded: false }),
+  );
+}
+
 test('AC-07.2 an item shows which course it belongs to', () => {
   render(
     <Dashboard
@@ -614,13 +641,12 @@ test('AC-07.2 an item shows which course it belongs to', () => {
     />,
   );
 
-  expect(screen.getByLabelText('Course for Project')).toHaveValue('c1');
-  expect(
-    screen.getByRole('option', { name: 'CSE 100', selected: true }),
-  ).toBeInTheDocument();
+  // US-22: closed, the row names the course rather than offering a control.
+  expect(screen.getByText('CSE 100')).toBeVisible();
 });
 
-test('AC-07.2 an item with no course says so', () => {
+test('AC-07.2 an item with no course says so', async () => {
+  const user = userEvent.setup();
   render(
     <Dashboard
       now={NOW}
@@ -634,6 +660,10 @@ test('AC-07.2 an item with no course says so', () => {
     />,
   );
 
+  // Closed it says nothing, which is AC-22.2: no course means no empty control.
+  expect(screen.queryByText('CSE 100')).toBeNull();
+
+  await openItem(user, 'Rent');
   expect(screen.getByLabelText('Course for Rent')).toHaveValue('');
 });
 
@@ -655,6 +685,7 @@ test('AC-07.2 choosing a course reports the item and the course', async () => {
     />,
   );
 
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Course for Project'), 'c1');
 
   expect(onCourseChange).toHaveBeenCalledWith(project.id, 'c1');
@@ -678,6 +709,7 @@ test('AC-07.2 clearing the course reports null, not an empty string', async () =
     />,
   );
 
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Course for Project'), '');
 
   expect(onCourseChange).toHaveBeenCalledWith(project.id, null);
@@ -698,4 +730,177 @@ test('AC-07.2 with no courses recorded, the item offers no course control', () =
   );
 
   expect(screen.queryByLabelText('Course for Rent')).not.toBeInTheDocument();
+});
+
+/** A course and a goal to attach things to. */
+const CSE110 = {
+  id: 'course-1',
+  name: 'CSE 110',
+  meetingLocation: '',
+  professorEmail: '',
+  officeHours: '',
+  createdAt: '2026-09-01T00:00:00.000Z',
+};
+
+const GOAL = {
+  id: 'goal-1',
+  name: 'Finish the quarter strong',
+  description: '',
+  targetAt: '2026-12-11T07:59:00.000Z',
+  createdAt: '2026-09-01T00:00:00.000Z',
+};
+
+/** A dashboard with one item, courses and goals available. */
+function renderOne(
+  rest: Partial<Item> = {},
+  handlers: Partial<{
+    onDone: (id: string) => void;
+    onNoteChange: (id: string, note: string) => void;
+    onCourseChange: (id: string, courseId: string | null) => void;
+    onGoalChange: (id: string, goalId: string | null) => void;
+  }> = {},
+) {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={handlers.onDone ?? noop}
+      onNoteChange={handlers.onNoteChange ?? noop}
+      courses={[CSE110]}
+      onCourseChange={handlers.onCourseChange ?? noop}
+      goals={[GOAL]}
+      onGoalChange={handlers.onGoalChange ?? noop}
+      items={[anItem('Midterm', 1, rest)]}
+    />,
+  );
+}
+
+/** The title, which is also the control that opens the item. */
+function title() {
+  return screen.getByRole('button', { name: /^Midterm/ });
+}
+
+test('AC-22.1 an item shows the course it belongs to', () => {
+  renderOne({ courseId: CSE110.id });
+
+  expect(screen.getByText('CSE 110')).toBeVisible();
+});
+
+test('AC-22.1 an item shows the goal it belongs to', () => {
+  renderOne({ goalId: GOAL.id });
+
+  expect(screen.getByText('Finish the quarter strong')).toBeVisible();
+});
+
+test('AC-22.2 an item with no course shows no course, and no empty control', () => {
+  renderOne();
+
+  expect(screen.queryByText('CSE 110')).toBeNull();
+  expect(screen.queryByText('No course')).toBeNull();
+});
+
+test('AC-22.3 a closed item shows no select and no note field', () => {
+  renderOne({ courseId: CSE110.id });
+
+  expect(screen.queryByLabelText('Course for Midterm')).toBeNull();
+  expect(screen.queryByLabelText('Goal for Midterm')).toBeNull();
+  expect(screen.queryByLabelText('Note for Midterm')).toBeNull();
+});
+
+test('AC-22.4 clicking the title reveals the two selects and the note', async () => {
+  const user = userEvent.setup();
+  renderOne();
+
+  await user.click(title());
+
+  expect(screen.getByLabelText('Course for Midterm')).toBeVisible();
+  expect(screen.getByLabelText('Goal for Midterm')).toBeVisible();
+  expect(screen.getByLabelText('Note for Midterm')).toBeVisible();
+});
+
+test('AC-22.5 clicking the title again hides them', async () => {
+  const user = userEvent.setup();
+  renderOne();
+
+  await user.click(title());
+  await user.click(title());
+
+  expect(screen.queryByLabelText('Course for Midterm')).toBeNull();
+});
+
+test('AC-22.6 the title says whether the item is open', async () => {
+  const user = userEvent.setup();
+  renderOne();
+
+  expect(title()).toHaveAttribute('aria-expanded', 'false');
+  await user.click(title());
+  expect(title()).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('AC-22.7 a note that was written is still shown when the item is closed', () => {
+  renderOne({ note: 'Chapters 4 to 7' });
+
+  expect(screen.getByText('Chapters 4 to 7')).toBeVisible();
+});
+
+test('AC-22.7 an item with no note shows nothing where the note would be', () => {
+  renderOne();
+
+  expect(screen.queryByText('Chapters 4 to 7')).toBeNull();
+});
+
+test('AC-22.8 done is still reachable without opening anything', async () => {
+  const user = userEvent.setup();
+  const done: string[] = [];
+  renderOne({}, { onDone: (id) => done.push(id) });
+
+  await user.click(screen.getByRole('button', { name: 'Mark Midterm done' }));
+
+  expect(done).toHaveLength(1);
+});
+
+test('AC-22.4 the course can still be changed once the item is open', async () => {
+  const user = userEvent.setup();
+  const changed: (string | null)[] = [];
+  renderOne({}, { onCourseChange: (_id, courseId) => changed.push(courseId) });
+
+  await user.click(title());
+  await user.selectOptions(
+    screen.getByLabelText('Course for Midterm'),
+    CSE110.id,
+  );
+
+  expect(changed).toEqual([CSE110.id]);
+});
+
+test('AC-22.4 the note can still be written once the item is open', async () => {
+  const user = userEvent.setup();
+  const notes: string[] = [];
+  renderOne({}, { onNoteChange: (_id, note) => notes.push(note) });
+
+  await user.click(title());
+  await user.type(screen.getByLabelText('Note for Midterm'), 'Bring a pencil');
+  await user.tab();
+
+  expect(notes).toEqual(['Bring a pencil']);
+});
+
+test('AC-22.3 opening one item does not open another', async () => {
+  const user = userEvent.setup();
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[CSE110]}
+      onCourseChange={noop}
+      goals={[]}
+      onGoalChange={noop}
+      items={[anItem('Midterm', 1), anItem('Rent', 2)]}
+    />,
+  );
+
+  await user.click(screen.getByRole('button', { name: /^Midterm/ }));
+
+  expect(screen.getByLabelText('Course for Midterm')).toBeVisible();
+  expect(screen.queryByLabelText('Course for Rent')).toBeNull();
 });

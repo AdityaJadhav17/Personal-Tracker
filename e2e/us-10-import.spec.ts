@@ -48,12 +48,22 @@ function storedTitles(page: Page) {
   });
 }
 
+/**
+ * Open an item's controls. US-22 put the note and the selects behind the
+ * title, so anything that edits an item clicks it open first. A reload closes
+ * every row again.
+ */
+async function open(page: Page, title: string) {
+  await page.getByRole('button', { name: title, exact: true }).click();
+}
+
 test('AC-10.1 a real export imports back into an empty database exactly', async ({
   page,
 }) => {
   await page.goto('/');
   await add(page, 'Rent');
   await add(page, 'Midterm', 3);
+  await open(page, 'Rent');
   await page.getByLabel('Note for Rent').fill('Zelle, not Venmo');
   await page.getByLabel('Note for Rent').blur();
   await page.getByRole('button', { name: 'Mark Midterm done' }).click();

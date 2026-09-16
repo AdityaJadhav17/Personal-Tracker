@@ -253,6 +253,20 @@ test('AC-05.2 the undo shortcut is announced, not hidden', async () => {
   );
 });
 
+/**
+ * Open an item's controls. US-22 put the selects and the note behind the
+ * title, so anything that edits an item clicks it open first. A fresh render
+ * starts closed, so a test that reloads opens it again.
+ */
+async function openItem(
+  user: ReturnType<typeof userEvent.setup>,
+  title: string,
+) {
+  await user.click(
+    screen.getByRole('button', { name: title, expanded: false }),
+  );
+}
+
 test('AC-05.3 Tab reaches each item control in display order', async () => {
   const user = userEvent.setup();
   render(<App />);
@@ -261,13 +275,15 @@ test('AC-05.3 Tab reaches each item control in display order', async () => {
 
   screen.getByRole('button', { name: 'Add' }).focus();
 
-  // Each item contributes its done control then its note field, and the items
-  // themselves follow display order. US-06 added the note to this sequence.
+  // Each item contributes its done control then its title, and the items
+  // themselves follow display order. US-22 moved the note behind the title, so
+  // the sequence is still two stops per item and finishing something is still
+  // the first of them.
   const expected = [
     'Mark aa first done',
-    'Note for aa first',
+    'aa first',
     'Mark bb second done',
-    'Note for bb second',
+    'bb second',
   ];
 
   for (const name of expected) {
@@ -281,6 +297,7 @@ test('AC-06.1 a note is still attached to its item after a reload', async () => 
   const first = render(<App />);
   await addItem('Rent', todayIso());
 
+  await openItem(user, 'Rent');
   await user.type(
     screen.getByRole('textbox', { name: 'Note for Rent' }),
     'Zelle, not Venmo',
@@ -289,6 +306,7 @@ test('AC-06.1 a note is still attached to its item after a reload', async () => 
   first.unmount();
 
   render(<App />);
+  await openItem(user, 'Rent');
   expect(screen.getByRole('textbox', { name: 'Note for Rent' })).toHaveValue(
     'Zelle, not Venmo',
   );
@@ -300,12 +318,14 @@ test('AC-06.1 a note lands on the right item when several exist', async () => {
   await addItem('Rent', todayIso());
   await addItem('Laundry', todayIso());
 
+  await openItem(user, 'Laundry');
   await user.type(
     screen.getByRole('textbox', { name: 'Note for Laundry' }),
     'quarters',
   );
   await user.tab();
 
+  await openItem(user, 'Rent');
   expect(screen.getByRole('textbox', { name: 'Note for Rent' })).toHaveValue(
     '',
   );
@@ -315,9 +335,11 @@ test('AC-06.1 a note lands on the right item when several exist', async () => {
 });
 
 test('AC-06.3 a 2000 character note is stored and shown in full', async () => {
+  const user = userEvent.setup();
   const long = 'x'.repeat(2000);
   const first = render(<App />);
   await addItem('Rent', todayIso());
+  await openItem(user, 'Rent');
 
   // Typed character by character this would take minutes, so the value is set
   // directly and blurred, which is the same path the component takes.
@@ -327,6 +349,7 @@ test('AC-06.3 a 2000 character note is stored and shown in full', async () => {
   first.unmount();
 
   render(<App />);
+  await openItem(user, 'Rent');
   const reloaded = screen.getByRole('textbox', { name: 'Note for Rent' });
   expect(reloaded).toHaveValue(long);
   expect((reloaded as HTMLTextAreaElement).value).toHaveLength(2000);
@@ -452,6 +475,7 @@ test('AC-10.1 exporting and importing into an empty database restores it exactly
   const first = render(<App />);
   await addItem('Rent', todayIso());
   await addItem('Midterm', todayIso());
+  await openItem(user, 'Rent');
   await user.type(
     screen.getByRole('textbox', { name: 'Note for Rent' }),
     'Zelle',
@@ -664,12 +688,17 @@ test('AC-07.2 an item can be given a course, and keeps it across a reload', asyn
   await goTo('Home');
   await addItem('Project', todayIso());
 
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Course for Project'), [
     screen.getByRole('option', { name: 'CSE 100' }),
   ]);
   first.unmount();
 
   render(<App />);
+  // Closed, the row names the course. Open, the control still holds it.
+  expect(screen.getByText('CSE 100')).toBeVisible();
+
+  await openItem(user, 'Project');
   expect(screen.getByLabelText('Course for Project')).toHaveDisplayValue(
     'CSE 100',
   );
@@ -682,6 +711,7 @@ test('AC-07.3 deleting a course keeps its items, without the course', async () =
   await addCourse('CSE 100');
   await goTo('Home');
   await addItem('Project', todayIso());
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Course for Project'), [
     screen.getByRole('option', { name: 'CSE 100' }),
   ]);
@@ -692,7 +722,10 @@ test('AC-07.3 deleting a course keeps its items, without the course', async () =
   await goTo('Home');
 
   expect(screen.getByText('Project')).toBeVisible();
-  // With no courses left the control is gone, and the item survived.
+
+  // Opened, because a closed row hides the control either way and the
+  // assertion would pass without proving the course had gone.
+  await openItem(user, 'Project');
   expect(screen.queryByLabelText('Course for Project')).not.toBeInTheDocument();
 });
 
@@ -750,6 +783,7 @@ test('AC-15.4 an item shows which goal it belongs to', async () => {
   await goTo('Home');
   await addItem('Project', todayIso());
 
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Goal for Project'), [
     screen.getByRole('option', { name: 'Finish the quarter' }),
   ]);
@@ -766,6 +800,7 @@ test('AC-15.3 finishing an item moves the goal count without a reload', async ()
   await addGoal('Finish the quarter');
   await goTo('Home');
   await addItem('Project', todayIso());
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Goal for Project'), [
     screen.getByRole('option', { name: 'Finish the quarter' }),
   ]);
@@ -787,6 +822,7 @@ test('AC-20.1 deleting a goal keeps its items, without the goal', async () => {
   await addGoal('Finish the quarter');
   await goTo('Home');
   await addItem('Project', todayIso());
+  await openItem(user, 'Project');
   await user.selectOptions(screen.getByLabelText('Goal for Project'), [
     screen.getByRole('option', { name: 'Finish the quarter' }),
   ]);

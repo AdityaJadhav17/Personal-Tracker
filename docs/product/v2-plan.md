@@ -416,3 +416,70 @@ A calendar still only shows you anything while the app is open. It makes term
 planning possible, which is real, and it does not address forgetting, which is
 what the missed assignment and the missed appointment came from. Calendar
 export, the deferred one, is still the only candidate that does.
+
+---
+
+# US-22, a row you can read at a glance
+
+Approved on 15 September 2026, from a choice Aditya was given between leaving
+the row alone, setting course and goal at add time only, and this.
+
+## The problem
+
+An item row carries a done control, a title, a due time, a Soon marker, a
+category tag, a course select, a goal select and a note field. Nine things. The
+goal name truncates, and the reference screenshots put a single coloured tag on
+a task row rather than two dropdowns.
+
+Nothing is broken and no acceptance criterion fails. What fails is the
+three-second test: the dashboard is meant to be readable at a glance, and a row
+with two dropdowns in it reads as a form.
+
+```
+US-22  As someone checking the dashboard in three seconds,
+       I want a row to show what a thing is rather than how to change it,
+       so that scanning the list is reading and not editing.
+
+Priority: Should, built
+Acceptance criteria:
+  AC-22.1  Given an item belongs to a course,
+           when I look at the list,
+           then the course name is shown on the row.
+  AC-22.2  Given an item belongs to no course,
+           when I look at the list,
+           then no course is shown on the row, and no empty control either.
+  AC-22.3  Given the list is showing,
+           when I have not opened an item,
+           then no course select, goal select or note field is on screen.
+  AC-22.4  Given an item is closed,
+           when I click its title,
+           then the course select, the goal select and the note field appear.
+  AC-22.5  Given an item is open,
+           when I click its title again,
+           then those controls are hidden.
+  AC-22.6  Given an item row,
+           when a screen reader reads its title,
+           then the title says whether the item is open or closed.
+  AC-22.7  Given a note was written on an item,
+           when the item is closed,
+           then the note text is still shown, so nothing written disappears.
+  AC-22.8  Given the list is showing,
+           when I mark something done from the keyboard,
+           then it takes the same keystrokes it did before.
+```
+
+## Decisions
+
+**The title is the control.** Not a separate chevron, which would be a tenth
+thing on the row. Clicking the title opens the item, which is what Aditya chose,
+and a button carrying `aria-expanded` is the standard disclosure pattern rather
+than a div with a click handler.
+
+**Done stays its own button,** outside the disclosure, so US-05's keyboard path
+is untouched: Tab reaches Done directly and nothing has to be opened first.
+
+**The note is shown when closed and editable when open.** Hiding a note you
+wrote behind a click would trade one problem for a worse one.
+
+**Chips are spans, not selects.** A course with no value renders nothing at all,
+so an item with no course costs no width and no tab stop.

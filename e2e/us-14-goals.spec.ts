@@ -21,6 +21,15 @@ async function addGoal(page: Page, name: string, description = '') {
   await page.getByRole('button', { name: 'Add goal' }).click();
 }
 
+/**
+ * Open an item's controls. US-22 put the note and the selects behind the
+ * title, so anything that edits an item clicks it open first. A reload closes
+ * every row again.
+ */
+async function open(page: Page, title: string) {
+  await page.getByRole('button', { name: title, exact: true }).click();
+}
+
 test('AC-14.1 and AC-14.3 a goal keeps its details across a reload', async ({
   page,
 }) => {
@@ -65,6 +74,7 @@ test('AC-15.1 and AC-15.3 progress moves as items are finished', async ({
   await page.getByRole('button', { name: 'Home' }).click();
   for (const title of ['Pset 1', 'Pset 2']) {
     await addItem(page, title, 3);
+    await open(page, title);
     await page
       .getByLabel(`Goal for ${title}`)
       .selectOption({ label: 'Finish the quarter' });
@@ -103,6 +113,7 @@ test('AC-20.1 and AC-20.3 deleting a goal asks, then keeps the items', async ({
 
   await page.getByRole('button', { name: 'Home' }).click();
   await addItem(page, 'Pset 1', 3);
+  await open(page, 'Pset 1');
   await page
     .getByLabel('Goal for Pset 1')
     .selectOption({ label: 'Finish the quarter' });
@@ -122,6 +133,9 @@ test('AC-20.1 and AC-20.3 deleting a goal asks, then keeps the items', async ({
 
   await page.getByRole('button', { name: 'Home' }).click();
   await expect(page.getByText('Pset 1')).toBeVisible();
+
+  // Opened, because a closed row hides the control either way.
+  await open(page, 'Pset 1');
   await expect(page.getByLabel('Goal for Pset 1')).toHaveCount(0);
 });
 

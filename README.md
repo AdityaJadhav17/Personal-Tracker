@@ -29,7 +29,12 @@ that day. Dates are stored as fixed moments, so a deadline set at 5pm still
 reads as 5pm on the other side of a daylight saving change.
 
 Mark something done from the keyboard, and press `u` to undo if you hit the
-wrong row. Attach a short note to any item.
+wrong row.
+
+A row shows what a thing is rather than how to change it: its title, when it is
+due, the course and goal it belongs to, and anything you wrote about it. Click
+the title to open the controls that change those. Done stays outside, so
+finishing something never means opening it first.
 
 **Calendar** lays the same items out as a month, so you can tell a heavy week
 from a light one before it arrives. Today is marked, you can step through the

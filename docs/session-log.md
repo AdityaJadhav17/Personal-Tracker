@@ -953,3 +953,51 @@ and stepping back.
 scrolls sideways, because the sidebar does not collapse. The numbers are
 identical on Home, so this predates the calendar and is not its bug. It wants
 its own story rather than a fix smuggled into this one.
+
+---
+
+## 2026-09-15: US-22, a row you can read at a glance
+
+The item row had grown to nine things, two of them dropdowns, and the goal name
+truncated. Nothing failed, which was the point: what failed was the three-second
+test. Aditya was given three options and picked chips in the row with the
+controls behind a click.
+
+**The title is the control.** A separate chevron would have been a tenth thing
+on the row. A button carrying `aria-expanded` is the standard disclosure, so it
+works from the keyboard for free and a screen reader says "collapsed" without
+being told to.
+
+**Done stayed outside the disclosure,** because US-05 says finishing something
+takes no mouse and no detour. Verified rather than assumed: Tab from the add
+button reaches Mark done, then the title, then the next item's Mark done. Two
+stops per item, same as before, and the first of them still finishes the item.
+
+**The note is shown closed and editable open.** Hiding something you wrote
+behind a click would have traded one problem for a worse one.
+
+**Twenty-two existing tests changed, and that is the honest number.** This story
+changes behaviour, so tests encoding the old behaviour had to move with it.
+Two of them were wrong in a way worth naming:
+
+- `renderedTitles` in the dashboard tests read `li.querySelector('span')`, a raw
+  DOM query that CLAUDE.md forbids. It broke the moment the title became a
+  button. It now finds titles by role, as the only control on a row that reports
+  whether it is expanded.
+- Two assertions of the form "the course control is gone" would have passed for
+  the wrong reason once a closed row hid it anyway. They now open the row first,
+  so they still prove what they were written to prove.
+
+**A near miss worth recording.** Pressing Enter on the focused title in the
+in-app browser did nothing, which looked like a keyboard defect. It was the
+browser tool's synthetic key events, which do not activate a focused button the
+way a real keypress does. Playwright, which does, passes on both Enter and
+Space. The check is now an acceptance criterion rather than a thing I remember.
+
+**The stale dev server bit for real.** A Vite server left running from earlier in
+the session served a corrupted transform of `ItemRow.tsx`, reporting that the
+module had no default export when it plainly did. Every Playwright test timed
+out, including ones this story never touched. Touching the file cleared it.
+Worth knowing before debugging the app when the whole suite goes red at once.
+
+**386 unit tests and 112 Playwright specs green.**
