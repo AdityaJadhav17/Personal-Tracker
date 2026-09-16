@@ -69,6 +69,8 @@ const PAIRS: [fg: string, bg: string, where: string][] = [
   ['danger', 'surface', 'form errors on a card'],
   ['danger', 'danger-soft', 'the import error box'],
   ['text', 'danger-soft', 'body text inside the error state'],
+  ['text', 'accent-soft', 'a calendar item sitting on its day'],
+  ['text-muted', 'accent-soft', "the more count in today's calendar cell"],
   ['sidebar-text', 'sidebar-bg', 'sidebar links'],
   ['sidebar-current', 'sidebar-bg', 'the sidebar item you are on'],
 ];

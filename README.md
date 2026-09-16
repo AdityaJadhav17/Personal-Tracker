@@ -10,7 +10,7 @@ nothing leaves the machine.
 
 ## What it does
 
-Five views, in a sidebar.
+Six views, in a sidebar.
 
 **Home** holds anything with a date and a consequence: a midterm, rent, a
 dentist appointment, a friend's birthday. Two numbers at the top say what is
@@ -30,6 +30,11 @@ reads as 5pm on the other side of a daylight saving change.
 
 Mark something done from the keyboard, and press `u` to undo if you hit the
 wrong row. Attach a short note to any item.
+
+**Calendar** lays the same items out as a month, so you can tell a heavy week
+from a light one before it arrives. Today is marked, you can step through the
+months, and a day with more than two things says how many more rather than
+hiding them. Finished items drop off, matching Home.
 
 **Goals** are things to aim at with a date on them. Items can belong to a goal,
 and each goal shows how much of its work is finished.

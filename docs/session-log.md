@@ -906,3 +906,50 @@ kept the item. No console errors on any path.
 **Not fixed here, deliberately.** The item row still carries four controls. That
 is a design question about what a row should show, and it needs an answer rather
 than a refactor.
+
+---
+
+## 2026-09-15: US-21, the calendar
+
+The first story since version 2 closed, and the one Aditya's own interview asked
+for: "before a college term starts I like to put the midterms and finals on a
+calendar". The dashboard answers what to do next and cannot answer what October
+looks like.
+
+**Where the seam fell.** `dates.ts` got the month arithmetic, since it is still
+the module that constructs a `Date`: `monthValue`, `shiftMonth`, `monthLabel`,
+`dayLabel`, and `monthCells`, which returns whole weeks with nulls for the days
+before the first. `calendar.ts` got `monthGrid`, which is the only piece that
+knows what an item is. The component got the month on screen and nothing else.
+
+**Two bits of date arithmetic worth writing down.** The length of a month is day
+zero of the next one, which gets February and a leap year right without a table.
+Rolling December to January is `new Date(year, 12, 1)`, because the constructor
+normalises an out-of-range month index; doing it by hand with modulo is where
+that goes wrong.
+
+**A table, not divs.** A calendar is tabular data. `<th scope="col">` names each
+weekday and the cells are real cells, so the whole thing is navigable without
+inventing grid roles. Padding days are `role="presentation"`, which is what lets
+a test count thirty cells in September and get thirty.
+
+**The date is read in full and seen in short.** Each cell carries a
+visually-hidden "September 16, 2026" beside the bare number. Without it a screen
+reader announces "16" with nothing saying which month, and it is also what gives
+the tests a name to find a cell by, rather than a CSS class.
+
+**The contrast gate needed two new pairs.** The calendar puts item titles on
+`--accent-soft`, which no view did before, and the count of hidden items in
+today's cell on the same background. Both were added to the pair list and both
+pass in light and dark. That list is only as good as what is on it, which is the
+one weakness of checking the palette rather than the rendered page.
+
+**373 unit tests and 103 Playwright specs, all green,** then driven in a browser
+in both schemes: a busy day showing two titles and "2 more", today's cell
+marked, stepping to October and finding Rent on the first with no today marker,
+and stepping back.
+
+**Found while looking, not fixed here.** Below roughly 600px the whole shell
+scrolls sideways, because the sidebar does not collapse. The numbers are
+identical on Home, so this predates the calendar and is not its bug. It wants
+its own story rather than a fix smuggled into this one.

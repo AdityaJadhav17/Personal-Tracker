@@ -2,7 +2,7 @@
 
 Scope derived from the four dashboard screenshots in
 [../design/ui-reference.md](../design/ui-reference.md) plus Aditya's brief: goals, activities, class
-information, a date selector, and a sidebar. Nothing built yet.
+information, a date selector, and a sidebar. All of it is built.
 
 Version 1 tracked deadlines. Version 2 is the dashboard those screenshots show.
 
@@ -334,10 +334,10 @@ the migration.
 
 ---
 
-# Proposed, not approved: US-21, a calendar view
+# US-21, a calendar view
 
-Written in response to Aditya asking about a calendar. Not built, and not
-approved.
+Written in response to Aditya asking about a calendar. Approved and built on
+15 September 2026.
 
 ## Why this one is grounded where the others are not
 
@@ -357,7 +357,7 @@ different way of seeing the same items, not a new kind of thing to maintain.
 
 ## What it is
 
-A month grid on a new Reading view, one cell per day, items shown on the day
+A month grid on a new sidebar view, one cell per day, items shown on the day
 they are due. Move between months. Nothing new is stored: it reads the items
 already there.
 
@@ -366,7 +366,7 @@ US-21  As someone who plans a term before it starts,
        I want to see my deadlines laid out as a month,
        so that I can tell a heavy week from a light one before it arrives.
 
-Priority: Should
+Priority: Should, built
 Acceptance criteria:
   AC-21.1  Given items due on several days this month,
            when I open the calendar,
