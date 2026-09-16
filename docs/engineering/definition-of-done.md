@@ -49,8 +49,9 @@ checklist you will lie to yourself about in week nine.
 
 **Functionality**
 
-- [ ] All ten MVP stories pass their story-level checklist: US-01 through
-      US-06, US-09 through US-12.
+- [ ] Every story in scope passes the story-level checklist above. Version 1 was
+      US-01 to US-06 and US-09 to US-12; version 2 adds US-07 and US-13 to
+      US-20. US-08, the category filter, is still deferred.
 - [ ] Export produces a file that import restores exactly, proven by a
       round-trip test that compares the full database before and after, not by
       spot-checking fields.

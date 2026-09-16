@@ -2,16 +2,19 @@
 
 [![CI](https://github.com/AdityaJadhav17/Personal-Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/AdityaJadhav17/Personal-Tracker/actions/workflows/ci.yml)
 
-One page holding every deadline you have, coursework and life in the same list,
-grouped by urgency and ordered by priority. It runs in your browser on your own
-laptop. No account, no server, nothing leaves the machine.
+A personal dashboard for deadlines, goals, courses and how your days are
+going. It runs in your browser on your own laptop. No account, no server,
+nothing leaves the machine.
 
 ![The dashboard, showing overdue, today, this week and later groups](docs/screenshot.png)
 
 ## What it does
 
-Add anything with a date and a consequence: a midterm, rent, a dentist
-appointment, a friend's birthday. The dashboard sorts them into four groups.
+Five views, in a sidebar.
+
+**Home** holds anything with a date and a consequence: a midterm, rent, a
+dentist appointment, a friend's birthday. Two numbers at the top say what is
+left today and what you finished yesterday, then the list sorts itself.
 
 - **Overdue** sits above everything, so you never scroll past something you
   have already missed.
@@ -21,14 +24,27 @@ appointment, a friend's birthday. The dashboard sorts them into four groups.
 - Anything due in the next three days carries a **Soon** marker, whatever its
   priority.
 
-Type a date however you like. `oct 3`, `10/3`, `2026-10-03` and `oct 3 2pm` all
-work. With no time, a deadline means 23:59 that day.
+Pick a date, and a time if it needs one. With no time, a deadline means 23:59
+that day. Dates are stored as fixed moments, so a deadline set at 5pm still
+reads as 5pm on the other side of a daylight saving change.
 
 Mark something done from the keyboard, and press `u` to undo if you hit the
 wrong row. Attach a short note to any item.
 
+**Goals** are things to aim at with a date on them. Items can belong to a goal,
+and each goal shows how much of its work is finished.
+
+**Courses** keeps the details you would otherwise dig out of email every week:
+where it meets, your professor's address, when office hours are.
+
+**Reflections** asks how the day went, on a scale of five, with a note. One
+entry per day.
+
+**Trends** plots those scores and what you finished, one point per day, with
+the same numbers in a table underneath.
+
 Export everything to a JSON file you keep, and import it back on another
-machine.
+machine. Files written by the first version still import.
 
 ## Run it
 
@@ -87,8 +103,8 @@ No accounts, no cloud sync, no hosted backend, no mobile app, no collaboration.
 GitHub holds the source and nothing else.
 
 Also absent, and deliberately: phone notifications, calendar export, recurring
-items, course reference cards, and filtering by category. Items still carry a
-category so that today's export files stay readable once filtering arrives.
+items, and filtering by category. Items still carry a category so that today's
+export files stay readable once filtering arrives.
 
 The honest limitation: a browser tab on a laptop cannot reach your phone without
 a server, so this version reminds you only while you have it open. Calendar
@@ -98,8 +114,12 @@ export is the leading candidate for fixing that, and
 ## How it is built
 
 React 18 and TypeScript on Vite. Vitest with React Testing Library for unit and
-component tests, Playwright for end to end. No component library, no state
-library, no router, no date library.
+component tests, Playwright for end to end.
+
+Two runtime dependencies, React and React DOM. No component library, no state
+library, no router, no date library and no chart library: the sidebar icons and
+the trend charts are inline SVG, and the colour palette is checked for contrast
+by a test that reads the stylesheet.
 
 [docs/](docs/README.md) holds the rest: the user research every test ID traces
 back to, the data model, and a decision log that explains why each choice went

@@ -683,7 +683,7 @@ gates green. M4 is complete: US-19, US-07, US-13.
 **AC-13.1 is met for the views that exist, not for four.** The criterion lists
 Home, Goals, Courses and Reflections. Goals and Reflections are M5 and M6. A nav
 item leading to "not built yet" is chrome pointing nowhere, which is exactly why
-[ui-reference.md](../design/ui-reference.md) rejected the sidebar in v1. Adding
+[ui-reference.md](design/ui-reference.md) rejected the sidebar in v1. Adding
 each one is a single entry in `VIEWS` when its view lands.
 
 **No test changed when the tab row became a sidebar.** The Shell kept every
@@ -831,3 +831,34 @@ while it is open, which remains the honest limitation from v1.
 **Next, and it is not code.** The definition of done still has one item nobody
 can write a test for: three real school days with real deadlines in it, logged
 here.
+
+---
+
+## 2026-09-15: the documentation caught up with the app
+
+No story was left to build, so this was a defect rather than a feature: three
+documents described version 1 while the app was version 2.
+
+**What was wrong.** The README told a stranger to type "oct 3 2pm", which US-19
+deleted, and listed course reference cards as not built, which US-07 built. It
+described four groups and no sidebar. `CLAUDE.md` carried the same stale "not in
+v1" list. `definition-of-done.md` still said "all ten MVP stories" when there are
+eighteen. The screenshot was the unstyled v1 dashboard.
+
+All four are now correct, and the screenshot is v2: the sidebar, the stat row,
+the date and time controls, and the course and goal controls on each item.
+
+**The link checker earned its keep.** It found one broken link I had written by
+hand into a later session-log entry after the docs were reorganised, pointing at
+`../design/ui-reference.md` from a file that is not in a subdirectory. Thirteen
+markdown files, zero broken links now.
+
+**One thing worth watching, from looking at the screenshot.** An item row now
+carries a done control, a title, a due time, a Soon marker, a category tag, a
+course select, a goal select and a note. The goal name truncates. The reference
+screenshots put a single coloured tag on a task row, not two dropdowns. This is
+not broken and no acceptance criterion covers it, but the row is doing more work
+than it comfortably can, and it is the first thing to reconsider if the dashboard
+stops passing the three-second test in real use.
+
+**Still the only open item.** Three real school days, logged here.

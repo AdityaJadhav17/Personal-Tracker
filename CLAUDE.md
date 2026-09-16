@@ -30,6 +30,11 @@ Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
 for why.
 
+The database is at version 2: items, goals, courses and reflections. Both
+`load` and `parseImport` upgrade a version 1 database through
+`src/domain/migrate.ts`, so an export taken before goals existed still opens.
+Any future shape change does the same rather than orphaning data.
+
 ## How we work
 
 These are Aditya's rules, not suggestions.
@@ -119,10 +124,13 @@ There is deliberately no encryption at rest. BitLocker covers the realistic
 threat, and a passphrase prompt on every launch would wreck an app whose value
 is being fast to check. See the decision log.
 
-## Not in v1
+## Not built
 
-Phone notifications, calendar export, recurring items, course reference cards,
-category filtering. Items still carry a `category` field so that v1 export
-files stay importable once filtering arrives.
+Phone notifications, calendar export, recurring items, and category filtering
+(US-08). Items still carry a `category` field so that export files stay
+importable once filtering arrives.
 
 Do not build toward these. When one becomes real it gets its own story.
+
+The app still only reminds you while it is open. That is the honest limitation
+and it is stated in the README rather than buried.
