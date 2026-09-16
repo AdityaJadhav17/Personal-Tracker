@@ -52,8 +52,10 @@ test('AC-13.3 a view can be opened from the keyboard alone', async ({
 }) => {
   await page.goto('/');
 
-  // Tab to the last sidebar item, then open it.
-  for (let i = 0; i < VIEWS.length; i += 1) await page.keyboard.press('Tab');
+  // Tab to Courses by identity, not by position, so adding a view later does
+  // not silently change which one this test opens.
+  const courses = VIEWS.findIndex((v) => v.id === 'courses');
+  for (let i = 0; i <= courses; i += 1) await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
 
   await expect(page.getByText('No courses yet.')).toBeVisible();

@@ -743,3 +743,45 @@ by reading `aria-current` back rather than by looking at the highlight, which is
 the mouse hover state in a screenshot.
 
 **Next.** M6: US-17 reflections and US-16 the stat row. Then M7, trends.
+
+---
+
+## 2026-09-15: M6, reflections and the stat row
+
+**Shipped.** A Reflections view with the five-point daily check-in and a list of
+past days, plus the two-number stat row on Home. Reflections joined the sidebar,
+which now holds all four views. 308 unit and component tests, 89 Playwright
+specs, coverage 92.41%. All six gates green. US-17 and US-16 are done.
+
+**One entry per day, keyed by the local calendar day.** `recordReflection`
+replaces rather than appends, and keeps the original id when it does, so nothing
+downstream sees a new record appear. That is AC-17.3, and it is also what keeps
+the Trends series in M7 honest: one point per day, no double counting.
+
+**Changing the face keeps the note.** Clicking a different score passes the note
+already recorded rather than an empty string, so reconsidering the day does not
+wipe what you wrote about it. Covered at the component level and in the browser.
+
+**The stat row counts by local calendar day, the same rule the dashboard groups
+by,** so the number and the Today group can never disagree. A rolling
+twenty-four hours would count tomorrow morning as today late at night, and there
+is a test pinned at 23:30 that says so. `completedYesterday` keys on when the
+work was finished rather than when it was due, so clearing a backlog shows up on
+the day you did it.
+
+**Both numbers always render, including zero.** Hiding a stat at zero makes the
+absence of a row something to interpret, which is slower than reading a 0.
+
+**A test broke for the right reason again, and the fix was the same shape.**
+Adding Reflections made it the last sidebar item, and a US-13 keyboard spec
+tabbed to "the last item" expecting Courses. It now finds Courses by id. That is
+the second time a positional assumption broke on an addition; both are now
+written against identity.
+
+**Something only the browser could tell me.** The chosen score was legible but
+not obvious: a pale tint on a pale surface. A control whose entire job is to be
+read at a glance needs to be read at a glance, so the chosen face is now filled
+with the accent. The state was correct the whole time, which is why no test
+caught it.
+
+**Next.** M7: US-18, trends. The last milestone.

@@ -4,18 +4,22 @@ import Dashboard from './components/Dashboard';
 import CourseList from './components/CourseList';
 import EmptyState from './components/EmptyState';
 import GoalList from './components/GoalList';
+import ReflectionView from './components/ReflectionView';
+import StatRow from './components/StatRow';
 import ErrorState from './components/ErrorState';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
 import { deleteCourse } from './domain/courses';
-import { now } from './domain/dates';
+import { now, toDateValue } from './domain/dates';
 import { deleteGoal } from './domain/goals';
+import { recordReflection } from './domain/reflections';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
 import type {
   Course,
   CourseDraft,
   Goal,
   GoalDraft,
+  Reflection,
   Database,
   Item,
   ItemDraft,
@@ -228,6 +232,10 @@ export default function App() {
     });
   }
 
+  function handleRecordReflection(score: Reflection['score'], note: string) {
+    commit(recordReflection(data, toDateValue(now()), score, note, now()));
+  }
+
   const current = now();
   const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
@@ -237,7 +245,13 @@ export default function App() {
 
   return (
     <Shell view={view} onNavigate={setView}>
-      {view === 'goals' ? (
+      {view === 'reflections' ? (
+        <ReflectionView
+          today={toDateValue(current)}
+          reflections={data.reflections}
+          onRecord={handleRecordReflection}
+        />
+      ) : view === 'goals' ? (
         <GoalList
           goals={data.goals}
           items={data.items}
@@ -252,6 +266,8 @@ export default function App() {
         />
       ) : (
         <>
+          <StatRow items={data.items} now={current} />
+
           <AddItemForm onAdd={handleAdd} titleRef={titleRef} />
 
           <p className="status" role="status">
