@@ -6,6 +6,7 @@ import EmptyState from './components/EmptyState';
 import GoalList from './components/GoalList';
 import ReflectionView from './components/ReflectionView';
 import StatRow from './components/StatRow';
+import TrendsView from './components/TrendsView';
 import ErrorState from './components/ErrorState';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
@@ -13,6 +14,7 @@ import { deleteCourse } from './domain/courses';
 import { now, toDateValue } from './domain/dates';
 import { deleteGoal } from './domain/goals';
 import { recordReflection } from './domain/reflections';
+import { dailySeries } from './domain/trends';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
 import type {
   Course,
@@ -245,7 +247,9 @@ export default function App() {
 
   return (
     <Shell view={view} onNavigate={setView}>
-      {view === 'reflections' ? (
+      {view === 'trends' ? (
+        <TrendsView series={dailySeries(data.items, data.reflections)} />
+      ) : view === 'reflections' ? (
         <ReflectionView
           today={toDateValue(current)}
           reflections={data.reflections}

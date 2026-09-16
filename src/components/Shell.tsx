@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type View = 'home' | 'goals' | 'courses' | 'reflections';
+export type View = 'home' | 'goals' | 'courses' | 'reflections' | 'trends';
 
 /**
  * Every destination the sidebar offers.
@@ -31,6 +31,11 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
     id: 'reflections',
     label: 'Reflections',
     icon: 'M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01',
+  },
+  {
+    id: 'trends',
+    label: 'Trends',
+    icon: 'M3 17l5-6 4 3 5-7M21 7h-4M21 7v4',
   },
 ];
 

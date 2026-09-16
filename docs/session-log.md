@@ -785,3 +785,49 @@ with the accent. The state was correct the whole time, which is why no test
 caught it.
 
 **Next.** M7: US-18, trends. The last milestone.
+
+---
+
+## 2026-09-15: M7, trends. Version 2 is feature complete.
+
+**Shipped.** A Trends view with two charts and a table of the same numbers.
+Trends joined the sidebar, which now holds five views. 328 unit and component
+tests, 95 Playwright specs, coverage 93.05%. All six gates green. Every story
+in [v2-plan.md](product/v2-plan.md) is built.
+
+**Two charts, never one with two axes.** A reflection score runs 1 to 5 and a
+day's completions run 0 to however many you managed. Plotting both on one scale
+makes the shapes look comparable when they are not, which the `dataviz` guidance
+names as the single most common way a chart misleads. Each series gets its own
+chart, its own scale, and a heading that names it, so neither needs a legend.
+
+**No chart library.** Two single-series line charts are about eighty lines of
+inline SVG. Recharts or Chart.js would each be a dependency that can read the
+user's deadlines, for a feature with two lines.
+
+**A missing day breaks the line rather than being drawn through.** A day with no
+reflection carries null, not zero: "no entry" and "a terrible day" are different
+things, and joining across the gap would invent a reading that was never taken.
+The break is visible in the browser on the seeded day with no entry.
+
+**No hover tooltip, deliberately.** The `dataviz` guidance ships one by default
+on line charts. AC-18.4 already requires the exact numbers as a table, so a
+tooltip would duplicate something already on the page in a form a screen reader
+can read and a keyboard can reach. Recorded as a deviation rather than an
+omission; if reading values off the chart turns out to matter, it is a story.
+
+**No palette to validate.** The validator exists for categorical palettes, and
+with one series per chart there is no categorical assignment to make: both use
+the accent, and the headings carry identity. Saying so rather than quietly
+skipping the step.
+
+**Verified in a real browser** with a fortnight of seeded data: two charts, the
+gap visible, and the table beneath listing every day including "No entry".
+
+**What version 2 does not have.** Recurring items, phone notifications, calendar
+export, and category filtering are all still out. The app still only reminds you
+while it is open, which remains the honest limitation from v1.
+
+**Next, and it is not code.** The definition of done still has one item nobody
+can write a test for: three real school days with real deadlines in it, logged
+here.
