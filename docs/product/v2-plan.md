@@ -483,3 +483,95 @@ wrote behind a click would trade one problem for a worse one.
 
 **Chips are spans, not selects.** A course with no value renders nothing at all,
 so an item with no course costs no width and no tab stop.
+
+---
+
+# Proposed, not approved: US-23, a sidebar that fits a phone
+
+Found while checking the calendar on 15 September 2026, and confirmed to predate
+it: the numbers are identical on Home.
+
+## What is wrong
+
+The page has a hard minimum width of 592px. Below that it does not reflow, it
+scrolls sideways.
+
+| Viewport              | Page width | Off screen |
+| --------------------- | ---------- | ---------- |
+| 320px, iPhone SE      | 592px      | 272px      |
+| 375px                 | 592px      | 217px      |
+| 390px, iPhone 15      | 592px      | 202px      |
+| 430px, iPhone Pro Max | 592px      | 162px      |
+| 600px                 | 600px      | none       |
+
+On the phone Aditya actually carries, a third of the page is off the right edge,
+including the Export and Import controls and the right end of every item row.
+
+## The cause is one missing declaration
+
+`@media (max-width: 700px)` already turns the shell into a single column and
+lays the nav out as a row. That row is `flex-wrap: nowrap`, and the six items
+measure 568px together. Add the sidebar's 24px of padding and the page cannot go
+below 592px however narrow the screen is.
+
+It was invisible while there were two views. US-13 added the sidebar with four,
+US-21 made it six, and nothing re-measured.
+
+```
+US-23  As someone who checks this on a phone between classes,
+       I want the page to fit the screen,
+       so that I can read a deadline without dragging the page sideways.
+
+Priority: Should
+Acceptance criteria:
+  AC-23.1  Given a 320px wide screen,
+           when the app loads,
+           then the document is no wider than the screen.
+  AC-23.2  Given any viewport from 320px to 1400px,
+           when the app loads,
+           then there is no horizontal scrollbar on the page.
+  AC-23.3  Given a narrow screen,
+           when I look at the sidebar,
+           then every one of the six views is reachable without scrolling
+           the page sideways.
+  AC-23.4  Given a narrow screen,
+           when a screen reader reads the sidebar,
+           then each item still announces its name.
+  AC-23.5  Given a wide screen,
+           when the app loads,
+           then the sidebar is unchanged from what it is today.
+```
+
+## Three ways to do it, and they differ in what they cost
+
+**Wrap the row.** `flex-wrap: wrap` on `.sidebar__nav`. One declaration. Six
+items become two rows of three. Costs roughly 40px of vertical space above the
+content on the view that matters most, and the nav grows another row the next
+time a view is added.
+
+**Scroll the nav instead of the page.** `overflow-x: auto` on the nav. Also
+about one declaration, keeps a single row, and the page stops overflowing. But
+destinations sit off the edge with nothing saying so, which is the failure the
+sidebar was added to avoid.
+
+**Icons only below the breakpoint.** Hide the labels with the
+`.visually-hidden` class US-21 already added, leaving the six icons the nav
+already draws. Six icons at roughly 32px each is 192px, which fits a 320px
+screen in one row with room to spare. AC-23.4 is why the labels are hidden
+visually rather than deleted: the accessible name survives untouched.
+
+**My recommendation is the third.** It is the only one that keeps every
+destination visible, in one row, with no vertical cost, and it scales to a
+seventh view. It is a handful of CSS in the existing media query and no
+component change. The icons are already drawn and already distinct.
+
+## One thing to tidy while in there
+
+US-21 added `@media (max-width: 720px)` for the calendar while the shell has
+used `700px` since US-13. Two breakpoints 20px apart is an accident, not a
+decision. Whichever option is chosen, these should become one value.
+
+## Not in scope
+
+A hamburger menu, a drawer, or anything that hides the nav behind a tap. Six
+destinations fit on a phone; a disclosure would be chrome hiding chrome.
