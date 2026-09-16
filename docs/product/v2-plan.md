@@ -331,3 +331,88 @@ before you see it.
 
 Approve the story set, or strike the ones you do not want. Then I start M4 with
 the migration.
+
+---
+
+# Proposed, not approved: US-21, a calendar view
+
+Written in response to Aditya asking about a calendar. Not built, and not
+approved.
+
+## Why this one is grounded where the others are not
+
+The deferred candidates (category filtering, recurrence, calendar export) are
+guesses. This one is not. From the interview:
+
+> "before a college term starts I like to put the midterms and finals on a
+> calendar"
+
+That is a habit he already has, described in his own words, and the app cannot
+support it. The four urgency groups answer "what do I do next" and cannot answer
+"what does October look like", which is the question you ask while planning a
+term rather than surviving a day.
+
+It also earns the sidebar slot in a way the others would not: a month is a
+different way of seeing the same items, not a new kind of thing to maintain.
+
+## What it is
+
+A month grid on a new Reading view, one cell per day, items shown on the day
+they are due. Move between months. Nothing new is stored: it reads the items
+already there.
+
+```
+US-21  As someone who plans a term before it starts,
+       I want to see my deadlines laid out as a month,
+       so that I can tell a heavy week from a light one before it arrives.
+
+Priority: Should
+Acceptance criteria:
+  AC-21.1  Given items due on several days this month,
+           when I open the calendar,
+           then each appears in the cell for the day it is due.
+  AC-21.2  Given the calendar is open,
+           when I look at it,
+           then today's cell is marked as today.
+  AC-21.3  Given the calendar is open on September,
+           when I move to the next month,
+           then October is shown and the items shown are October's.
+  AC-21.4  Given a day has more items than the cell can show,
+           when I look at that day,
+           then the cell says how many more there are rather than clipping
+           them silently.
+  AC-21.5  Given a month has no items at all,
+           when I open it,
+           then the grid still renders, with no items rather than an error.
+  AC-21.6  Given an item is marked done,
+           when I look at the calendar,
+           then it is not shown, matching the dashboard.
+```
+
+## Decisions to make before building
+
+**A month grid, not an agenda list.** An agenda is what the dashboard already
+is. The grid is the thing that makes a heavy week visible as a shape.
+
+**What a cell shows.** Titles truncate fast in a 7-column grid. Proposal: the
+day number, then up to two item titles, then "+2 more". AC-21.4 covers the
+overflow so nothing disappears quietly.
+
+**Moving between months** needs one piece of state and two buttons. Opening
+always starts on the current month, matching how the sidebar already forgets
+which view you were on after a reload.
+
+**No dependency.** A month grid is date arithmetic plus a CSS grid of seven
+columns, roughly sixty lines. `date-fns` would be a package to compute the first
+weekday of a month.
+
+**Not in scope:** clicking a day to add an item prefilled with that date, and
+dragging an item to another day. Both are reasonable and neither is in an
+acceptance criterion. If the first turns out to matter it is a small follow-up.
+
+## What it does not fix
+
+A calendar still only shows you anything while the app is open. It makes term
+planning possible, which is real, and it does not address forgetting, which is
+what the missed assignment and the missed appointment came from. Calendar
+export, the deferred one, is still the only candidate that does.
