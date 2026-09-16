@@ -670,3 +670,39 @@ lists four details and a weekly schedule is recurrence machinery, which is
 deferred.
 
 **Next in M4.** US-13, the sidebar.
+
+---
+
+## 2026-09-15: US-13, the sidebar, closing M4
+
+**Shipped.** A `Shell` component with the dark sidebar from the reference
+screenshots: app name, inline SVG icons, an accent bar on the current item, and
+content beside it. 243 unit and component tests, 73 Playwright specs, all six
+gates green. M4 is complete: US-19, US-07, US-13.
+
+**AC-13.1 is met for the views that exist, not for four.** The criterion lists
+Home, Goals, Courses and Reflections. Goals and Reflections are M5 and M6. A nav
+item leading to "not built yet" is chrome pointing nowhere, which is exactly why
+[ui-reference.md](../design/ui-reference.md) rejected the sidebar in v1. Adding
+each one is a single entry in `VIEWS` when its view lands.
+
+**No test changed when the tab row became a sidebar.** The Shell kept every
+accessible name and the nav's position in the tab order, so all 239 tests that
+existed beforehand stayed green. That was the point of building the view state
+during US-07 and the chrome separately.
+
+**The sidebar has its own colour tokens** and stays dark in both schemes, as in
+the reference. They are real tokens rather than inline hex, so
+`contrast.test.ts` now checks the sidebar's two text colours against its
+background along with everything else. Thirty-two pairs pass.
+
+**The icons are decorative.** Inline SVG paths, `aria-hidden`, nothing fetched,
+and a test asserts the accessible name of each item is just its label. An icon
+that announced itself would read the item twice.
+
+**Verified in both schemes and checked in the DOM rather than by eye.** A
+screenshot appeared to show Home still highlighted while Courses was open;
+reading `aria-current` back showed Courses correctly marked, and the highlight
+was the mouse hover state.
+
+**Next.** M5: US-14 goals, US-15 progress, US-20 deletion.

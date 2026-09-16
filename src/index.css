@@ -17,6 +17,11 @@
   --danger: #b91c1c;
   --danger-soft: #fef2f2;
 
+  /* The sidebar stays dark in both schemes, as in the reference screenshots. */
+  --sidebar-bg: #172033;
+  --sidebar-text: #cbd5e1;
+  --sidebar-current: #2dd4bf;
+
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -42,6 +47,11 @@
     --accent-soft: #163a37;
     --danger: #f87171;
     --danger-soft: #3a1c1c;
+
+    /* Same values: the sidebar does not follow the scheme. */
+    --sidebar-bg: #172033;
+    --sidebar-text: #cbd5e1;
+    --sidebar-current: #2dd4bf;
   }
 }
 
@@ -74,17 +84,66 @@ button {
   font: inherit;
 }
 
-.app {
-  max-width: 820px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-4) var(--space-5);
+.shell {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 100vh;
 }
 
-.app__title {
-  margin: 0 0 var(--space-4);
-  font-size: 22px;
+.sidebar {
+  padding: var(--space-5) var(--space-3);
+  background: var(--sidebar-bg);
+}
+
+.sidebar__title {
+  margin: 0 var(--space-2) var(--space-5);
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  transition:
+    color var(--speed) ease,
+    background var(--speed) ease;
+}
+
+.sidebar__item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar__item--current {
+  color: var(--sidebar-current);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__icon {
+  flex: none;
+}
+
+.shell__main {
+  max-width: 900px;
+  padding: var(--space-5) var(--space-5) var(--space-5);
 }
 
 /* ---------- Add form: one row wide, stacked narrow ---------- */
@@ -460,8 +519,24 @@ button {
 
 /* ---------- Narrow screens ---------- */
 
-@media (max-width: 600px) {
-  .app {
+@media (max-width: 700px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    padding: var(--space-3);
+  }
+
+  .sidebar__title {
+    margin-bottom: var(--space-3);
+  }
+
+  .sidebar__nav {
+    flex-direction: row;
+  }
+
+  .shell__main {
     padding: var(--space-4) var(--space-3);
   }
 
@@ -482,39 +557,6 @@ button {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
-}
-
-/* ---------- Views ---------- */
-
-/*
- * A plain row for now. US-13 turns this into the sidebar from the reference
- * screenshots, once Goals and Reflections exist to put in it.
- */
-.nav {
-  display: flex;
-  gap: var(--space-1);
-  margin-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
-
-.nav__item {
-  padding: var(--space-2) var(--space-3);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  transition: color var(--speed) ease;
-}
-
-.nav__item:hover {
-  color: var(--text);
-}
-
-.nav__item--current {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 
 /* ---------- Courses ---------- */

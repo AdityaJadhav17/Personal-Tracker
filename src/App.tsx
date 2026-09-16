@@ -4,6 +4,8 @@ import Dashboard from './components/Dashboard';
 import CourseList from './components/CourseList';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
+import Shell from './components/Shell';
+import type { View } from './components/Shell';
 import { deleteCourse } from './domain/courses';
 import { now } from './domain/dates';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
@@ -35,9 +37,9 @@ export default function App() {
   const [undoable, setUndoable] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<Database | null>(null);
   const [importError, setImportError] = useState('');
-  // Which view is showing. No router: four views and one piece of state, and
-  // a reload puts you back on Home, which is the view you want on open.
-  const [view, setView] = useState<'home' | 'courses'>('home');
+  // Which view is showing. No router: one piece of state, and a reload puts
+  // you back on Home, which is the view you want on open. AC-13.4.
+  const [view, setView] = useState<View>('home');
   const titleRef = useRef<HTMLInputElement>(null);
 
   function commit(next: Database) {
@@ -71,10 +73,9 @@ export default function App() {
 
   if (db === null) {
     return (
-      <main className="app">
-        <h1 className="app__title">Personal Tracker</h1>
+      <Shell view={view} onNavigate={setView}>
         <ErrorState />
-      </main>
+      </Shell>
     );
   }
 
@@ -209,23 +210,7 @@ export default function App() {
   const hasOpen = db.items.some((item) => item.status === 'open');
 
   return (
-    <main className="app">
-      <h1 className="app__title">Personal Tracker</h1>
-
-      <nav className="nav" aria-label="Views">
-        {(['home', 'courses'] as const).map((name) => (
-          <button
-            className={`nav__item ${view === name ? 'nav__item--current' : ''}`}
-            key={name}
-            type="button"
-            aria-current={view === name ? 'page' : undefined}
-            onClick={() => setView(name)}
-          >
-            {name === 'home' ? 'Home' : 'Courses'}
-          </button>
-        ))}
-      </nav>
-
+    <Shell view={view} onNavigate={setView}>
       {view === 'courses' ? (
         <CourseList
           courses={data.courses}
@@ -314,6 +299,6 @@ export default function App() {
           </div>
         </section>
       )}
-    </main>
+    </Shell>
   );
 }
