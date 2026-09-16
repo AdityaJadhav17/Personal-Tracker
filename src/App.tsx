@@ -1,85 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
-import Dashboard from './components/Dashboard';
 import CourseList from './components/CourseList';
+import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
+import ErrorState from './components/ErrorState';
 import GoalList from './components/GoalList';
 import ReflectionView from './components/ReflectionView';
-import StatRow from './components/StatRow';
-import TrendsView from './components/TrendsView';
-import ErrorState from './components/ErrorState';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
-import { deleteCourse } from './domain/courses';
+import StatRow from './components/StatRow';
+import TrendsView from './components/TrendsView';
 import { now, toDateValue } from './domain/dates';
-import { deleteGoal } from './domain/goals';
-import { recordReflection } from './domain/reflections';
-import { dailySeries } from './domain/trends';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
-import type {
-  Course,
-  CourseDraft,
-  Goal,
-  GoalDraft,
-  Reflection,
-  Database,
-  Item,
-  ItemDraft,
-} from './domain/types';
-import { load, save } from './storage/db';
-
-/** Undo is a plain letter, so it must not fire while you are typing. */
-function isTyping(element: Element | null): boolean {
-  if (!element) return false;
-  return ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
-}
+import { dailySeries } from './domain/trends';
+import type { Database } from './domain/types';
+import { useDatabase } from './state/useDatabase';
 
 export default function App() {
-  // null means storage itself could not be read, which is AC-11.2. A corrupt
-  // or absent key is not this case: load() returns an empty database for that.
-  const [db, setDb] = useState<Database | null>(() => {
-    try {
-      return load();
-    } catch {
-      return null;
-    }
-  });
-  const [undoable, setUndoable] = useState<string | null>(null);
-  const [pendingImport, setPendingImport] = useState<Database | null>(null);
-  const [importError, setImportError] = useState('');
+  const { db, undoableTitle, actions } = useDatabase();
+
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
   const [view, setView] = useState<View>('home');
+  // Import flow, which is about what is on screen rather than about the data.
+  const [pendingImport, setPendingImport] = useState<Database | null>(null);
+  const [importError, setImportError] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
-
-  function commit(next: Database) {
-    setDb(next);
-    save(next);
-  }
-
-  // AC-05.2. The handler lives inside the effect so it always closes over the
-  // current database rather than a stale one.
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'u') return;
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      if (isTyping(document.activeElement)) return;
-      if (!db || !undoable) return;
-
-      commit({
-        ...db,
-        items: db.items.map((item) =>
-          item.id === undoable
-            ? { ...item, status: 'open', completedAt: null }
-            : item,
-        ),
-      });
-      setUndoable(null);
-    }
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [db, undoable]);
 
   if (db === null) {
     return (
@@ -93,49 +39,8 @@ export default function App() {
   // from the null check above, because it could be called at any time.
   const data: Database = db;
 
-  function handleAdd(draft: ItemDraft) {
-    const item: Item = {
-      id: crypto.randomUUID(),
-      title: draft.title,
-      dueAt: draft.dueAt,
-      category: draft.category,
-      priority: draft.priority,
-      status: 'open',
-      note: '',
-      createdAt: now().toISOString(),
-      completedAt: null,
-      goalId: null,
-      courseId: null,
-    };
-
-    commit({ ...data, items: [...data.items, item] });
-  }
-
-  function handleDone(id: string) {
-    commit({
-      ...data,
-      items: data.items.map((item) =>
-        item.id === id
-          ? { ...item, status: 'done', completedAt: now().toISOString() }
-          : item,
-      ),
-    });
-    setUndoable(id);
-  }
-
-  function handleNoteChange(id: string, note: string) {
-    commit({
-      ...data,
-      items: data.items.map((item) =>
-        item.id === id ? { ...item, note } : item,
-      ),
-    });
-  }
-
   function handleExport() {
-    const blob = new Blob([serialize(data)], {
-      type: 'application/json',
-    });
+    const blob = new Blob([serialize(data)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
     // The anchor is appended before clicking because some browsers ignore a
@@ -147,25 +52,6 @@ export default function App() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-  }
-
-  function applyImport(next: Database) {
-    commit(next);
-    setPendingImport(null);
-    setUndoable(null);
-  }
-
-  function mergeImport(next: Database) {
-    const existing = new Set(data.items.map((item) => item.id));
-    applyImport({
-      ...next,
-      items: [
-        ...data.items,
-        // Dropping ids we already hold is what makes importing your own
-        // export twice a no-op rather than a way to duplicate everything.
-        ...next.items.filter((item) => !existing.has(item.id)),
-      ],
-    });
   }
 
   function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
@@ -184,62 +70,13 @@ export default function App() {
       setImportError('');
       // AC-10.4. Nothing is written while there is data that could be lost.
       if (data.items.length > 0) setPendingImport(result.db);
-      else applyImport(result.db);
+      else actions.replaceAll(result.db);
     };
     reader.onerror = () => setImportError('That file could not be read.');
     reader.readAsText(file);
   }
 
-  function handleAddCourse(draft: CourseDraft) {
-    const course: Course = {
-      id: crypto.randomUUID(),
-      ...draft,
-      createdAt: now().toISOString(),
-    };
-    commit({ ...data, courses: [...data.courses, course] });
-  }
-
-  function handleDeleteCourse(id: string) {
-    commit(deleteCourse(data, id));
-  }
-
-  function handleCourseChange(id: string, courseId: string | null) {
-    commit({
-      ...data,
-      items: data.items.map((item) =>
-        item.id === id ? { ...item, courseId } : item,
-      ),
-    });
-  }
-
-  function handleAddGoal(draft: GoalDraft) {
-    const goal: Goal = {
-      id: crypto.randomUUID(),
-      ...draft,
-      createdAt: now().toISOString(),
-    };
-    commit({ ...data, goals: [...data.goals, goal] });
-  }
-
-  function handleDeleteGoal(id: string) {
-    commit(deleteGoal(data, id));
-  }
-
-  function handleGoalChange(id: string, goalId: string | null) {
-    commit({
-      ...data,
-      items: data.items.map((item) =>
-        item.id === id ? { ...item, goalId } : item,
-      ),
-    });
-  }
-
-  function handleRecordReflection(score: Reflection['score'], note: string) {
-    commit(recordReflection(data, toDateValue(now()), score, note, now()));
-  }
-
   const current = now();
-  const undoableTitle = db.items.find((item) => item.id === undoable)?.title;
 
   // Based on open items rather than on the array being empty, so finishing
   // everything shows the empty state instead of a blank page.
@@ -248,31 +85,31 @@ export default function App() {
   return (
     <Shell view={view} onNavigate={setView}>
       {view === 'trends' ? (
-        <TrendsView series={dailySeries(data.items, data.reflections)} />
+        <TrendsView series={dailySeries(db.items, db.reflections)} />
       ) : view === 'reflections' ? (
         <ReflectionView
           today={toDateValue(current)}
-          reflections={data.reflections}
-          onRecord={handleRecordReflection}
+          reflections={db.reflections}
+          onRecord={actions.recordToday}
         />
       ) : view === 'goals' ? (
         <GoalList
-          goals={data.goals}
-          items={data.items}
-          onAdd={handleAddGoal}
-          onDelete={handleDeleteGoal}
+          goals={db.goals}
+          items={db.items}
+          onAdd={actions.addGoal}
+          onDelete={actions.removeGoal}
         />
       ) : view === 'courses' ? (
         <CourseList
-          courses={data.courses}
-          onAdd={handleAddCourse}
-          onDelete={handleDeleteCourse}
+          courses={db.courses}
+          onAdd={actions.addCourse}
+          onDelete={actions.removeCourse}
         />
       ) : (
         <>
-          <StatRow items={data.items} now={current} />
+          <StatRow items={db.items} now={current} />
 
-          <AddItemForm onAdd={handleAdd} titleRef={titleRef} />
+          <AddItemForm onAdd={actions.addItem} titleRef={titleRef} />
 
           <p className="status" role="status">
             {undoableTitle
@@ -284,12 +121,12 @@ export default function App() {
             <Dashboard
               items={db.items}
               now={current}
-              onDone={handleDone}
-              onNoteChange={handleNoteChange}
-              courses={data.courses}
-              onCourseChange={handleCourseChange}
-              goals={data.goals}
-              onGoalChange={handleGoalChange}
+              onDone={actions.markDone}
+              onNoteChange={actions.setNote}
+              courses={db.courses}
+              onCourseChange={actions.setCourse}
+              goals={db.goals}
+              onGoalChange={actions.setGoal}
             />
           ) : (
             <EmptyState onAddFirst={() => titleRef.current?.focus()} />
@@ -333,14 +170,20 @@ export default function App() {
             <button
               className="prompt__button"
               type="button"
-              onClick={() => applyImport(pendingImport)}
+              onClick={() => {
+                actions.replaceAll(pendingImport);
+                setPendingImport(null);
+              }}
             >
               Replace
             </button>
             <button
               className="prompt__button"
               type="button"
-              onClick={() => mergeImport(pendingImport)}
+              onClick={() => {
+                actions.merge(pendingImport);
+                setPendingImport(null);
+              }}
             >
               Merge
             </button>
