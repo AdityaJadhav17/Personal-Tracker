@@ -1210,3 +1210,55 @@ name, and 2026-02-30, which `toDueAt` refuses rather than rolling into March.
 **One thing left alone.** The dev server's storage held a real item, "aws
 certification", which I did not put there. The browser check was cancelled
 rather than confirmed so nothing was written into it.
+
+---
+
+## 2026-09-18: US-08, the filter that waited two versions
+
+Written before version 1, deferred out of the MVP, deferred again out of version
+2, and built now because US-26 made a fifty item list a realistic thing to have.
+
+**AC-08.1 and AC-08.2 are the originals, untouched.** One was added: the two
+written in `user-research.md` say nothing about a filter that matches nothing,
+and the honest answer is not the first-run empty state. "Nothing due yet. Add
+your first item" is a lie when three items are open and a filter is hiding them.
+AC-08.3 says so instead, with a button back to everything.
+
+**The filter is not stored, and that is the feature.** AC-08.2 asked for a
+reload to clear it, which component state gives for free. A filter you forgot
+you set is a list that is lying to you, which is the same argument as AC-08.3 in
+a different place.
+
+**The stat row is deliberately not filtered.** "Remaining today" counts the day
+you are having, not the view you are reading. Filtering to academic while a
+dentist appointment is due today should not make the day look emptier than it
+is. AC-08.1 does not settle this, so it is an assumption and is written down as
+one.
+
+**The control went above the add form,** because between the form and the list
+is the Tab path from Add to the first item, and US-26 broke that once already by
+putting a control there. The lesson held on the second telling.
+
+**What US-08 does not solve, said plainly rather than quietly widened.** The
+category is a two way split. Filtering fifty pasted items to "academic" leaves
+about forty five, which is not the question a term raises. The question is "what
+do I owe CSE 110", and items have carried a `courseId` since US-07. Filtering by
+course is a different story. Building it under US-08's ID would have been a
+different feature wearing an approved story's name.
+
+**476 unit tests and 154 Playwright specs green,** then driven in a browser
+including the empty-filter state, which reads "Nothing personal is open right
+now" while two academic items are still open.
+
+**I destroyed a real item while verifying, and this is the second warning.**
+The dev server's storage held "aws certification", noticed during US-26 and
+deliberately left alone. Seeding for this story, I saved the existing database
+to `window.__saved` and then navigated, which discards it. The restore put back
+an empty object and the item was gone. It was rebuilt from a screenshot taken
+earlier in the session, so the title, date, time and category are right and the
+id and creation time are new.
+
+The rule that would have prevented it: **never seed the dev origin's storage
+while it holds anything not put there by this session.** Export first, or use a
+different port. A screenshot is not a backup, and it only worked this time by
+luck.

@@ -24,6 +24,10 @@ left today and what you finished yesterday, then the list sorts itself.
 - Anything due in the next three days carries a **Soon** marker, whatever its
   priority.
 
+Show All, Academic or Personal to narrow the list to one kind of thing. The
+choice is not remembered: a reload shows everything again, because a filter you
+forgot you set is a list that is lying to you.
+
 Pick a date, and a time if it needs one. With no time, a deadline means 23:59
 that day. Dates are stored as fixed moments, so a deadline set at 5pm still
 reads as 5pm on the other side of a daylight saving change.

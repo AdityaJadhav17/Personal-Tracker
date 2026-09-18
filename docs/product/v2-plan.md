@@ -950,3 +950,52 @@ form put it in the Tab order between Add and the first item, which broke the
 US-05 keyboard path and was caught by that story's own test. The comment in
 `App.tsx` already said why export sits after the list; a term-start action
 belongs in the same place for the same reason.
+
+---
+
+# US-08, filtering the list to one category
+
+Written in `user-research.md` before version 1 and deferred twice: out of the
+MVP, then out of version 2. Built 18 September 2026, after US-26 made a fifty
+item list a realistic thing to have.
+
+The story and AC-08.1 and AC-08.2 are unchanged from the original. One was
+added, because the original two do not cover what happens when a filter matches
+nothing:
+
+```
+  AC-08.3  Given items exist but none match the filter,
+           when I look at the list,
+           then it says the filter is hiding them rather than showing the
+           first-run empty state, and offers a way back to everything.
+```
+
+## Decisions
+
+**Buttons with `aria-pressed`, not a select.** One click instead of two, and the
+choice in force is visible without opening anything. Matches the score control
+on Reflections.
+
+**The filter is not stored.** AC-08.2 asks for a reload to show everything
+again, which plain component state gives for free, and it is the right default:
+a filter you forgot you set is a list that is lying to you.
+
+**The stat row is not filtered.** "Remaining today" counts the day you are
+having, not the view you are reading. Filtering to academic while a dentist
+appointment is due today should not make the day look emptier than it is. This
+is an assumption rather than something AC-08.1 settles.
+
+**The control sits above the add form.** Between the form and the list would put
+it in the Tab order between Add and the first item, which is the US-05 keyboard
+path that US-26 broke once already.
+
+## What this does not solve
+
+The category is a two way split. After a pasted quarter, filtering fifty items
+to "academic" leaves about forty five, which is not the question you were
+asking. The question a term actually raises is "what do I owe CSE 110", and
+items have carried a `courseId` since US-07.
+
+Filtering by course is a different story and is not built. US-08 was specified
+before courses existed, and widening it silently would have been a different
+feature wearing an approved story's ID.

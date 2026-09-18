@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
 import BulkAdd from './components/BulkAdd';
 import CalendarView from './components/CalendarView';
+import CategoryFilter from './components/CategoryFilter';
+import type { Filter } from './components/CategoryFilter';
 import CourseList from './components/CourseList';
 import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
@@ -30,6 +32,9 @@ export default function App() {
   const [importError, setImportError] = useState('');
   // US-26. A term-start action, so it stays folded away until asked for.
   const [pasting, setPasting] = useState(false);
+  // US-08. Not stored: AC-08.2 wants a reload to show everything again, and a
+  // filter you forgot you set is a list that is lying to you.
+  const [filter, setFilter] = useState<Filter>('all');
   const titleRef = useRef<HTMLInputElement>(null);
 
   if (db === null) {
@@ -100,6 +105,14 @@ export default function App() {
   // everything shows the empty state instead of a blank page.
   const hasOpen = db.items.some((item) => item.status === 'open');
 
+  const shown =
+    filter === 'all'
+      ? db.items
+      : db.items.filter((item) => item.category === filter);
+  // AC-08.3. There is work, the filter is just hiding all of it, which is a
+  // different thing to say than "nothing due yet".
+  const hiddenByFilter = hasOpen && !shown.some((i) => i.status === 'open');
+
   return (
     <Shell view={view} onNavigate={setView}>
       {view === 'calendar' ? (
@@ -129,6 +142,13 @@ export default function App() {
         <>
           <StatRow items={db.items} now={current} />
 
+          {/*
+            Above the form, not between it and the list: US-05 wants Tab to go
+            from Add straight to the first item, and US-26 already broke that
+            once by putting a control in between.
+          */}
+          <CategoryFilter value={filter} onChange={setFilter} />
+
           <AddItemForm onAdd={actions.addItem} titleRef={titleRef} />
 
           <p className="status" role="status">
@@ -137,9 +157,20 @@ export default function App() {
               : ''}
           </p>
 
-          {hasOpen ? (
+          {hiddenByFilter ? (
+            <section className="empty">
+              <p>Nothing {filter} is open right now.</p>
+              <button
+                className="prompt__button"
+                type="button"
+                onClick={() => setFilter('all')}
+              >
+                Show everything
+              </button>
+            </section>
+          ) : hasOpen ? (
             <Dashboard
-              items={db.items}
+              items={shown}
               now={current}
               onDone={actions.markDone}
               onNoteChange={actions.setNote}

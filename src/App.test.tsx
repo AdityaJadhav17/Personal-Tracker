@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -843,4 +843,129 @@ test('AC-14.4 the goals view starts empty and says so', async () => {
   await goTo('Goals');
 
   expect(screen.getByText('No goals yet.')).toBeVisible();
+});
+
+/** A date the given number of days from today, as the date control wants it. */
+function isoDaysFromToday(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Add an item in a chosen category. */
+async function addIn(title: string, due: string, category: string) {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Title'), title);
+  fireEvent.change(screen.getByLabelText('Due'), { target: { value: due } });
+  await user.selectOptions(screen.getByLabelText('Category'), category);
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+}
+
+/** Choose what the list shows. */
+async function show(label: string) {
+  const user = userEvent.setup();
+  await user.click(
+    within(screen.getByRole('group', { name: 'Show' })).getByRole('button', {
+      name: label,
+    }),
+  );
+}
+
+test('AC-08.1 filtering to a category hides the others', async () => {
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+
+  await show('Academic');
+
+  expect(screen.getByRole('button', { name: 'CSE 110 midterm' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Dentist' })).toBeNull();
+});
+
+test('AC-08.1 the group headings still apply to what is left', async () => {
+  render(<App />);
+  await addIn('CSE 110 midterm', isoDaysFromToday(1), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+
+  await show('Academic');
+
+  // The academic item is due tomorrow, so This week survives and Today does
+  // not: the filter narrows the list, it does not flatten it.
+  expect(screen.getByRole('heading', { name: 'This week' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Today' })).toBeNull();
+});
+
+test('AC-08.1 filtering the other way hides the first', async () => {
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+
+  await show('Personal');
+
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'CSE 110 midterm' })).toBeNull();
+});
+
+test('AC-08.1 going back to All brings everything back', async () => {
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+
+  await show('Academic');
+  await show('All');
+
+  expect(screen.getByRole('button', { name: 'CSE 110 midterm' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+});
+
+test('AC-08.2 a reload clears the filter rather than remembering it', async () => {
+  const first = render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+  await show('Academic');
+  expect(screen.queryByRole('button', { name: 'Dentist' })).toBeNull();
+
+  first.unmount();
+  render(<App />);
+
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+  expect(
+    within(screen.getByRole('group', { name: 'Show' })).getByRole('button', {
+      name: 'All',
+    }),
+  ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('AC-08.3 a filter that hides everything says so, and offers a way back', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+
+  await show('Personal');
+
+  expect(screen.getByText(/Nothing personal/i)).toBeVisible();
+  // Not the first-run empty state, which would be a lie: there is an item.
+  expect(screen.queryByText(/Nothing due yet/)).toBeNull();
+
+  await user.click(screen.getByRole('button', { name: 'Show everything' }));
+  expect(screen.getByRole('button', { name: 'CSE 110 midterm' })).toBeVisible();
+});
+
+test('AC-08.3 with no items at all the first-run empty state still shows', async () => {
+  render(<App />);
+
+  expect(screen.getByText(/Nothing due yet/)).toBeVisible();
+});
+
+test('AC-08.1 the stat row counts the whole day, not the filtered view', async () => {
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+
+  await show('Academic');
+
+  // Two remain due today. The filter narrows the list you read, not the day
+  // you are having.
+  expect(screen.getByText('2')).toBeVisible();
 });

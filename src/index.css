@@ -1202,3 +1202,38 @@ button {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
 }
+
+/* ---------- Filter ---------- */
+
+.filter {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.filter__option {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color var(--speed),
+    color var(--speed);
+}
+
+.filter__option:hover {
+  border-color: var(--accent);
+}
+
+/* The one in force reads as chosen without relying on colour alone: it is the
+   only one that is filled. */
+.filter__option--current {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}

@@ -126,9 +126,11 @@ is being fast to check. See the decision log.
 
 ## Not built
 
-Phone notifications, recurring items, and category filtering (US-08). Items
-still carry a `category` field so that export files stay importable once
-filtering arrives.
+Phone notifications and recurring items.
+
+Category filtering (US-08) is built, which is why it left this list. Filtering
+by course is not, and is a separate story: US-08 was specified before courses
+existed and was not widened to cover them.
 
 Do not build toward these. When one becomes real it gets its own story.
 
