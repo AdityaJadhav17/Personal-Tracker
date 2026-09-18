@@ -9,8 +9,8 @@ function isoDate(daysFromToday: number): string {
 }
 
 async function add(page: Page, title: string, daysFromToday = 0) {
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(isoDate(daysFromToday));
+  await page.getByLabel('Title', { exact: true }).fill(title);
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 }
 
@@ -68,11 +68,13 @@ test('AC-05.2 typing u in the title field does not undo', async ({ page }) => {
   await add(page, 'Rent');
   await page.getByRole('button', { name: 'Mark Rent done' }).click();
 
-  await page.getByLabel('Title').click();
+  await page.getByLabel('Title', { exact: true }).click();
   await page.keyboard.type('Tuesday');
 
   await expect(page.getByText('Rent', { exact: true })).toHaveCount(0);
-  await expect(page.getByLabel('Title')).toHaveValue('Tuesday');
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
+    'Tuesday',
+  );
 });
 
 test('AC-05.3 add an item and finish it without touching the mouse', async ({
@@ -88,7 +90,7 @@ test('AC-05.3 add an item and finish it without touching the mouse', async ({
     String(today.getDate()).padStart(2, '0') +
     String(today.getFullYear());
 
-  await page.getByLabel('Title').click();
+  await page.getByLabel('Title', { exact: true }).click();
   await page.keyboard.type('Rent');
   await page.keyboard.press('Tab');
   await page.keyboard.type(digits);
@@ -100,7 +102,7 @@ test('AC-05.3 add an item and finish it without touching the mouse', async ({
   // date and time controls as its own stop, so a fixed number would encode a
   // browser detail. What AC-05.3 needs is that the control is reachable.
   const done = page.getByRole('button', { name: 'Mark Rent done' });
-  await page.getByLabel('Title').focus();
+  await page.getByLabel('Title', { exact: true }).focus();
   for (let i = 0; i < 20; i += 1) {
     if (await done.evaluate((node) => node === document.activeElement)) break;
     await page.keyboard.press('Tab');

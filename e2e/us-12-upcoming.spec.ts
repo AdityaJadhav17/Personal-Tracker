@@ -14,8 +14,8 @@ async function add(
   daysFromToday: number,
   priority?: string,
 ) {
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(isoDate(daysFromToday));
+  await page.getByLabel('Title', { exact: true }).fill(title);
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
   if (priority) await page.getByLabel('Priority').selectOption(priority);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 }

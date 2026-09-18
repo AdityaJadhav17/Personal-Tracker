@@ -206,3 +206,9 @@ export function toIcsStamp(iso: string): string {
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();
 }
+
+/** The local time of an instant, as `<input type="time">` wants it, "17:00". */
+export function toTimeValue(at: Date): string {
+  const hours = String(at.getHours()).padStart(2, '0');
+  return `${hours}:${String(at.getMinutes()).padStart(2, '0')}`;
+}

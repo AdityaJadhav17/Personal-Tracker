@@ -34,8 +34,10 @@ test('AC-23.2 a full dashboard still fits a phone', async ({ page }) => {
 
   // Overflow from a long title is the other way this breaks, so the check is
   // not run on an empty page.
-  await page.getByLabel('Title').fill('CSE 110 final project proposal draft');
-  await page.getByLabel('Due').fill('2026-12-11');
+  await page
+    .getByLabel('Title', { exact: true })
+    .fill('CSE 110 final project proposal draft');
+  await page.getByLabel('Due', { exact: true }).fill('2026-12-11');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(

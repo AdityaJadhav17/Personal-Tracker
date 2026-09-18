@@ -14,9 +14,10 @@ async function add(
   daysFromToday: number,
   options: { priority?: string; time?: string } = {},
 ) {
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(isoDate(daysFromToday));
-  if (options.time) await page.getByLabel('Time').fill(options.time);
+  await page.getByLabel('Title', { exact: true }).fill(title);
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
+  if (options.time)
+    await page.getByLabel('Time', { exact: true }).fill(options.time);
   if (options.priority) {
     await page.getByLabel('Priority').selectOption(options.priority);
   }

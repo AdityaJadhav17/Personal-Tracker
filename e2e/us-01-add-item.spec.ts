@@ -15,9 +15,10 @@ async function add(
   daysFromToday = 0,
   options: { time?: string; category?: string; priority?: string } = {},
 ) {
-  if (title) await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(isoDate(daysFromToday));
-  if (options.time) await page.getByLabel('Time').fill(options.time);
+  if (title) await page.getByLabel('Title', { exact: true }).fill(title);
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
+  if (options.time)
+    await page.getByLabel('Time', { exact: true }).fill(options.time);
   if (options.category) {
     await page.getByLabel('Category').selectOption(options.category);
   }
@@ -79,7 +80,7 @@ test('AC-01.2 submitting with no title adds nothing and says why', async ({
 }) => {
   await page.goto('/');
 
-  await page.getByLabel('Due').fill(isoDate(0));
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(0));
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(page.getByText('Give it a title.')).toBeVisible();
@@ -91,7 +92,7 @@ test('AC-19.4 submitting with no date adds nothing and says why', async ({
 }) => {
   await page.goto('/');
 
-  await page.getByLabel('Title').fill('Dentist');
+  await page.getByLabel('Title', { exact: true }).fill('Dentist');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(page.getByText('Pick a date.')).toBeVisible();

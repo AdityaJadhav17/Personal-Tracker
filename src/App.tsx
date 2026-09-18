@@ -144,6 +144,8 @@ export default function App() {
               onCourseChange={actions.setCourse}
               goals={db.goals}
               onGoalChange={actions.setGoal}
+              onEdit={actions.editItem}
+              onDelete={actions.removeItem}
             />
           ) : (
             <EmptyState onAddFirst={() => titleRef.current?.focus()} />

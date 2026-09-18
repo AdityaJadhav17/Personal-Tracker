@@ -9,6 +9,7 @@ import {
   shiftMinutes,
   shiftMonth,
   toIcsStamp,
+  toTimeValue,
   toDueAt,
 } from './dates';
 
@@ -336,5 +337,19 @@ describe('shiftMinutes', () => {
     expect(shiftMinutes('2026-10-01T00:15:00.000Z', -30)).toBe(
       '2026-09-30T23:45:00.000Z',
     );
+  });
+});
+
+describe('toTimeValue', () => {
+  test('AC-25.2 the local time of an instant, as the time control wants it', () => {
+    expect(toTimeValue(new Date(2026, 9, 3, 17, 0))).toBe('17:00');
+  });
+
+  test('pads the hour, which the control rejects without', () => {
+    expect(toTimeValue(new Date(2026, 9, 3, 9, 5))).toBe('09:05');
+  });
+
+  test('midnight is 00:00, not blank', () => {
+    expect(toTimeValue(new Date(2026, 9, 3, 0, 0))).toBe('00:00');
   });
 });

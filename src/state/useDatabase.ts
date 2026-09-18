@@ -19,6 +19,10 @@ export interface DatabaseActions {
   addItem: (draft: ItemDraft) => void;
   markDone: (id: string) => void;
   setNote: (id: string, note: string) => void;
+  /** US-25. Rename an item or move its deadline. */
+  editItem: (id: string, title: string, dueAt: string) => void;
+  /** US-25. Gone for good; goal progress is derived, so it corrects itself. */
+  removeItem: (id: string) => void;
   setCourse: (id: string, courseId: string | null) => void;
   setGoal: (id: string, goalId: string | null) => void;
   addCourse: (draft: CourseDraft) => void;
@@ -142,6 +146,19 @@ export function useDatabase(): {
 
     setNote(id, note) {
       mapItems(id, (item) => ({ ...item, note }));
+    },
+
+    editItem(id, title, dueAt) {
+      mapItems(id, (item) => ({ ...item, title, dueAt }));
+    },
+
+    removeItem(id) {
+      update((current) => ({
+        ...current,
+        items: current.items.filter((item) => item.id !== id),
+      }));
+      // An item that no longer exists cannot be un-finished.
+      setUndoable(null);
     },
 
     setCourse(id, courseId) {

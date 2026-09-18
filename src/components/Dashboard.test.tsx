@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Dashboard from './Dashboard';
 import type { Item } from '../domain/types';
@@ -44,6 +44,8 @@ test('AC-02.1 items land in Overdue, Today, This week, and Later', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('Missed lab', -1),
         anItem('Quiz', 0),
@@ -77,6 +79,8 @@ test('AC-02.2 a group with no items renders no heading', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -103,6 +107,8 @@ test('AC-02.3 an item marked done is not shown in its group', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('Quiz', 0),
         anItem('Already handed in', 0, {
@@ -127,6 +133,8 @@ test('AC-02.3 a group whose only item is done renders no heading', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Handed in', 0, { status: 'done' })]}
     />,
   );
@@ -146,6 +154,8 @@ test('AC-02.1 Overdue is rendered above Today', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Quiz', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -166,6 +176,8 @@ test('each item shows its due date', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -182,6 +194,8 @@ test('AC-03.1 an overdue open item appears in Overdue, above Today', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Quiz today', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -204,6 +218,8 @@ test('AC-03.2 with nothing overdue the Overdue group is not rendered', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Quiz today', 0)]}
     />,
   );
@@ -223,6 +239,8 @@ test('AC-03.2 an overdue item that is done does not bring back the group', () =>
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Handed in late', -3, { status: 'done' })]}
     />,
   );
@@ -242,6 +260,8 @@ test('AC-03.3 overdue items render most overdue first', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('one day late', -1),
         anItem('twelve days late', -12),
@@ -282,6 +302,8 @@ test('AC-04.1 inside a group, high comes before normal before low', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('bb normal', 3, { priority: 'normal' }),
         anItem('cc low', 3, { priority: 'low' }),
@@ -303,6 +325,8 @@ test('AC-04.2 same priority and day, the 9am item is listed first', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('bb evening', 3, { dueAt: hoursOn(3, 17) }),
         anItem('aa morning', 3, { dueAt: hoursOn(3, 9) }),
@@ -323,6 +347,8 @@ test('AC-04.3 two items due at the same minute are both rendered', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('aa first', 3, { dueAt: hoursOn(3, 9) }),
         anItem('bb second', 3, { dueAt: hoursOn(3, 9) }),
@@ -344,6 +370,8 @@ test('AC-04.4 grouping wins over priority', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('Laundry', 0, { priority: 'low' }),
         anItem('Midterm', 6, { priority: 'high' }),
@@ -369,6 +397,8 @@ test('AC-04.1 priority ordering applies inside Overdue too', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('bb twelve', -12, { priority: 'low' }),
         anItem('aa one', -1, { priority: 'high' }),
@@ -389,6 +419,8 @@ test('AC-05.1 every open item offers a done control naming that item', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -413,6 +445,8 @@ test('AC-05.1 activating the control reports the item id', async () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[rent]}
     />,
   );
@@ -431,6 +465,8 @@ test('AC-05.3 the done controls follow the order the items are displayed', () =>
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('cc low', 3, { priority: 'low' }),
         anItem('aa high', 3, { priority: 'high' }),
@@ -463,6 +499,8 @@ test('AC-06.1 each item offers a note field that names the item', async () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -487,6 +525,8 @@ test('AC-06.1 an existing note is shown in the field', async () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Rent', 0, { note: 'Zelle, not Venmo' })]}
     />,
   );
@@ -514,6 +554,8 @@ test('AC-06.1 the note is reported on blur, not on every keystroke', async () =>
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[rent]}
     />,
   );
@@ -540,6 +582,8 @@ test('AC-12.1 an item due in two days carries the upcoming marker', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Midterm', 2)]}
     />,
   );
@@ -557,6 +601,8 @@ test('AC-12.2 an item due in nine days carries no marker', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Finals', 9)]}
     />,
   );
@@ -574,6 +620,8 @@ test('AC-12.3 priority does not suppress the marker', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Laundry', 2, { priority: 'low' })]}
     />,
   );
@@ -591,6 +639,8 @@ test('AC-12.1 only the items inside the window are marked', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[
         anItem('Late thing', -2),
         anItem('Today thing', 0),
@@ -637,6 +687,8 @@ test('AC-07.2 an item shows which course it belongs to', () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Project', 3, { courseId: 'c1' })]}
     />,
   );
@@ -656,6 +708,8 @@ test('AC-07.2 an item with no course says so', async () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Rent', 3)]}
     />,
   );
@@ -681,6 +735,8 @@ test('AC-07.2 choosing a course reports the item and the course', async () => {
       onCourseChange={onCourseChange}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[project]}
     />,
   );
@@ -705,6 +761,8 @@ test('AC-07.2 clearing the course reports null, not an empty string', async () =
       onCourseChange={onCourseChange}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[project]}
     />,
   );
@@ -725,6 +783,8 @@ test('AC-07.2 with no courses recorded, the item offers no course control', () =
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Rent', 3)]}
     />,
   );
@@ -769,6 +829,8 @@ function renderOne(
       onCourseChange={handlers.onCourseChange ?? noop}
       goals={[GOAL]}
       onGoalChange={handlers.onGoalChange ?? noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Midterm', 1, rest)]}
     />,
   );
@@ -895,6 +957,8 @@ test('AC-22.3 opening one item does not open another', async () => {
       onCourseChange={noop}
       goals={[]}
       onGoalChange={noop}
+      onEdit={noop}
+      onDelete={noop}
       items={[anItem('Midterm', 1), anItem('Rent', 2)]}
     />,
   );
@@ -903,4 +967,131 @@ test('AC-22.3 opening one item does not open another', async () => {
 
   expect(screen.getByLabelText('Course for Midterm')).toBeVisible();
   expect(screen.queryByLabelText('Course for Rent')).toBeNull();
+});
+
+/** Render one item with the edit and delete handlers wired. */
+function renderEditable(
+  rest: Partial<Item> = {},
+  handlers: Partial<{
+    onEdit: (id: string, title: string, dueAt: string) => void;
+    onDelete: (id: string) => void;
+  }> = {},
+) {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
+      goals={[]}
+      onGoalChange={noop}
+      onEdit={handlers.onEdit ?? noop}
+      onDelete={handlers.onDelete ?? noop}
+      items={[anItem('Midterm', 1, rest)]}
+    />,
+  );
+}
+
+test('AC-25.1 the title can be changed, and the new one is reported', async () => {
+  const user = userEvent.setup();
+  const edits: string[] = [];
+  renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
+
+  await openItem(user, 'Midterm');
+  const field = screen.getByLabelText('Title for Midterm');
+  await user.clear(field);
+  await user.type(field, 'CSE 110 midterm');
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(edits).toEqual(['CSE 110 midterm']);
+});
+
+test('AC-25.1 the edit form opens holding what the item already says', async () => {
+  const user = userEvent.setup();
+  renderEditable();
+
+  await openItem(user, 'Midterm');
+
+  expect(screen.getByLabelText('Title for Midterm')).toHaveValue('Midterm');
+});
+
+test('AC-25.2 the due date can be moved, and comes back as an instant', async () => {
+  const user = userEvent.setup();
+  const dues: string[] = [];
+  renderEditable({}, { onEdit: (_id, _title, dueAt) => dues.push(dueAt) });
+
+  await openItem(user, 'Midterm');
+  fireEvent.change(screen.getByLabelText('Due for Midterm'), {
+    target: { value: '2026-10-03' },
+  });
+  fireEvent.change(screen.getByLabelText('Time for Midterm'), {
+    target: { value: '17:00' },
+  });
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(dues).toHaveLength(1);
+  const moved = new Date(dues[0]!);
+  expect(moved.getFullYear()).toBe(2026);
+  expect(moved.getMonth()).toBe(9);
+  expect(moved.getDate()).toBe(3);
+  expect(moved.getHours()).toBe(17);
+});
+
+test('AC-25.3 an empty title saves nothing and says why', async () => {
+  const user = userEvent.setup();
+  const edits: string[] = [];
+  renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
+
+  await openItem(user, 'Midterm');
+  await user.clear(screen.getByLabelText('Title for Midterm'));
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(edits).toEqual([]);
+  expect(screen.getByText('Give it a title.')).toBeVisible();
+});
+
+test('AC-25.4 deleting asks first and removes nothing yet', async () => {
+  const user = userEvent.setup();
+  const deleted: string[] = [];
+  renderEditable({}, { onDelete: (id) => deleted.push(id) });
+
+  await openItem(user, 'Midterm');
+  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
+
+  expect(
+    screen.getByText('Delete Midterm? It is gone for good.'),
+  ).toBeVisible();
+  expect(deleted).toEqual([]);
+});
+
+test('AC-25.5 confirming reports the deletion', async () => {
+  const user = userEvent.setup();
+  const deleted: string[] = [];
+  renderEditable({}, { onDelete: (id) => deleted.push(id) });
+
+  await openItem(user, 'Midterm');
+  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+
+  expect(deleted).toHaveLength(1);
+});
+
+test('AC-25.8 declining removes nothing', async () => {
+  const user = userEvent.setup();
+  const deleted: string[] = [];
+  renderEditable({}, { onDelete: (id) => deleted.push(id) });
+
+  await openItem(user, 'Midterm');
+  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
+  await user.click(screen.getByRole('button', { name: 'Keep' }));
+
+  expect(deleted).toEqual([]);
+  expect(screen.queryByText(/gone for good/)).toBeNull();
+});
+
+test('AC-25.4 a closed row offers no delete, so it cannot be hit by accident', () => {
+  renderEditable();
+
+  expect(screen.queryByRole('button', { name: 'Delete Midterm' })).toBeNull();
 });

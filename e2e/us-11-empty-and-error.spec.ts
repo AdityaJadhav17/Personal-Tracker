@@ -17,7 +17,7 @@ test('AC-11.1 the add action puts the cursor in the title field', async ({
 
   await page.getByRole('button', { name: 'Add your first item' }).click();
 
-  await expect(page.getByLabel('Title')).toBeFocused();
+  await expect(page.getByLabel('Title', { exact: true })).toBeFocused();
 });
 
 test('AC-11.1 you can type straight after the add action, no mouse', async ({
@@ -28,7 +28,7 @@ test('AC-11.1 you can type straight after the add action, no mouse', async ({
   await page.getByRole('button', { name: 'Add your first item' }).click();
   await page.keyboard.type('Rent');
 
-  await expect(page.getByLabel('Title')).toHaveValue('Rent');
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Rent');
 });
 
 test('AC-11.1 the empty state is replaced once an item exists', async ({
@@ -36,11 +36,13 @@ test('AC-11.1 the empty state is replaced once an item exists', async ({
 }) => {
   await page.goto('/');
 
-  await page.getByLabel('Title').fill('Rent');
+  await page.getByLabel('Title', { exact: true }).fill('Rent');
   const today = new Date();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  await page.getByLabel('Due').fill(`${today.getFullYear()}-${month}-${day}`);
+  await page
+    .getByLabel('Due', { exact: true })
+    .fill(`${today.getFullYear()}-${month}-${day}`);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(page.getByText('Nothing due yet.')).toHaveCount(0);
@@ -66,6 +68,6 @@ test('AC-11.2 a browser that blocks site data gets an error state', async ({
 
   await expect(page.getByText('Your data could not be loaded.')).toBeVisible();
   await expect(page.getByText(/site data is probably blocked/i)).toBeVisible();
-  await expect(page.getByLabel('Title')).toHaveCount(0);
+  await expect(page.getByLabel('Title', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Nothing due yet.')).toHaveCount(0);
 });

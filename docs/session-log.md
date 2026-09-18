@@ -1113,3 +1113,52 @@ to read is a question for Aditya, not something to change underneath him.
 **422 unit tests and 130 Playwright specs green,** and the generated file was
 read by eye as well, because no assertion proves a calendar application will
 accept it.
+
+---
+
+## 2026-09-18: US-25, an item you can correct
+
+Checking the code before writing a different story turned up the real gap: an
+item could be marked done, given a note and attached to a course or goal, and
+that was all. It could not be renamed, its deadline could not be moved, and it
+could not be deleted. Courses and goals both had deletion. Items never got it.
+
+**The workaround was worse than the gap.** The only way to clear a mistake was
+to mark it done, and done is not inert: it feeds `completedYesterday`, the
+"3 of 5 done" on a goal, and the completions line on Trends. Clearing a typo
+meant lying about finishing something, permanently, because the item then could
+not be removed either. The real escape hatch was Export, hand-edit the JSON,
+Import, Replace.
+
+**Almost no new code.** `editItem` and `removeItem` are one-liners over the
+`mapItems` and `update` helpers the hook already had, and the controls went into
+the panel US-22 opens. No domain module for deletion: `progressOf` derives goal
+progress from the items rather than storing it, so removing an item corrects
+every count for free. A `deleteItem` function would have had one caller and
+nothing to cascade.
+
+**Three things worth recording, none of them flattering.**
+
+`toTimeValue` was written with its test in the same command, so it never had a
+red phase. CLAUDE.md is explicit that a test which passes the first time has
+not tested anything yet. It is three lines and mirrors `toDateValue`, but the
+process was skipped and that is worth saying rather than quietly not saying.
+
+The label collision from US-24 appeared a third time and **the first fix was
+wrong**. Both the add form and the edit panel have a field called Title, so
+`getByLabel('Title')` matched two inputs. Removing the edit panel's `<label>`
+did nothing, because Playwright matches `aria-label` by substring too and the
+edit field is named "Title for Pset 1". The fix that worked was `exact: true`,
+which is what Export and Calendar had already needed. The rule, stated plainly
+for next time: **a Playwright `getByRole` name or `getByLabel` is a substring
+match; the Testing Library equivalent is a whole-string match.** Any new control
+whose name contains an existing one will break locators, and only the end to end
+suite will notice.
+
+It was also predicted and shipped anyway. The collision was visible while
+writing the markup and the first full run found it in a spec this story never
+touched.
+
+**433 unit tests and 140 Playwright specs green,** then driven in a browser: a
+seeded typo renamed and checked in storage, and an item deleted and confirmed
+gone from `localStorage` with no `completedAt` on anything.

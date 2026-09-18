@@ -8,9 +8,9 @@ function isoDate(daysFromToday: number): string {
 }
 
 async function addItem(page: Page, title: string, time = '17:00') {
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Due').fill(isoDate(1));
-  await page.getByLabel('Time').fill(time);
+  await page.getByLabel('Title', { exact: true }).fill(title);
+  await page.getByLabel('Due', { exact: true }).fill(isoDate(1));
+  await page.getByLabel('Time', { exact: true }).fill(time);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 }
 

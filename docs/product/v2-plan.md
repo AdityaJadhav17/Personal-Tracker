@@ -744,10 +744,10 @@ The end to end spec decodes the downloaded file with `TextDecoder` rather than
 
 ---
 
-# Proposed, not approved: US-25, changing your mind about an item
+# US-25, changing your mind about an item
 
-Found 18 September 2026 while planning something else. This is a missing
-primitive rather than a feature, and it should go before anything new.
+Found 18 September 2026 while planning something else, and built the same day.
+This was a missing primitive rather than a feature.
 
 ## What is missing
 
@@ -778,7 +778,7 @@ US-25  As someone whose deadlines move and who types things wrong,
        I want to change or remove an item,
        so that the list stays true without lying about finishing something.
 
-Priority: Must
+Priority: Must, built
 Acceptance criteria:
   AC-25.1  Given an item is open,
            when I edit its title,
@@ -824,6 +824,23 @@ matter, `u` already exists as a pattern and it gets its own story.
 
 **Editing the date reuses `toDueAt`.** The same two controls as the add form and
 the same validation, so there is one definition of what a valid deadline is.
+
+## What it took
+
+`editItem` and `removeItem` on the hook, both one-liners over the existing
+`mapItems` and `update` helpers, and the controls in the panel US-22 already
+opens. No domain module: goal progress is derived by `progressOf` rather than
+stored, so deleting an item corrects every count for free. An abstraction with
+one caller would have been deleted anyway.
+
+The label collision from US-24 turned up a third time, and the first fix for it
+was wrong. Both the add form and the edit panel have a field called Title, so
+`getByLabel('Title')` matched two inputs. Removing the edit panel's `<label>`
+did not help, because Playwright also matches `aria-label` by substring and the
+edit field's name is "Title for Pset 1", which contains "Title". The fix that
+worked is `exact: true`, the same one the Export and Calendar collisions needed.
+The markup change stayed anyway, on its own merit: each input now has one
+source for its accessible name instead of two.
 
 ## Why this is a Must and bulk entry is not
 

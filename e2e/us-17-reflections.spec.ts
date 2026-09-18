@@ -148,8 +148,8 @@ test('AC-16.1 and AC-16.2 Home shows what is left and what was finished', async 
   await page.goto('/');
 
   for (const title of ['Pset 1', 'Pset 2', 'Pset 3']) {
-    await page.getByLabel('Title').fill(title);
-    await page.getByLabel('Due').fill(isoDate(0));
+    await page.getByLabel('Title', { exact: true }).fill(title);
+    await page.getByLabel('Due', { exact: true }).fill(isoDate(0));
     await page.getByRole('button', { name: 'Add', exact: true }).click();
   }
 

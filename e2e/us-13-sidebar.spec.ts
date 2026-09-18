@@ -25,7 +25,7 @@ test('AC-13.2 moving to Courses swaps the view and the marker', async ({
   await page.getByRole('button', { name: 'Courses' }).click();
 
   await expect(page.getByText('No courses yet.')).toBeVisible();
-  await expect(page.getByLabel('Title')).toHaveCount(0);
+  await expect(page.getByLabel('Title', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Courses' })).toHaveAttribute(
     'aria-current',
     'page',
@@ -70,7 +70,7 @@ test('AC-13.4 reloading puts you back on Home', async ({ page }) => {
 
   await page.reload();
 
-  await expect(page.getByLabel('Title')).toBeVisible();
+  await expect(page.getByLabel('Title', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Home' })).toHaveAttribute(
     'aria-current',
     'page',

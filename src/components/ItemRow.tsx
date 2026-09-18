@@ -1,6 +1,16 @@
 import { useState } from 'react';
-import { formatDue, isUpcoming } from '../domain/dates';
+import {
+  formatDue,
+  isUpcoming,
+  toDateValue,
+  toDueAt,
+  toTimeValue,
+} from '../domain/dates';
 import type { Course, Goal, Item } from '../domain/types';
+
+/** Same words the add form uses, so there is one definition of the message. */
+const TITLE_REQUIRED = 'Give it a title.';
+const DUE_REQUIRED = 'Pick a date.';
 
 interface ItemRowProps {
   item: Item;
@@ -12,6 +22,8 @@ interface ItemRowProps {
   onNoteChange: (id: string, note: string) => void;
   onCourseChange: (id: string, courseId: string | null) => void;
   onGoalChange: (id: string, goalId: string | null) => void;
+  onEdit: (id: string, title: string, dueAt: string) => void;
+  onDelete: (id: string) => void;
 }
 
 /**
@@ -34,14 +46,38 @@ export default function ItemRow({
   onNoteChange,
   onCourseChange,
   onGoalChange,
+  onEdit,
+  onDelete,
 }: ItemRowProps) {
   // The note is held locally while you type and reported on blur, so a save
   // does not run on every keystroke. See the storage note in docs/plan.md.
   const [note, setNote] = useState(item.note);
   const [open, setOpen] = useState(false);
 
+  // US-25. The edit fields start from what the item already says, so opening
+  // the row and saving without touching anything changes nothing.
+  const due = new Date(item.dueAt);
+  const [title, setTitle] = useState(item.title);
+  const [dueDate, setDueDate] = useState(toDateValue(due));
+  const [dueTime, setDueTime] = useState(toTimeValue(due));
+  const [titleError, setTitleError] = useState('');
+  const [dueError, setDueError] = useState('');
+  const [confirming, setConfirming] = useState(false);
+
   const course = courses.find((one) => one.id === item.courseId);
   const goal = goals.find((one) => one.id === item.goalId);
+
+  function handleSave() {
+    const trimmed = title.trim();
+    const at = toDueAt(dueDate, dueTime);
+
+    setTitleError(trimmed ? '' : TITLE_REQUIRED);
+    setDueError(at ? '' : DUE_REQUIRED);
+    // AC-25.3. Nothing is written while either half is unusable.
+    if (!trimmed || !at) return;
+
+    onEdit(item.id, trimmed, at);
+  }
 
   return (
     // The priority modifier drives a coloured bar on the left edge. Position
@@ -87,6 +123,68 @@ export default function ItemRow({
       )}
       {open && (
         <div className="item__edit">
+          {/*
+            The visible words are a span, not a <label htmlFor>, so each input
+            has exactly one source for its accessible name: the aria-label,
+            which carries the item's title and makes twenty open rows
+            individually addressable. Sighted users still read "Title", and
+            WCAG 2.5.3 holds because the accessible name contains that word.
+          */}
+          <div className="form__field form__field--title">
+            <span className="form__label" aria-hidden="true">
+              Title
+            </span>
+            <input
+              className="form__input"
+              id={`title-${item.id}`}
+              aria-label={`Title for ${item.title}`}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              aria-describedby={
+                titleError ? `title-error-${item.id}` : undefined
+              }
+            />
+            {titleError && (
+              <p className="form__error" id={`title-error-${item.id}`}>
+                {titleError}
+              </p>
+            )}
+          </div>
+
+          <div className="form__field">
+            <span className="form__label" aria-hidden="true">
+              Due
+            </span>
+            <input
+              className="form__input"
+              id={`due-${item.id}`}
+              type="date"
+              aria-label={`Due for ${item.title}`}
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              aria-describedby={dueError ? `due-error-${item.id}` : undefined}
+            />
+            {dueError && (
+              <p className="form__error" id={`due-error-${item.id}`}>
+                {dueError}
+              </p>
+            )}
+          </div>
+
+          <div className="form__field">
+            <span className="form__label" aria-hidden="true">
+              Time
+            </span>
+            <input
+              className="form__input"
+              id={`time-${item.id}`}
+              type="time"
+              aria-label={`Time for ${item.title}`}
+              value={dueTime}
+              onChange={(event) => setDueTime(event.target.value)}
+            />
+          </div>
+
           {/*
             Each select is only rendered once there is something to choose, so
             an empty one never joins the tab order.
@@ -135,6 +233,57 @@ export default function ItemRow({
             onChange={(event) => setNote(event.target.value)}
             onBlur={() => onNoteChange(item.id, note)}
           />
+
+          <div className="item__actions">
+            <button
+              className="prompt__button"
+              type="button"
+              aria-label={`Save ${item.title}`}
+              onClick={handleSave}
+            >
+              Save
+            </button>
+            {/*
+              Delete lives inside the disclosure, so a row you are only reading
+              never shows a control that destroys it.
+            */}
+            <button
+              className="prompt__button prompt__button--quiet"
+              type="button"
+              aria-label={`Delete ${item.title}`}
+              onClick={() => setConfirming(true)}
+            >
+              Delete
+            </button>
+          </div>
+
+          {confirming && (
+            <div className="item__confirm">
+              {/*
+                Blunter than the course and goal wording, which can promise the
+                items survive. Nothing survives this one, so it says so.
+              */}
+              <p className="status" role="status">
+                Delete {item.title}? It is gone for good.
+              </p>
+              <div className="prompt__actions">
+                <button
+                  className="prompt__button"
+                  type="button"
+                  onClick={() => onDelete(item.id)}
+                >
+                  Yes, delete
+                </button>
+                <button
+                  className="prompt__button prompt__button--quiet"
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                >
+                  Keep
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </li>

@@ -36,6 +36,10 @@ due, the course and goal it belongs to, and anything you wrote about it. Click
 the title to open the controls that change those. Done stays outside, so
 finishing something never means opening it first.
 
+The same panel is where you rename something, move its deadline when a professor
+does, or delete it outright. Deleting asks first and then really deletes: it is
+not marked done, so it never inflates what you finished.
+
 **Calendar** lays the same items out as a month, so you can tell a heavy week
 from a light one before it arrives. Today is marked, you can step through the
 months, and a day with more than two things says how many more rather than

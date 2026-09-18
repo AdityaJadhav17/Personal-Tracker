@@ -22,6 +22,8 @@ interface DashboardProps {
   onCourseChange: (id: string, courseId: string | null) => void;
   goals: Goal[];
   onGoalChange: (id: string, goalId: string | null) => void;
+  onEdit: (id: string, title: string, dueAt: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function Dashboard({
@@ -33,6 +35,8 @@ export default function Dashboard({
   onCourseChange,
   goals,
   onGoalChange,
+  onEdit,
+  onDelete,
 }: DashboardProps) {
   const open = items.filter((item) => item.status === 'open');
 
@@ -70,6 +74,8 @@ export default function Dashboard({
                   onCourseChange={onCourseChange}
                   goals={goals}
                   onGoalChange={onGoalChange}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
                 />
               ))}
             </ul>
