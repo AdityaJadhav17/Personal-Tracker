@@ -1162,3 +1162,51 @@ touched.
 **433 unit tests and 140 Playwright specs green,** then driven in a browser: a
 seeded typo renamed and checked in storage, and an item deleted and confirmed
 gone from `localStorage` with no `completedAt` on anything.
+
+---
+
+## 2026-09-18: US-26, a term in one paste
+
+Entry cost was upstream of everything: five courses with ten deadlines each is
+fifty items typed one at a time, at exactly the moment the interview described,
+sitting down before a term starts. A calendar with four items in it looks empty
+and a goal with four items has meaningless progress.
+
+**The format is strict because US-19 is still right.** That story deleted typed
+dates from the daily path, on the grounds that a silent wrong guess is worse
+than a picker. This does not bring the guessing back: `oct 3 Midterm` is
+reported as unreadable rather than interpreted. What makes strictness bearable
+is that a paste is reviewed before it is saved, which the daily path is not.
+
+**The preview has no Preview button.** It is derived from whatever is in the box
+on every render, so AC-26.1 holds by construction rather than by a handler
+remembering to run: the Add button cannot be reached without the preview having
+already rendered what each line was understood as.
+
+**A batch action was necessary, not tidiness.** `addItem` closes over the
+database it was rendered with, so fifty calls in a loop would each have computed
+from the same snapshot and only the last would have survived. `addItems` commits
+the list once. There is an end to end test that pastes twelve lines and counts
+twelve distinct ids, because a unit test on the parser would never have seen
+that failure.
+
+**The first placement broke the keyboard path, and US-05's own test caught it.**
+Putting the button under the add form put it in the Tab order between Add and
+the first item. `App.tsx` already carried a comment explaining why export sits
+after the list; a term-start action belongs there for the same reason. Moving
+the control fixed it with no test edited, which is the right way round.
+
+**Three locator collisions in one spec, all mine.** The preview echoes what you
+pasted, so a bare `getByText` matched the textarea as well as the row; the rows
+now render the title as a single text node and the assertions scope to the list.
+`getByRole('button', { name: 'Lab 3' })` also matched "Mark Lab 3 done", and
+`/^Add /` matched the add form's own button. The rule from US-25 held again:
+**a Playwright name is a substring match.** It cost four runs.
+
+**463 unit tests and 148 Playwright specs green,** then driven in a browser with
+a deliberately mixed paste: three good lines, a natural-language date, a month
+name, and 2026-02-30, which `toDueAt` refuses rather than rolling into March.
+
+**One thing left alone.** The dev server's storage held a real item, "aws
+certification", which I did not put there. The browser check was cancelled
+rather than confirmed so nothing was written into it.

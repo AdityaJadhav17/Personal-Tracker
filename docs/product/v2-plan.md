@@ -850,9 +850,10 @@ wrong, and a tracker you do not trust is not consulted, whatever else it does.
 
 ---
 
-# Proposed, not approved: US-26, filling a term in one paste
+# US-26, filling a term in one paste
 
-Written 18 September 2026. Second in line, behind US-25.
+Written and built 18 September 2026, after US-25. Aditya approved the strict,
+previewed format below.
 
 ## Why
 
@@ -872,7 +873,7 @@ US-26  As someone setting up a whole quarter at once,
        I want to paste a list of deadlines,
        so that filling the term is one action instead of fifty.
 
-Priority: Should
+Priority: Should, built
 Acceptance criteria:
   AC-26.1  Given a block of lines, each a date and a title,
            when I paste it,
@@ -915,9 +916,7 @@ Anything else is reported as not understood rather than guessed at. No month
 names, no "next Tuesday", no natural language. If a strict format turns out to
 be too strict in real use, that is a thing real use will say.
 
-**This is the decision that needs you before it is built.** The alternative is
-not building it and living with one-at-a-time entry, which is a defensible
-answer for someone who adds four things a week.
+**Aditya took the strict, previewed version.**
 
 ## Scope
 
@@ -926,3 +925,28 @@ defaults the add form uses.
 
 **Out:** reading a syllabus PDF, importing from Canvas, and anything that needs
 a network request or guesses at prose. Those are a different product.
+
+## What it took
+
+`parseLines` in `src/domain/bulk.ts` is one regular expression and a loop.
+`toDueAt` does the rest of the rejecting, so February 30th and 25:00 are refused
+by the same code that refuses them in the add form rather than by a second
+opinion about what a date is.
+
+**The preview has no Preview button.** It is derived from whatever is in the box
+on every render, which is one fewer control and makes AC-26.1 true by
+construction: the Add button cannot be reached without the preview having
+already rendered what each line was understood as.
+
+**A batch action was necessary, not a nicety.** `addItem` closes over the
+database it was rendered with, so calling it fifty times in a loop would have
+written fifty items over the top of each other and kept the last. `addItems`
+commits the whole list once. There is an end to end test that pastes twelve
+lines and counts twelve distinct ids, because that is the failure this shape
+prevents and a unit test on the parser would never have seen it.
+
+**It lives beside Import, not under the add form.** Putting the button under the
+form put it in the Tab order between Add and the first item, which broke the
+US-05 keyboard path and was caught by that story's own test. The comment in
+`App.tsx` already said why export sits after the list; a term-start action
+belongs in the same place for the same reason.

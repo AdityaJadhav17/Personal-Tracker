@@ -57,6 +57,11 @@ entry per day.
 **Trends** plots those scores and what you finished, one point per day, with
 the same numbers in a table underneath.
 
+Paste a list fills a whole term at once: one line each, a date, an optional
+time, then the title. It shows you what every line was understood as, and lists
+the ones it could not read, before anything is saved. The format is strict on
+purpose: it reports a line it cannot read rather than guessing at it.
+
 Export everything to a JSON file you keep, and import it back on another
 machine. Files written by the first version still import.
 

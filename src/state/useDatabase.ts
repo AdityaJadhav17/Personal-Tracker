@@ -17,6 +17,9 @@ import { load, save } from '../storage/db';
 
 export interface DatabaseActions {
   addItem: (draft: ItemDraft) => void;
+  /** US-26. One commit, because fifty addItem calls would all see one stale
+      database and only the last would survive. */
+  addItems: (drafts: ItemDraft[]) => void;
   markDone: (id: string) => void;
   setNote: (id: string, note: string) => void;
   /** US-25. Rename an item or move its deadline. */
@@ -34,6 +37,23 @@ export interface DatabaseActions {
   replaceAll: (next: Database) => void;
   /** Import chose to keep both. Incoming ids we already hold are dropped. */
   merge: (next: Database) => void;
+}
+
+/** A draft becomes an item: an id, a creation time, and nothing attached yet. */
+function itemFrom(draft: ItemDraft): Item {
+  return {
+    id: crypto.randomUUID(),
+    title: draft.title,
+    dueAt: draft.dueAt,
+    category: draft.category,
+    priority: draft.priority,
+    status: 'open',
+    note: '',
+    createdAt: now().toISOString(),
+    completedAt: null,
+    goalId: null,
+    courseId: null,
+  };
 }
 
 /** Undo is a plain letter, so it must not fire while you are typing. */
@@ -119,20 +139,16 @@ export function useDatabase(): {
 
   const actions: DatabaseActions = {
     addItem(draft) {
-      const item: Item = {
-        id: crypto.randomUUID(),
-        title: draft.title,
-        dueAt: draft.dueAt,
-        category: draft.category,
-        priority: draft.priority,
-        status: 'open',
-        note: '',
-        createdAt: now().toISOString(),
-        completedAt: null,
-        goalId: null,
-        courseId: null,
-      };
+      const item = itemFrom(draft);
       update((current) => ({ ...current, items: [...current.items, item] }));
+    },
+
+    addItems(drafts) {
+      const items = drafts.map(itemFrom);
+      update((current) => ({
+        ...current,
+        items: [...current.items, ...items],
+      }));
     },
 
     markDone(id) {

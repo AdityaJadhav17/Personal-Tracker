@@ -1143,3 +1143,62 @@ button {
 .item__edit .form__field {
   flex: 1 1 100%;
 }
+
+/* ---------- Pasting a list ---------- */
+
+.bulk {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.bulk__box {
+  width: 100%;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.bulk__format {
+  margin: var(--space-2) 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.bulk__format code {
+  font-size: 12px;
+}
+
+.bulk__heading {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.bulk__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bulk__row {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+/* A line that will not become anything, said in the colour of a problem. */
+.bulk__row--skipped {
+  color: var(--danger);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}

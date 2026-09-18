@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
+import BulkAdd from './components/BulkAdd';
 import CalendarView from './components/CalendarView';
 import CourseList from './components/CourseList';
 import Dashboard from './components/Dashboard';
@@ -27,6 +28,8 @@ export default function App() {
   // Import flow, which is about what is on screen rather than about the data.
   const [pendingImport, setPendingImport] = useState<Database | null>(null);
   const [importError, setImportError] = useState('');
+  // US-26. A term-start action, so it stays folded away until asked for.
+  const [pasting, setPasting] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
   if (db === null) {
@@ -170,6 +173,14 @@ export default function App() {
           Export calendar
         </button>
 
+        <button
+          className="data__button"
+          type="button"
+          onClick={() => setPasting(!pasting)}
+        >
+          Paste a list
+        </button>
+
         <span className="data__import">
           <label htmlFor="import-file">Import</label>
           <input
@@ -180,6 +191,10 @@ export default function App() {
           />
         </span>
       </div>
+
+      {pasting && (
+        <BulkAdd onAdd={actions.addItems} onClose={() => setPasting(false)} />
+      )}
 
       {importError && (
         <p className="alert" role="alert">
