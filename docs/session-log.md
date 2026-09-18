@@ -1262,3 +1262,48 @@ The rule that would have prevented it: **never seed the dev origin's storage
 while it holds anything not put there by this session.** Export first, or use a
 different port. A screenshot is not a backup, and it only worked this time by
 luck.
+
+---
+
+## 2026-09-18: US-27, filtering to one course
+
+The gap US-08 left. The category is a two way split, so filtering fifty pasted
+items to "academic" leaves about forty five. The question a term raises is what
+you owe one class, and items have carried a `courseId` since US-07.
+
+**A select where the category is chips,** because the two differ in cardinality
+rather than in kind. Three fixed options fit in a row; six user-created ones
+would not survive the 320px screen US-23 just fixed. The control renders nothing
+at all until a course exists, the same rule the item row already follows.
+
+**The empty message composes instead of branching.** "Nothing personal for
+CSE 110 is open right now" and "Nothing personal is open right now" come out of
+one sentence built from the filters in force, so AC-08.3's wording is unchanged
+and US-27 did not have to edit a US-08 test to make room for itself.
+
+**AC-27.7 exists because deleting a course leaves a filter pointing at nothing.**
+`deleteCourse` clears the link on the items, so a stale filter would match zero
+of them and show an empty list naming a class that is gone. Resolving the id
+against the current courses makes it fall back to everything.
+
+**The collision family appeared a fourth time, in a new shape.** A course name is
+now an `<option>` in the filter as well as a chip on every row, so
+`getByText('CSE 110')` and `getByRole('option', { name: 'CSE 110' })` each
+matched two things. Unlike Export, Calendar and Title, this one is not about
+substrings: the strings are equal, and no amount of `exact: true` separates
+them. Scoping with `within(theSelect)` and `getByRole('listitem')` is the fix,
+and it is what those lookups always meant.
+
+Four for four, the general rule is now clear enough to write down: **a locator
+that names a thing rather than a place breaks the moment a second control shows
+the same thing.** Scope to the control, or name the control. It cost seven test
+edits across four specs this time, all of them mine to have written better.
+
+**491 unit tests and 161 Playwright specs green,** then driven in a browser
+including the combined filter, which correctly reports that nothing personal for
+CSE 110 is open.
+
+**The "aws certification" item was overwritten a second time and restored
+again.** Same cause as before: seeding the dev origin while it held data this
+session did not put there. Writing the rule down once did not stop me doing it
+twice, which suggests the fix is not a note in a log but exporting first.

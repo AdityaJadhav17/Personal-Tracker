@@ -999,3 +999,84 @@ items have carried a `courseId` since US-07.
 Filtering by course is a different story and is not built. US-08 was specified
 before courses existed, and widening it silently would have been a different
 feature wearing an approved story's ID.
+
+---
+
+# US-27, filtering to one course
+
+Approved and built 18 September 2026, out of the gap US-08 left. The category is a two way
+split: filtering fifty pasted items to "academic" leaves about forty five. The
+question a term actually raises is what you owe one class, and items have
+carried a `courseId` since US-07.
+
+```
+US-27  As someone who sits down to do one class's work,
+       I want to see only that class's deadlines,
+       so that the list matches what I am about to do.
+
+Priority: Should, built
+Acceptance criteria:
+  AC-27.1  Given items attached to two different courses,
+           when I filter to one,
+           then only its items are shown, and the group headings still apply.
+  AC-27.2  Given no courses have been recorded,
+           when I look at the filters,
+           then no course control is offered at all.
+  AC-27.3  Given an item attached to no course,
+           when I filter to a course,
+           then it is not shown.
+  AC-27.4  Given a course filter and a category filter are both set,
+           when I look at the list,
+           then only items matching both are shown.
+  AC-27.5  Given a filter is set,
+           when I reload the page,
+           then it is cleared, matching AC-08.2.
+  AC-27.6  Given a course filter hides everything,
+           when I look at the list,
+           then the message names the course and offers a way back.
+  AC-27.7  Given I am filtered to a course,
+           when that course is deleted,
+           then the list shows everything again rather than going silently
+           empty.
+```
+
+## Decisions
+
+**A select, where the category is chips.** The category has exactly three fixed
+options and fits in a row. Courses are user-created and unbounded, and six chips
+would not survive the 320px screen US-23 just fixed. Different cardinality, so a
+different control.
+
+**The control only exists once a course does.** Same rule the item row already
+follows: an empty select never joins the tab order for someone who does not use
+courses. That is AC-27.2.
+
+**The two filters combine with AND.** Academic plus CSE 110 means academic work
+for that class. Neither replaces the other, because they answer different
+questions and you can want both at once.
+
+**A deleted course falls back to everything.** `deleteCourse` clears the link on
+the items, so a filter still pointing at the dead id would match nothing and
+show an empty list naming a course that is gone. AC-27.7 makes it reset instead.
+
+**The empty message composes rather than branching.** AC-08.3's wording is
+unchanged when only the category is set, and the course clause is added when
+there is one, so "Nothing personal for CSE 110 is open right now" and "Nothing
+personal is open right now" come out of the same sentence.
+
+## What it took
+
+`CourseFilter` is a select and an early return. The filtering itself is one
+predicate in `App.tsx` combining both filters, and no domain module: an
+abstraction over `item.courseId === id` would have had one caller.
+
+**The collision family appeared a fourth time, in a new shape.** A course name
+is now an `<option>` in the filter as well as on every open row, so
+`getByRole('option', { name: 'CSE 110' })` matched several. Unlike the previous
+three this one is not about substrings: the names are equal, and no amount of
+`exact: true` separates them. The fix is scoping with `within(theSelect)`, which
+is what those lookups always meant.
+
+The general rule, now four for four: **a locator that names a thing rather than
+a place breaks as soon as a second control shows the same thing.** Scope to the
+control, or name the control.

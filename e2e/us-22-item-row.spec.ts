@@ -49,7 +49,8 @@ test('AC-22.1 a closed row names the course it belongs to', async ({
     .selectOption({ label: 'CSE 110' });
   await title(page, 'Midterm').click();
 
-  await expect(page.getByText('CSE 110')).toBeVisible();
+  // Scoped to the row: US-27 put the course name in a filter as well.
+  await expect(page.getByRole('listitem').getByText('CSE 110')).toBeVisible();
 });
 
 test('AC-22.2 an item with no course shows nothing where a course would be', async ({
@@ -59,8 +60,9 @@ test('AC-22.2 an item with no course shows nothing where a course would be', asy
   await addCourse(page, 'CSE 110');
   await addItem(page, 'Rent');
 
-  // The course exists, this item just does not belong to it.
-  await expect(page.getByText('CSE 110')).toHaveCount(0);
+  // The course exists, this item just does not belong to it. Read off the row,
+  // since the filter lists every course whatever the items say.
+  await expect(page.getByRole('listitem').getByText('CSE 110')).toHaveCount(0);
 });
 
 test('AC-22.4 and AC-22.5 the title opens the controls and closes them again', async ({

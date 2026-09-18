@@ -4,6 +4,7 @@ import BulkAdd from './components/BulkAdd';
 import CalendarView from './components/CalendarView';
 import CategoryFilter from './components/CategoryFilter';
 import type { Filter } from './components/CategoryFilter';
+import CourseFilter from './components/CourseFilter';
 import CourseList from './components/CourseList';
 import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
@@ -35,6 +36,7 @@ export default function App() {
   // US-08. Not stored: AC-08.2 wants a reload to show everything again, and a
   // filter you forgot you set is a list that is lying to you.
   const [filter, setFilter] = useState<Filter>('all');
+  const [courseFilter, setCourseFilter] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
   if (db === null) {
@@ -105,13 +107,34 @@ export default function App() {
   // everything shows the empty state instead of a blank page.
   const hasOpen = db.items.some((item) => item.status === 'open');
 
-  const shown =
-    filter === 'all'
-      ? db.items
-      : db.items.filter((item) => item.category === filter);
-  // AC-08.3. There is work, the filter is just hiding all of it, which is a
-  // different thing to say than "nothing due yet".
+  // AC-27.7. deleteCourse clears the link on the items, so a filter still
+  // pointing at a course that is gone would match nothing and show an empty
+  // list naming something that no longer exists.
+  const course = db.courses.find((one) => one.id === courseFilter) ?? null;
+
+  const shown = db.items.filter(
+    (item) =>
+      (filter === 'all' || item.category === filter) &&
+      (course === null || item.courseId === course.id),
+  );
+
+  // AC-08.3 and AC-27.6. There is work, the filters are just hiding all of it,
+  // which is a different thing to say than "nothing due yet". The sentence is
+  // composed so the category-only wording is unchanged from US-08.
   const hiddenByFilter = hasOpen && !shown.some((i) => i.status === 'open');
+  const hiding = [
+    'Nothing',
+    filter === 'all' ? '' : filter,
+    course ? `for ${course.name}` : '',
+    'is open right now.',
+  ]
+    .filter((part) => part !== '')
+    .join(' ');
+
+  function showEverything() {
+    setFilter('all');
+    setCourseFilter(null);
+  }
 
   return (
     <Shell view={view} onNavigate={setView}>
@@ -147,7 +170,14 @@ export default function App() {
             from Add straight to the first item, and US-26 already broke that
             once by putting a control in between.
           */}
-          <CategoryFilter value={filter} onChange={setFilter} />
+          <div className="filters">
+            <CategoryFilter value={filter} onChange={setFilter} />
+            <CourseFilter
+              courses={db.courses}
+              value={courseFilter}
+              onChange={setCourseFilter}
+            />
+          </div>
 
           <AddItemForm onAdd={actions.addItem} titleRef={titleRef} />
 
@@ -159,11 +189,11 @@ export default function App() {
 
           {hiddenByFilter ? (
             <section className="empty">
-              <p>Nothing {filter} is open right now.</p>
+              <p>{hiding}</p>
               <button
                 className="prompt__button"
                 type="button"
-                onClick={() => setFilter('all')}
+                onClick={showEverything}
               >
                 Show everything
               </button>

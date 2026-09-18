@@ -128,9 +128,8 @@ is being fast to check. See the decision log.
 
 Phone notifications and recurring items.
 
-Category filtering (US-08) is built, which is why it left this list. Filtering
-by course is not, and is a separate story: US-08 was specified before courses
-existed and was not widened to cover them.
+Category filtering (US-08) and course filtering (US-27) are both built, which is
+why they left this list.
 
 Do not build toward these. When one becomes real it gets its own story.
 

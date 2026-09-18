@@ -24,8 +24,10 @@ left today and what you finished yesterday, then the list sorts itself.
 - Anything due in the next three days carries a **Soon** marker, whatever its
   priority.
 
-Show All, Academic or Personal to narrow the list to one kind of thing. The
-choice is not remembered: a reload shows everything again, because a filter you
+Show All, Academic or Personal to narrow the list to one kind of thing, and pick
+a course to narrow it to one class. The two combine, so you can ask for academic
+work for CSE 110. The course control only appears once you have a course. Neither
+choice is remembered: a reload shows everything again, because a filter you
 forgot you set is a list that is lying to you.
 
 Pick a date, and a time if it needs one. With no time, a deadline means 23:59

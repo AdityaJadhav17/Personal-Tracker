@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -689,14 +695,18 @@ test('AC-07.2 an item can be given a course, and keeps it across a reload', asyn
   await addItem('Project', todayIso());
 
   await openItem(user, 'Project');
-  await user.selectOptions(screen.getByLabelText('Course for Project'), [
-    screen.getByRole('option', { name: 'CSE 100' }),
+  const courseSelect = screen.getByLabelText('Course for Project');
+  await user.selectOptions(courseSelect, [
+    within(courseSelect).getByRole('option', { name: 'CSE 100' }),
   ]);
   first.unmount();
 
   render(<App />);
   // Closed, the row names the course. Open, the control still holds it.
-  expect(screen.getByText('CSE 100')).toBeVisible();
+  // Scoped to the row, because US-27 put the course name in a filter too.
+  expect(
+    within(screen.getByRole('listitem')).getByText('CSE 100'),
+  ).toBeVisible();
 
   await openItem(user, 'Project');
   expect(screen.getByLabelText('Course for Project')).toHaveDisplayValue(
@@ -712,8 +722,9 @@ test('AC-07.3 deleting a course keeps its items, without the course', async () =
   await goTo('Home');
   await addItem('Project', todayIso());
   await openItem(user, 'Project');
-  await user.selectOptions(screen.getByLabelText('Course for Project'), [
-    screen.getByRole('option', { name: 'CSE 100' }),
+  const courseSelect = screen.getByLabelText('Course for Project');
+  await user.selectOptions(courseSelect, [
+    within(courseSelect).getByRole('option', { name: 'CSE 100' }),
   ]);
 
   await goTo('Courses');
@@ -784,8 +795,9 @@ test('AC-15.4 an item shows which goal it belongs to', async () => {
   await addItem('Project', todayIso());
 
   await openItem(user, 'Project');
-  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
-    screen.getByRole('option', { name: 'Finish the quarter' }),
+  const goalSelect = screen.getByLabelText('Goal for Project');
+  await user.selectOptions(goalSelect, [
+    within(goalSelect).getByRole('option', { name: 'Finish the quarter' }),
   ]);
 
   expect(screen.getByLabelText('Goal for Project')).toHaveDisplayValue(
@@ -801,8 +813,9 @@ test('AC-15.3 finishing an item moves the goal count without a reload', async ()
   await goTo('Home');
   await addItem('Project', todayIso());
   await openItem(user, 'Project');
-  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
-    screen.getByRole('option', { name: 'Finish the quarter' }),
+  const goalSelect = screen.getByLabelText('Goal for Project');
+  await user.selectOptions(goalSelect, [
+    within(goalSelect).getByRole('option', { name: 'Finish the quarter' }),
   ]);
 
   await goTo('Goals');
@@ -823,8 +836,9 @@ test('AC-20.1 deleting a goal keeps its items, without the goal', async () => {
   await goTo('Home');
   await addItem('Project', todayIso());
   await openItem(user, 'Project');
-  await user.selectOptions(screen.getByLabelText('Goal for Project'), [
-    screen.getByRole('option', { name: 'Finish the quarter' }),
+  const goalSelect = screen.getByLabelText('Goal for Project');
+  await user.selectOptions(goalSelect, [
+    within(goalSelect).getByRole('option', { name: 'Finish the quarter' }),
   ]);
 
   await goTo('Goals');
@@ -968,4 +982,159 @@ test('AC-08.1 the stat row counts the whole day, not the filtered view', async (
   // Two remain due today. The filter narrows the list you read, not the day
   // you are having.
   expect(screen.getByText('2')).toBeVisible();
+});
+
+/** Click a button by its accessible name. */
+async function user2Click(name: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name }));
+}
+
+/** Attach an item to a course through the row US-22 opens. */
+async function attachToCourse(title: string, courseName: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: title }));
+  const select = screen.getByLabelText(`Course for ${title}`);
+  await user.selectOptions(select, [
+    within(select).getByRole('option', { name: courseName }),
+  ]);
+  await user.click(screen.getByRole('button', { name: title }));
+}
+
+/** Narrow the list to one course. */
+async function showCourse(name: string) {
+  const user = userEvent.setup();
+  const filterSelect = screen.getByLabelText('Course');
+  await user.selectOptions(filterSelect, [
+    within(filterSelect).getByRole('option', { name }),
+  ]);
+}
+
+/** Two courses and three items, one attached to each course and one loose. */
+async function aTermWithCourses() {
+  render(<App />);
+  await goTo('Courses');
+  await addCourse('CSE 110');
+  await addCourse('MATH 20C');
+  await goTo('Home');
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+  await addIn('MATH problem set', todayIso(), 'academic');
+  await addIn('Dentist', todayIso(), 'personal');
+  await attachToCourse('CSE 110 midterm', 'CSE 110');
+  await attachToCourse('MATH problem set', 'MATH 20C');
+}
+
+test('AC-27.1 filtering to a course shows only that course', async () => {
+  await aTermWithCourses();
+
+  await showCourse('CSE 110');
+
+  expect(screen.getByRole('button', { name: 'CSE 110 midterm' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'MATH problem set' })).toBeNull();
+});
+
+test('AC-27.3 an item attached to no course is hidden by a course filter', async () => {
+  await aTermWithCourses();
+
+  await showCourse('CSE 110');
+
+  expect(screen.queryByRole('button', { name: 'Dentist' })).toBeNull();
+});
+
+test('AC-27.1 going back to all courses brings everything back', async () => {
+  await aTermWithCourses();
+
+  await showCourse('CSE 110');
+  await showCourse('All courses');
+
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+  expect(
+    screen.getByRole('button', { name: 'MATH problem set' }),
+  ).toBeVisible();
+});
+
+test('AC-27.4 a course and a category filter both apply', async () => {
+  await aTermWithCourses();
+
+  await show('Personal');
+  await showCourse('CSE 110');
+
+  // The midterm is academic and the dentist has no course: nothing is both.
+  expect(
+    screen.getByText(/Nothing personal for CSE 110 is open/i),
+  ).toBeVisible();
+});
+
+test('AC-27.4 both filters together can still leave something', async () => {
+  await aTermWithCourses();
+
+  await show('Academic');
+  await showCourse('CSE 110');
+
+  expect(screen.getByRole('button', { name: 'CSE 110 midterm' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'MATH problem set' })).toBeNull();
+});
+
+test('AC-27.6 a course filter that hides everything names the course', async () => {
+  await aTermWithCourses();
+
+  await showCourse('CSE 110');
+  await user2Click('Mark CSE 110 midterm done');
+
+  expect(
+    screen.getByText(/Nothing for CSE 110 is open right now/i),
+  ).toBeVisible();
+});
+
+test('AC-27.6 the way back clears both filters', async () => {
+  const user = userEvent.setup();
+  await aTermWithCourses();
+
+  await show('Personal');
+  await showCourse('CSE 110');
+  await user.click(screen.getByRole('button', { name: 'Show everything' }));
+
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+  expect(
+    screen.getByRole('button', { name: 'MATH problem set' }),
+  ).toBeVisible();
+});
+
+test('AC-27.5 a reload clears the course filter too', async () => {
+  await aTermWithCourses();
+  await showCourse('CSE 110');
+  expect(screen.queryByRole('button', { name: 'MATH problem set' })).toBeNull();
+
+  // aTermWithCourses rendered the app, so tear that one down before the next.
+  cleanup();
+  render(<App />);
+
+  expect(screen.getByLabelText('Course')).toHaveValue('');
+  expect(
+    screen.getByRole('button', { name: 'MATH problem set' }),
+  ).toBeVisible();
+});
+
+test('AC-27.7 deleting the course you filtered to shows everything again', async () => {
+  const user = userEvent.setup();
+  await aTermWithCourses();
+  await showCourse('CSE 110');
+
+  await goTo('Courses');
+  await user.click(screen.getByRole('button', { name: 'Delete CSE 110' }));
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+  await goTo('Home');
+
+  // Not an empty list naming a course that no longer exists.
+  expect(
+    screen.getByRole('button', { name: 'MATH problem set' }),
+  ).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Dentist' })).toBeVisible();
+});
+
+test('AC-27.2 with no courses recorded no course control is offered', async () => {
+  render(<App />);
+  await addIn('Dentist', todayIso(), 'personal');
+
+  expect(screen.queryByLabelText('Course')).toBeNull();
 });

@@ -89,8 +89,9 @@ test('AC-07.2 an item can be given a course, and keeps it after a reload', async
 
   await page.reload();
 
-  // Closed, the row names the course it belongs to (AC-22.1).
-  await expect(page.getByText('CSE 100')).toBeVisible();
+  // Closed, the row names the course it belongs to (AC-22.1). Scoped to the
+  // row, because US-27 put the course name in a filter as well.
+  await expect(page.getByRole('listitem').getByText('CSE 100')).toBeVisible();
 
   await open(page, 'Project');
   await expect(page.getByLabel('Course for Project')).toHaveValue(/.+/);

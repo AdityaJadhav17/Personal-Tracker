@@ -1205,10 +1205,19 @@ button {
 
 /* ---------- Filter ---------- */
 
+/* The row that holds both filters: chips for the fixed three, a select for the
+   open-ended list of courses. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
 .filter {
   display: flex;
   gap: var(--space-1);
-  margin-bottom: var(--space-4);
 }
 
 .filter__option {
@@ -1236,4 +1245,19 @@ button {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
+}
+
+.filter__select {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filter__select:hover {
+  border-color: var(--accent);
 }
