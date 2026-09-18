@@ -741,3 +741,171 @@ what it meant: no property with nothing after the colon.
 
 The end to end spec decodes the downloaded file with `TextDecoder` rather than
 `Buffer`, so the suite still typechecks without `@types/node`.
+
+---
+
+# Proposed, not approved: US-25, changing your mind about an item
+
+Found 18 September 2026 while planning something else. This is a missing
+primitive rather than a feature, and it should go before anything new.
+
+## What is missing
+
+An item can be marked done, given a note, attached to a course and attached to a
+goal. It cannot be renamed, its date cannot be moved, and it cannot be deleted.
+Courses and goals both have deletion, with a confirmation and safe unlinking.
+Items never got it.
+
+This is not hypothetical for a term that has already started:
+
+- A professor moves a midterm by a week. There is no way to move the deadline.
+- A title has a typo in it. It is permanent.
+- An appointment is cancelled, or something was added twice. It stays on the
+  dashboard and in the calendar export forever.
+
+**The available workaround actively corrupts the data.** The only way to get an
+item off the dashboard today is to mark it done, and done is not inert: it feeds
+`completedYesterday` on the Home stat row, the "3 of 5 done" on a goal, and the
+completions line on Trends. Clearing a mistake by lying about finishing it makes
+every number the app shows slightly wrong, and it does so permanently, because
+the item then cannot be deleted either.
+
+The real escape hatch is Export, hand-edit the JSON, Import, Replace. That is a
+text editor and a round trip to fix a typo.
+
+```
+US-25  As someone whose deadlines move and who types things wrong,
+       I want to change or remove an item,
+       so that the list stays true without lying about finishing something.
+
+Priority: Must
+Acceptance criteria:
+  AC-25.1  Given an item is open,
+           when I edit its title,
+           then the new title is shown and survives a reload.
+  AC-25.2  Given an item is open,
+           when I change its due date or time,
+           then it moves to the group and the calendar cell that date belongs
+           to.
+  AC-25.3  Given I clear the title and save,
+           then the item is unchanged and the field says why, matching the add
+           form.
+  AC-25.4  Given an item is open,
+           when I delete it,
+           then it is asked about first, in the same words courses and goals
+           use.
+  AC-25.5  Given I confirm a deletion,
+           then the item is gone from the dashboard, the calendar and the
+           export, and does not come back after a reload.
+  AC-25.6  Given I delete an item attached to a goal,
+           when I look at that goal,
+           then its progress no longer counts the deleted item.
+  AC-25.7  Given I delete an item,
+           when I look at the stat row and Trends,
+           then nothing counts it as completed.
+  AC-25.8  Given I decline the deletion,
+           then nothing is removed.
+```
+
+## Decisions
+
+**The controls go in the row that US-22 already opens.** That panel exists, it
+already holds the things that change an item, and a row that opens to edit is
+exactly where a rename belongs. No new view, no modal.
+
+**Delete is confirmed, worded like the others.** `deleteCourse` and `deleteGoal`
+both ask first and say what survives. An item deletion has nothing to reassure
+you about, so the wording is shorter, but the shape matches.
+
+**Delete really deletes.** Not an archive flag, not a tombstone. The database
+has no concept of a hidden item and inventing one would mean every count, every
+chart and the export all learning about it. If restoring a deletion turns out to
+matter, `u` already exists as a pattern and it gets its own story.
+
+**Editing the date reuses `toDueAt`.** The same two controls as the add form and
+the same validation, so there is one definition of what a valid deadline is.
+
+## Why this is a Must and bulk entry is not
+
+Bulk entry makes the app faster to fill. This makes it possible to keep it
+correct. A tracker you cannot correct stops being trusted the first time it is
+wrong, and a tracker you do not trust is not consulted, whatever else it does.
+
+---
+
+# Proposed, not approved: US-26, filling a term in one paste
+
+Written 18 September 2026. Second in line, behind US-25.
+
+## Why
+
+Every item is entered one at a time: a title, a date, a time, a category, a
+priority, a submit. Five courses with ten deadlines each is fifty items and
+roughly fifteen minutes of typing, and it lands at exactly the moment described
+in the interview: sitting down before a term starts to put the midterms and
+finals somewhere.
+
+Entry cost is upstream of every other feature. A calendar with four items in it
+looks empty, a goal with four items has meaningless progress, and Trends has
+nothing to plot. Everything built so far assumes a full list and nothing helps
+you get one.
+
+```
+US-26  As someone setting up a whole quarter at once,
+       I want to paste a list of deadlines,
+       so that filling the term is one action instead of fifty.
+
+Priority: Should
+Acceptance criteria:
+  AC-26.1  Given a block of lines, each a date and a title,
+           when I paste it,
+           then I see what each line was understood as, before anything is
+           saved.
+  AC-26.2  Given the preview is showing,
+           when I confirm,
+           then every understood line becomes an item.
+  AC-26.3  Given a line that cannot be read,
+           when I paste,
+           then that line is listed as not understood and the rest still work.
+  AC-26.4  Given the preview is showing,
+           when I cancel,
+           then nothing is added.
+  AC-26.5  Given a pasted line with no time,
+           then the item is due at 23:59 that day, matching the add form.
+  AC-26.6  Given text that is not a list at all,
+           when I paste it,
+           then I am told nothing was understood and nothing is written.
+```
+
+## The contradiction to resolve first
+
+**US-19 deliberately removed typed dates.** It replaced "oct 3 2pm" with the
+browser's own date control, on the grounds that entering something should be a
+click rather than a spelling test, and `parseDueDate` was deleted. Bulk paste
+needs to read dates out of text, which is the thing that was taken out.
+
+These are not actually in conflict, but only if the difference is respected:
+
+- US-19 is about the **daily path**, where guessing at what you meant is worse
+  than a picker, because a wrong guess is silent and you use it every day.
+- A paste is a **one-off, reviewed** action. AC-26.1 says nothing is written
+  until you have seen what each line was understood as, which is the same shape
+  as the import prompt: parse, show, confirm.
+
+So the format is strict rather than clever. `2026-10-03 Read chapter 4` and
+`2026-10-03 17:00 Rent`: an ISO date, an optional 24 hour time, then the title.
+Anything else is reported as not understood rather than guessed at. No month
+names, no "next Tuesday", no natural language. If a strict format turns out to
+be too strict in real use, that is a thing real use will say.
+
+**This is the decision that needs you before it is built.** The alternative is
+not building it and living with one-at-a-time entry, which is a defensible
+answer for someone who adds four things a week.
+
+## Scope
+
+**In:** one paste box, a preview, a confirm. Category and priority take the same
+defaults the add form uses.
+
+**Out:** reading a syllabus PDF, importing from Canvas, and anything that needs
+a network request or guesses at prose. Those are a different product.
