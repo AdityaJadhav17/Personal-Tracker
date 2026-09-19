@@ -23,6 +23,7 @@ function completedOn(day: string): Item {
     completedAt: new Date(y!, m! - 1, d!, 12).toISOString(),
     goalId: null,
     courseId: null,
+    repeat: 'none',
   };
 }
 

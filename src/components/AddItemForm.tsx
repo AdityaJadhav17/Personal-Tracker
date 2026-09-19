@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toDueAt } from '../domain/dates';
-import type { Category, ItemDraft, Priority } from '../domain/types';
+import type { Category, ItemDraft, Priority, Repeat } from '../domain/types';
 
 const TITLE_REQUIRED = 'Give it a title.';
 const DUE_REQUIRED = 'Pick a date.';
@@ -17,6 +17,7 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
   const [dueTime, setDueTime] = useState('');
   const [category, setCategory] = useState<Category>('academic');
   const [priority, setPriority] = useState<Priority>('normal');
+  const [repeat, setRepeat] = useState<Repeat>('none');
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
 
@@ -30,7 +31,7 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
     setDueError(dueAt ? '' : DUE_REQUIRED);
     if (!trimmed || !dueAt) return;
 
-    onAdd({ title: trimmed, dueAt, category, priority });
+    onAdd({ title: trimmed, dueAt, category, priority, repeat });
 
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.
@@ -38,6 +39,7 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
     setDueDate('');
     setDueTime('');
     setCategory('academic');
+    setRepeat('none');
     setPriority('normal');
   }
 
@@ -126,6 +128,22 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
           <option value="high">High</option>
           <option value="normal">Normal</option>
           <option value="low">Low</option>
+        </select>
+      </div>
+
+      <div className="form__field">
+        <label className="form__label" htmlFor="repeat">
+          Repeat
+        </label>
+        <select
+          className="form__select"
+          id="repeat"
+          value={repeat}
+          onChange={(e) => setRepeat(e.target.value as Repeat)}
+        >
+          <option value="none">Never</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
         </select>
       </div>
 

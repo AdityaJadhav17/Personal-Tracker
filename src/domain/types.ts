@@ -26,6 +26,8 @@ export interface Item {
   goalId: string | null;
   /** The course this belongs to, or null. Added in version 2. */
   courseId: string | null;
+  /** How often it comes back. Added in version 3. */
+  repeat: Repeat;
 }
 
 /** Something to get to by a date, that items belong to. */
@@ -62,7 +64,7 @@ export interface Reflection {
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 2;
+  version: 3;
   items: Item[];
   goals: Goal[];
   courses: Course[];
@@ -85,9 +87,12 @@ export interface CourseDraft {
 }
 
 /** What the add form produces, before the app assigns identity and time. */
+export type Repeat = 'none' | 'weekly' | 'monthly';
+
 export interface ItemDraft {
   title: string;
   dueAt: string;
   category: Category;
   priority: Priority;
+  repeat: Repeat;
 }

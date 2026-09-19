@@ -193,3 +193,46 @@ test('AC-01.3 category and priority go back to their defaults after a submit', a
     expect.objectContaining({ category: 'academic', priority: 'normal' }),
   );
 });
+
+test('AC-28.1 an item can be set to repeat when it is added', async () => {
+  const user = userEvent.setup();
+  const drafts: ItemDraft[] = [];
+  render(<AddItemForm onAdd={(d) => drafts.push(d)} titleRef={createRef()} />);
+
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: '2026-10-01' },
+  });
+  await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  expect(drafts[0]?.repeat).toBe('monthly');
+});
+
+test('AC-28.3 an item does not repeat unless you say so', async () => {
+  const user = userEvent.setup();
+  const drafts: ItemDraft[] = [];
+  render(<AddItemForm onAdd={(d) => drafts.push(d)} titleRef={createRef()} />);
+
+  await user.type(screen.getByLabelText('Title'), 'Midterm');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: '2026-10-01' },
+  });
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  expect(drafts[0]?.repeat).toBe('none');
+});
+
+test('AC-28.1 the repeat choice resets with the rest of the form', async () => {
+  const user = userEvent.setup();
+  render(<AddItemForm onAdd={() => {}} titleRef={createRef()} />);
+
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: '2026-10-01' },
+  });
+  await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  expect(screen.getByLabelText('Repeat')).toHaveValue('none');
+});

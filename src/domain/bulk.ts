@@ -15,6 +15,9 @@ const LINE = /^(\d{4}-\d{2}-\d{2})(?:[ \t]+(\d{1,2}:\d{2}))?[ \t]+(.+)$/;
 /** Same defaults the add form starts with. */
 const CATEGORY = 'academic';
 const PRIORITY = 'normal';
+// A pasted line says nothing about repeating, and inventing one would be a
+// guess of exactly the kind US-26's strict format exists to avoid.
+const REPEAT = 'none';
 
 export interface Parsed {
   /** Lines that became items, in the order they were written. */
@@ -55,6 +58,7 @@ export function parseLines(text: string): Parsed {
       dueAt,
       category: CATEGORY,
       priority: PRIORITY,
+      repeat: REPEAT,
     });
   }
 

@@ -29,6 +29,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     completedAt: done ? '2026-09-16T01:00:00.000Z' : null,
     goalId,
     courseId: null,
+    repeat: 'none',
   };
 }
 

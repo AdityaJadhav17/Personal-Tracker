@@ -1,28 +1,56 @@
-import type { Database, Item } from './types';
+import type { Database } from './types';
+
+/** What a database looks like on its way through, before the last hop. */
+interface Partial {
+  version: number;
+  items: unknown[];
+  goals?: unknown[];
+  courses?: unknown[];
+  reflections?: unknown[];
+}
 
 /**
- * Bring a database up to the current version.
+ * Bring a database up to the current version, one hop at a time.
  *
  * Version 1 had only `items`, and items had no goal or course. Version 2 adds
- * goals, courses and reflections, and a null link on every item. Anything
- * already at version 2 is handed straight back.
+ * goals, courses and reflections, and a null link on every item. Version 3
+ * adds `repeat`. Anything already current is handed straight back.
+ *
+ * Written as steps rather than one branch per starting version, so adding
+ * version 4 means adding one hop instead of revisiting every path through.
  *
  * The caller has validated the shape; this only moves it forward. Keep it
  * pure, because both `load` and `parseImport` route through it and neither
  * should be surprised by a mutated input.
  */
-export function upgrade(db: { version: number; items: unknown[] }): Database {
-  if (db.version === 2) return db as unknown as Database;
+export function upgrade(db: Partial): Database {
+  let current = db;
 
-  return {
-    version: 2,
-    items: db.items.map((item) => ({
-      ...(item as Omit<Item, 'goalId' | 'courseId'>),
-      goalId: null,
-      courseId: null,
-    })),
-    goals: [],
-    courses: [],
-    reflections: [],
-  };
+  if (current.version < 2) {
+    current = {
+      version: 2,
+      items: current.items.map((item) => ({
+        ...(item as object),
+        goalId: null,
+        courseId: null,
+      })),
+      goals: [],
+      courses: [],
+      reflections: [],
+    };
+  }
+
+  if (current.version < 3) {
+    current = {
+      ...current,
+      version: 3,
+      items: current.items.map((item) => ({
+        repeat: 'none',
+        // Spread second, so anything that already carries the field keeps it.
+        ...(item as object),
+      })),
+    };
+  }
+
+  return current as unknown as Database;
 }

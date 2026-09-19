@@ -405,7 +405,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(2);
+  expect(parsed.version).toBe(3);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -447,7 +447,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 2,
+    version: 3,
     items: [],
     goals: [],
     courses: [],
@@ -1137,4 +1137,184 @@ test('AC-27.2 with no courses recorded no course control is offered', async () =
   await addIn('Dentist', todayIso(), 'personal');
 
   expect(screen.queryByLabelText('Course')).toBeNull();
+});
+
+/** Add an item that repeats. */
+async function addRepeating(title: string, due: string, repeat: string) {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('Title'), title);
+  fireEvent.change(screen.getByLabelText('Due'), { target: { value: due } });
+  await user.selectOptions(screen.getByLabelText('Repeat'), repeat);
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+}
+
+/** Every item in storage, which is where a spawned one has to land. */
+function storedTitles() {
+  const raw = localStorage.getItem('personal-tracker/v1') ?? '{"items":[]}';
+  return (JSON.parse(raw) as { items: { title: string; status: string }[] })
+    .items;
+}
+
+test('AC-28.1 finishing a monthly item creates the next one', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  const rents = storedTitles().filter((i) => i.title === 'Rent');
+  expect(rents).toHaveLength(2);
+  expect(rents.filter((i) => i.status === 'open')).toHaveLength(1);
+  expect(rents.filter((i) => i.status === 'done')).toHaveLength(1);
+});
+
+test('AC-28.1 the next one keeps everything except the finishing', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  const raw = localStorage.getItem('personal-tracker/v1')!;
+  const items = (JSON.parse(raw) as { items: Record<string, unknown>[] }).items;
+  const next = items.find((i) => i.status === 'open')!;
+  const done = items.find((i) => i.status === 'done')!;
+
+  expect(next.title).toBe('Rent');
+  expect(next.repeat).toBe('monthly');
+  expect(next.category).toBe(done.category);
+  expect(next.priority).toBe(done.priority);
+  expect(next.completedAt).toBeNull();
+  // A new item, not the same one moved.
+  expect(next.id).not.toBe(done.id);
+});
+
+test('AC-28.1 the next one is a month later, at the same local time', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  const raw = localStorage.getItem('personal-tracker/v1')!;
+  const items = (JSON.parse(raw) as { items: Record<string, string>[] }).items;
+  const next = new Date(items.find((i) => i.status === 'open')!.dueAt!);
+
+  expect(next.getMonth()).toBe(10);
+  expect(next.getDate()).toBe(1);
+});
+
+test('AC-28.2 finishing a weekly item creates one seven days later', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Lab writeup', '2026-10-01', 'weekly');
+
+  await user.click(
+    screen.getByRole('button', { name: 'Mark Lab writeup done' }),
+  );
+
+  const raw = localStorage.getItem('personal-tracker/v1')!;
+  const items = (JSON.parse(raw) as { items: Record<string, string>[] }).items;
+  const next = new Date(items.find((i) => i.status === 'open')!.dueAt!);
+
+  expect(next.getMonth()).toBe(9);
+  expect(next.getDate()).toBe(8);
+});
+
+test('AC-28.3 finishing an item that does not repeat creates nothing', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Midterm', '2026-10-01', 'none');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Midterm done' }));
+
+  expect(storedTitles()).toHaveLength(1);
+});
+
+test('AC-28.4 undo reopens the finished one and removes the one it made', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+  expect(storedTitles()).toHaveLength(2);
+
+  await user.keyboard('u');
+
+  const after = storedTitles();
+  expect(after).toHaveLength(1);
+  expect(after[0]?.status).toBe('open');
+});
+
+test('AC-28.4 undo after a non-repeating item still just reopens it', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Midterm', '2026-10-01', 'none');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Midterm done' }));
+  await user.keyboard('u');
+
+  const after = storedTitles();
+  expect(after).toHaveLength(1);
+  expect(after[0]?.status).toBe('open');
+});
+
+test('AC-28.6 a repeating item says so in the list', async () => {
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  // Scoped to the row: "Monthly" is also an option in the Repeat select.
+  expect(
+    within(screen.getByRole('listitem')).getByText('Monthly'),
+  ).toBeVisible();
+});
+
+test('AC-28.6 an item that does not repeat says nothing', async () => {
+  render(<App />);
+  await addRepeating('Midterm', '2026-10-01', 'none');
+
+  const row = within(screen.getByRole('listitem'));
+  expect(row.queryByText('Monthly')).toBeNull();
+  expect(row.queryByText('Weekly')).toBeNull();
+});
+
+test('AC-25.5 deleting an item through the real app removes it from storage', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addIn('Midterm', todayIso(), 'academic');
+  await addIn('Rent', todayIso(), 'personal');
+
+  await user.click(screen.getByRole('button', { name: 'Midterm' }));
+  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+
+  const left = storedTitles();
+  expect(left).toHaveLength(1);
+  expect(left[0]?.title).toBe('Rent');
+});
+
+test('AC-17.1 recording a reflection through the real app stores it', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Reflections');
+
+  await user.click(screen.getByRole('button', { name: 'Good' }));
+
+  const raw = localStorage.getItem('personal-tracker/v1')!;
+  const db = JSON.parse(raw) as { reflections: { score: number }[] };
+  expect(db.reflections).toHaveLength(1);
+  expect(db.reflections[0]?.score).toBe(4);
+});
+
+test('AC-24.1 the calendar export writes a real .ics file', async () => {
+  const user = userEvent.setup();
+  const blobs = captureExport();
+  render(<App />);
+  await addIn('CSE 110 midterm', todayIso(), 'academic');
+
+  await user.click(screen.getByRole('button', { name: 'Export calendar' }));
+
+  const text = await readBlob(blobs[0]!);
+  expect(text).toContain('BEGIN:VCALENDAR');
+  expect(text.replace(/\r\n /g, '')).toContain('SUMMARY:CSE 110 midterm');
 });

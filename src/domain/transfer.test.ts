@@ -14,13 +14,14 @@ function anItem(overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeat: 'none',
     ...overrides,
   };
 }
 
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
-  return { version: 2, items, goals: [], courses: [], reflections: [] };
+  return { version: 3, items, goals: [], courses: [], reflections: [] };
 }
 
 describe('serialize', () => {
@@ -56,7 +57,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -163,7 +164,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    expect(reject('{"version": 3, "items": []}')).toMatch(/version/i);
+    // 3 is current since US-28, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 4, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -265,7 +267,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(2);
+    expect(result.ok && result.db.version).toBe(3);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -282,6 +284,7 @@ describe('parseImport of a version 1 file', () => {
       priority: 'high',
       goalId: null,
       courseId: null,
+      repeat: 'none',
     });
   });
 
@@ -295,7 +298,7 @@ describe('parseImport of a version 1 file', () => {
 describe('parseImport of the new collections', () => {
   function v2File(extra: Record<string, unknown>) {
     return JSON.stringify({
-      version: 2,
+      version: 3,
       items: [],
       goals: [],
       courses: [],
@@ -384,5 +387,158 @@ describe('parseImport of the new collections', () => {
       v2File({ goals: [{ ...goal, evil: 'payload' }] }),
     );
     expect(result.ok && result.db.goals[0]).not.toHaveProperty('evil');
+  });
+});
+
+describe('validation branches that hostile input would find', () => {
+  test('a completedAt that is not a date is refused, naming why', () => {
+    const file = JSON.stringify({
+      version: 1,
+      items: [{ ...anItem(), completedAt: 'last Tuesday' }],
+    });
+
+    const result = parseImport(file);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toMatch(/completed date/i);
+  });
+
+  test('a repeat this app does not know is refused', () => {
+    const file = JSON.stringify({
+      version: 3,
+      items: [{ ...anItem(), repeat: 'fortnightly' }],
+      goals: [],
+      courses: [],
+      reflections: [],
+    });
+
+    const result = parseImport(file);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toMatch(/none, weekly or monthly/i);
+  });
+
+  test('a repeat that is not text at all is refused', () => {
+    const file = JSON.stringify({
+      version: 3,
+      items: [{ ...anItem(), repeat: 7 }],
+      goals: [],
+      courses: [],
+      reflections: [],
+    });
+
+    expect(parseImport(file).ok).toBe(false);
+  });
+
+  test('a version 2 file with no repeat is accepted and defaults to none', () => {
+    const file = JSON.stringify({
+      version: 2,
+      items: [anItem()],
+      goals: [],
+      courses: [],
+      reflections: [],
+    });
+
+    const result = parseImport(file);
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.db.items[0]?.repeat).toBe('none');
+  });
+});
+
+describe('the other collections are validated as hostilely as items are', () => {
+  function withCourse(course: unknown) {
+    return JSON.stringify({
+      version: 2,
+      items: [],
+      goals: [],
+      courses: [course],
+      reflections: [],
+    });
+  }
+
+  function withReflection(reflection: unknown) {
+    return JSON.stringify({
+      version: 2,
+      items: [],
+      goals: [],
+      courses: [],
+      reflections: [reflection],
+    });
+  }
+
+  const aCourse = {
+    id: 'c1',
+    name: 'CSE 110',
+    meetingLocation: '',
+    professorEmail: '',
+    officeHours: '',
+    createdAt: '2026-09-01T00:00:00.000Z',
+  };
+
+  const aReflection = {
+    id: 'r1',
+    day: '2026-09-15',
+    score: 4,
+    note: '',
+    createdAt: '2026-09-15T21:00:00.000Z',
+  };
+
+  test('a course with a non-text location is refused', () => {
+    const result = parseImport(withCourse({ ...aCourse, meetingLocation: 7 }));
+    expect(!result.ok && result.error).toMatch(/location/i);
+  });
+
+  test('a course with a non-text professor email is refused', () => {
+    const result = parseImport(withCourse({ ...aCourse, professorEmail: [] }));
+    expect(!result.ok && result.error).toMatch(/professor email/i);
+  });
+
+  test('a course with non-text office hours is refused', () => {
+    const result = parseImport(withCourse({ ...aCourse, officeHours: null }));
+    expect(!result.ok && result.error).toMatch(/office hours/i);
+  });
+
+  test('a course with no created date is refused', () => {
+    const result = parseImport(withCourse({ ...aCourse, createdAt: 'soon' }));
+    expect(!result.ok && result.error).toMatch(/created date/i);
+  });
+
+  test('a reflection scored outside one to five is refused', () => {
+    expect(parseImport(withReflection({ ...aReflection, score: 9 })).ok).toBe(
+      false,
+    );
+    expect(parseImport(withReflection({ ...aReflection, score: 0 })).ok).toBe(
+      false,
+    );
+  });
+
+  test('a reflection scored with a fraction is refused', () => {
+    const result = parseImport(withReflection({ ...aReflection, score: 3.5 }));
+    expect(!result.ok && result.error).toMatch(/whole number/i);
+  });
+
+  test('a reflection with a note that is not text is refused', () => {
+    const result = parseImport(withReflection({ ...aReflection, note: 3 }));
+    expect(!result.ok && result.error).toMatch(/note/i);
+  });
+
+  test('a reflection with no created date is refused', () => {
+    const result = parseImport(
+      withReflection({ ...aReflection, createdAt: 'yesterday' }),
+    );
+    expect(!result.ok && result.error).toMatch(/created date/i);
+  });
+
+  test('a well formed course and reflection are accepted', () => {
+    const file = JSON.stringify({
+      version: 2,
+      items: [],
+      goals: [],
+      courses: [aCourse],
+      reflections: [aReflection],
+    });
+
+    const result = parseImport(file);
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.db.courses).toHaveLength(1);
+    expect(result.ok && result.db.reflections).toHaveLength(1);
   });
 });

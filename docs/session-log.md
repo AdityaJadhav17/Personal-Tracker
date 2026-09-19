@@ -1307,3 +1307,73 @@ CSE 110 is open.
 again.** Same cause as before: seeding the dev origin while it held data this
 session did not put there. Writing the rule down once did not stop me doing it
 twice, which suggests the fix is not a note in a log but exporting first.
+
+---
+
+## 2026-09-18: US-28, things that come back, and a coverage pass
+
+The last feature Aditya named himself: rent on the 1st of every month, entered
+by hand twelve times a year.
+
+**One field, not a template entity.** `repeat: 'none' | 'weekly' | 'monthly'` on
+the item. A separate recurring-thing would need its own lifecycle, its own
+editing, and its own answer to what happens when you change it after three
+occurrences.
+
+**The next one is created when the last is finished.** Generating a year up
+front would bury the dashboard and fill the calendar with work nobody has done.
+The honest cost, written into the story: a repeating item you never mark done
+never comes back.
+
+**Undo had to learn what done created.** US-05 made `u` the exact inverse of
+marking done, and marking done can now produce a second item. The hook remembers
+the pair and AC-28.4 asserts the spawned one goes with it.
+
+**`upgrade` became hops instead of branches.** It used to ask "is this version
+2?" and treat anything else as version 1. A third version turns that shape into
+a rethink every time. It now applies one step per version.
+
+**A careless find-and-replace broke `load`, and the tests caught it.** Changing
+every `version: 2` to `version: 3` also changed the guard deciding whether a
+stored database already had its collections, so a current database fell through
+the version 1 path and lost its goals, courses and reflections. The comment
+directly above that branch warned about exactly this failure. The fix deleted
+the branch: `load` hands everything to `upgrade` now, because only migrate.ts
+should hold an opinion about versions. Four unit tests and four end to end tests
+went red, which is the system working.
+
+**The locator collision reached five.** "Monthly" is the badge on a row and an
+option in the Repeat select. Scope to the row.
+
+## The coverage pass
+
+Aditya asked for above 95%. `CLAUDE.md` says not to chase a percentage and that
+coverage gates nothing, so this was flagged before it was done and then done,
+because a later instruction from him outranks an earlier written rule.
+
+Two exclusions, both measurement rather than gaming: `types.ts` and
+`vite-env.d.ts` are declarations that compile to no runtime code, so counting
+their lines as uncovered measures the absence of code. That alone moved
+statements from 93.9% to 98.2%.
+
+The rest are real tests for real branches that nothing exercised:
+
+- Import validation for a bad `completedAt`, an unknown `repeat`, and every
+  field of a course and a reflection. These matter beyond the number: the import
+  file is treated as hostile by policy, and those branches were the untested
+  part of that promise.
+- `load` with a `reflections` that is not an array, with `goals` and `courses`
+  of the wrong shape, and with no version at all.
+- `LineChart` with one point, with a gap in the middle, with two runs either
+  side of a gap, with a max of zero, and with nothing but gaps. The divide-by-zero
+  guards had never been run.
+- Delete, record-a-reflection and the calendar export driven through the real
+  app rather than through a component with mock handlers.
+
+**539 unit tests and 169 Playwright specs green. 99.3% statements, 95.33%
+branches, 96.83% functions, 99.3% lines.**
+
+**The data loss did not happen a third time.** The backup went to
+`sessionStorage`, which survives navigation, and the verification added an item
+through the form instead of seeding over storage. Writing the rule down twice
+did not work; changing the method did.

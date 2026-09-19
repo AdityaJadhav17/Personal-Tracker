@@ -28,11 +28,13 @@ export function exportFilename(now: Date): string {
 const CATEGORIES = ['academic', 'personal'];
 const PRIORITIES = ['high', 'normal', 'low'];
 const STATUSES = ['open', 'done'];
+const REPEATS = ['none', 'weekly', 'monthly'];
 
 /** Top level keys each version is allowed to carry. */
 const KEYS: Record<number, string[]> = {
   1: ['version', 'items'],
   2: ['version', 'items', 'goals', 'courses', 'reflections'],
+  3: ['version', 'items', 'goals', 'courses', 'reflections'],
 };
 
 export type ParseResult =
@@ -80,6 +82,12 @@ function itemProblem(value: unknown): string | null {
     return 'its completed date must be a date or null';
   }
   // Absent in version 1 files, which is why these are not required.
+  if (
+    raw.repeat !== undefined &&
+    (!isText(raw.repeat) || !REPEATS.includes(raw.repeat))
+  ) {
+    return 'its repeat must be none, weekly or monthly';
+  }
   if (!isLink(raw.goalId)) return 'its goal must be an id or null';
   if (!isLink(raw.courseId)) return 'its course must be an id or null';
   return null;
@@ -146,6 +154,9 @@ function toItem(value: unknown): Item {
     completedAt: raw.completedAt as string | null,
     goalId: (raw.goalId as string | null | undefined) ?? null,
     courseId: (raw.courseId as string | null | undefined) ?? null,
+    // Absent before version 3, and upgrade would fill it anyway; defaulting
+    // here keeps toItem total so the mapper never returns a partial item.
+    repeat: (raw.repeat as Item['repeat'] | undefined) ?? 'none',
   };
 }
 
@@ -229,7 +240,7 @@ export function parseImport(text: string): ParseResult {
   }
 
   const version = raw.version;
-  if (version !== 1 && version !== 2) {
+  if (version !== 1 && version !== 2 && version !== 3) {
     return {
       ok: false,
       error: 'That file is not a version this app can read.',
@@ -282,12 +293,14 @@ export function parseImport(text: string): ParseResult {
 
   return {
     ok: true,
-    db: {
-      version: 2,
+    // Routed through upgrade rather than stamped with a number, so the version
+    // this returns is whatever the current one is and only migrate.ts decides.
+    db: upgrade({
+      version,
       items: raw.items.map(toItem),
       goals: (raw.goals as unknown[]).map(toGoal),
       courses: (raw.courses as unknown[]).map(toCourse),
       reflections: (raw.reflections as unknown[]).map(toReflection),
-    },
+    }),
   };
 }

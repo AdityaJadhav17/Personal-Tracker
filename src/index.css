@@ -1261,3 +1261,10 @@ button {
 .filter__select:hover {
   border-color: var(--accent);
 }
+
+/* A thing that comes back, said where you read the row. */
+.item__chip--repeat {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+}

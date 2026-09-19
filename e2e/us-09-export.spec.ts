@@ -55,7 +55,7 @@ test('AC-09.1 exporting downloads a real file containing every item', async ({
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(2);
+  expect(parsed.version).toBe(3);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -99,7 +99,7 @@ test('AC-09.2 exporting an empty database downloads a valid file', async ({
   const { text } = await exportAndRead(page);
 
   expect(JSON.parse(text)).toEqual({
-    version: 2,
+    version: 3,
     items: [],
     goals: [],
     courses: [],

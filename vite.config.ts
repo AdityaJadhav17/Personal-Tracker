@@ -15,7 +15,16 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/main.tsx', 'src/test-setup.ts', 'src/**/*.test.{ts,tsx}'],
+      exclude: [
+        'src/main.tsx',
+        'src/test-setup.ts',
+        'src/**/*.test.{ts,tsx}',
+        // Type declarations only. They compile to nothing, so counting their
+        // lines as uncovered measures the absence of code rather than the
+        // absence of tests.
+        'src/domain/types.ts',
+        'src/vite-env.d.ts',
+      ],
     },
   },
 });

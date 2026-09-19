@@ -6,6 +6,7 @@ import {
   monthCells,
   monthLabel,
   monthValue,
+  nextOccurrence,
   shiftMinutes,
   shiftMonth,
   toIcsStamp,
@@ -351,5 +352,100 @@ describe('toTimeValue', () => {
 
   test('midnight is 00:00, not blank', () => {
     expect(toTimeValue(new Date(2026, 9, 3, 0, 0))).toBe('00:00');
+  });
+});
+
+describe('nextOccurrence', () => {
+  /** Read an instant back as local fields, which is how it renders. */
+  function fields(iso: string) {
+    const d = new Date(iso);
+    return {
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      day: d.getDate(),
+      hours: d.getHours(),
+      minutes: d.getMinutes(),
+    };
+  }
+
+  test('AC-28.2 weekly is seven days later, at the same local time', () => {
+    const at = new Date(2026, 9, 1, 17, 0).toISOString();
+
+    expect(fields(nextOccurrence(at, 'weekly'))).toEqual({
+      year: 2026,
+      month: 10,
+      day: 8,
+      hours: 17,
+      minutes: 0,
+    });
+  });
+
+  test('AC-28.1 monthly is the same day of the next month', () => {
+    const at = new Date(2026, 9, 1, 17, 0).toISOString();
+
+    expect(fields(nextOccurrence(at, 'monthly'))).toEqual({
+      year: 2026,
+      month: 11,
+      day: 1,
+      hours: 17,
+      minutes: 0,
+    });
+  });
+
+  test('AC-28.1 monthly crosses the year end', () => {
+    const at = new Date(2026, 11, 1, 17, 0).toISOString();
+    const next = fields(nextOccurrence(at, 'monthly'));
+
+    expect(next.year).toBe(2027);
+    expect(next.month).toBe(1);
+    expect(next.day).toBe(1);
+  });
+
+  test('AC-28.5 the 31st clamps to the last day of a short month', () => {
+    // 31 January plus one month is not the 3rd of March.
+    const at = new Date(2027, 0, 31, 9, 0).toISOString();
+    const next = fields(nextOccurrence(at, 'monthly'));
+
+    expect(next.month).toBe(2);
+    expect(next.day).toBe(28);
+  });
+
+  test('AC-28.5 the 31st clamps to 29 February in a leap year', () => {
+    const at = new Date(2028, 0, 31, 9, 0).toISOString();
+    const next = fields(nextOccurrence(at, 'monthly'));
+
+    expect(next.month).toBe(2);
+    expect(next.day).toBe(29);
+  });
+
+  test('AC-28.5 the 31st clamps to 30 in a thirty day month', () => {
+    const at = new Date(2026, 2, 31, 9, 0).toISOString();
+    const next = fields(nextOccurrence(at, 'monthly'));
+
+    expect(next.month).toBe(4);
+    expect(next.day).toBe(30);
+  });
+
+  test('AC-28.5 a clamp is permanent, which is the documented limitation', () => {
+    // January to February clamps to the 28th, and March then takes the 28th
+    // rather than returning to the 31st, because the next date is computed
+    // from the last one and nothing remembers the day it started on. An item
+    // due on the 29th to 31st walks backwards the first time it crosses a
+    // short month, and then stays there. Aditya's case is the 1st, which never
+    // clamps. Anchoring the original day is a stored field and a story of its
+    // own if that ever matters.
+    const january = new Date(2027, 0, 31, 9, 0).toISOString();
+    const february = nextOccurrence(january, 'monthly');
+
+    expect(fields(february).day).toBe(28);
+    expect(fields(nextOccurrence(february, 'monthly')).day).toBe(28);
+  });
+
+  test('weekly across a month boundary', () => {
+    const at = new Date(2026, 8, 30, 12, 0).toISOString();
+    const next = fields(nextOccurrence(at, 'weekly'));
+
+    expect(next.month).toBe(10);
+    expect(next.day).toBe(7);
   });
 });

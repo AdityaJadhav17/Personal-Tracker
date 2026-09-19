@@ -212,3 +212,45 @@ export function toTimeValue(at: Date): string {
   const hours = String(at.getHours()).padStart(2, '0');
   return `${hours}:${String(at.getMinutes()).padStart(2, '0')}`;
 }
+
+/** How often an item comes back. */
+export type Repeat = 'none' | 'weekly' | 'monthly';
+
+/**
+ * When a repeating item is next due, from when it was last due.
+ *
+ * Weekly is seven days on. Monthly is the same day of the next month, clamped
+ * to the last day when that month is shorter: the 31st of January becomes the
+ * 28th of February, not the 3rd of March.
+ *
+ * ponytail: the clamp is permanent, because the next date is computed from the
+ * last one and nothing stores the day it started on. An item due on the 29th
+ * to 31st walks backwards the first time it crosses a short month and stays
+ * there. Anchoring the original day would need a field on the item, and is a
+ * story of its own if it ever matters.
+ */
+export function nextOccurrence(iso: string, repeat: Repeat): string {
+  const at = new Date(iso);
+
+  if (repeat === 'weekly') {
+    return new Date(
+      at.getFullYear(),
+      at.getMonth(),
+      at.getDate() + 7,
+      at.getHours(),
+      at.getMinutes(),
+    ).toISOString();
+  }
+
+  // Day zero of the month after next is the last day of the next month, which
+  // is the clamp without a table of month lengths.
+  const lastDay = new Date(at.getFullYear(), at.getMonth() + 2, 0).getDate();
+
+  return new Date(
+    at.getFullYear(),
+    at.getMonth() + 1,
+    Math.min(at.getDate(), lastDay),
+    at.getHours(),
+    at.getMinutes(),
+  ).toISOString();
+}

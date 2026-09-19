@@ -14,6 +14,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     completedAt: done ? '2026-09-16T01:00:00.000Z' : null,
     goalId,
     courseId: null,
+    repeat: 'none',
   };
 }
 
@@ -28,7 +29,7 @@ function aGoal(id: string, name = id): Goal {
 }
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
-  return { version: 2, items, goals, courses: [], reflections: [] };
+  return { version: 3, items, goals, courses: [], reflections: [] };
 }
 
 describe('progressOf', () => {
@@ -126,7 +127,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(2);
+    expect(next.version).toBe(3);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

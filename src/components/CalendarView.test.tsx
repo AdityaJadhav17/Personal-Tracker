@@ -27,6 +27,7 @@ function dueOn(
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeat: 'none',
     ...overrides,
   };
 }

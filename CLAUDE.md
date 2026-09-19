@@ -30,10 +30,11 @@ Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
 for why.
 
-The database is at version 2: items, goals, courses and reflections. Both
-`load` and `parseImport` upgrade a version 1 database through
-`src/domain/migrate.ts`, so an export taken before goals existed still opens.
-Any future shape change does the same rather than orphaning data.
+The database is at version 3: items, goals, courses and reflections, with a
+`repeat` on every item. Both `load` and `parseImport` route through
+`upgrade` in `src/domain/migrate.ts`, which applies one hop per version, so an
+export taken before goals existed still opens. Neither module branches on the
+version itself; adding version 4 means adding one hop there and nowhere else.
 
 ## How we work
 
@@ -126,10 +127,10 @@ is being fast to check. See the decision log.
 
 ## Not built
 
-Phone notifications and recurring items.
+Phone notifications.
 
-Category filtering (US-08) and course filtering (US-27) are both built, which is
-why they left this list.
+Category filtering (US-08), course filtering (US-27) and recurring items (US-28)
+are all built, which is why they left this list.
 
 Do not build toward these. When one becomes real it gets its own story.
 

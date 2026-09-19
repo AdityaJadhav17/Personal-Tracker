@@ -14,12 +14,13 @@ function anItem(overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeat: 'none',
     ...overrides,
   };
 }
 
 function aDatabase(items: Item[] = [anItem()]): Database {
-  return { version: 2, items, goals: [], courses: [], reflections: [] };
+  return { version: 3, items, goals: [], courses: [], reflections: [] };
 }
 
 beforeEach(() => {
@@ -70,5 +71,46 @@ describe('save', () => {
     const title = '<script>alert(1)</script> & "quotes"';
     save(aDatabase([anItem({ title })]));
     expect(load().items[0]?.title).toBe(title);
+  });
+});
+
+describe('a stored database with collections of the wrong shape', () => {
+  test('reflections that are not an array come back empty rather than crashing', () => {
+    localStorage.setItem(
+      'personal-tracker/v1',
+      JSON.stringify({
+        version: 3,
+        items: [],
+        goals: [],
+        courses: [],
+        reflections: 'nope',
+      }),
+    );
+
+    expect(load().reflections).toEqual([]);
+  });
+
+  test('goals and courses of the wrong shape come back empty too', () => {
+    localStorage.setItem(
+      'personal-tracker/v1',
+      JSON.stringify({
+        version: 3,
+        items: [],
+        goals: 1,
+        courses: null,
+        reflections: [],
+      }),
+    );
+
+    const db = load();
+    expect(db.goals).toEqual([]);
+    expect(db.courses).toEqual([]);
+  });
+
+  test('a database with no version at all is read as the oldest one', () => {
+    localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
+
+    // No version means version 1, which upgrade carries forward.
+    expect(load().version).toBe(3);
   });
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
-import { now, toDateValue } from '../domain/dates';
+import { nextOccurrence, now, toDateValue } from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
 import { recordReflection } from '../domain/reflections';
 import type {
@@ -47,6 +47,7 @@ function itemFrom(draft: ItemDraft): Item {
     dueAt: draft.dueAt,
     category: draft.category,
     priority: draft.priority,
+    repeat: draft.repeat,
     status: 'open',
     note: '',
     createdAt: now().toISOString(),
@@ -88,7 +89,15 @@ export function useDatabase(): {
       return null;
     }
   });
-  const [undoable, setUndoable] = useState<string | null>(null);
+  /**
+   * What the last "done" did, so `u` can be its exact inverse. US-28 made
+   * finishing something able to create a second item, and undo that only
+   * reopens the first would leave a duplicate behind.
+   */
+  const [undoable, setUndoable] = useState<{
+    doneId: string;
+    spawnedId: string | null;
+  } | null>(null);
 
   function commit(next: Database) {
     setDb(next);
@@ -124,11 +133,14 @@ export function useDatabase(): {
 
       commit({
         ...db,
-        items: db.items.map((item) =>
-          item.id === undoable
-            ? { ...item, status: 'open', completedAt: null }
-            : item,
-        ),
+        items: db.items
+          // AC-28.4. The one it created goes with it.
+          .filter((item) => item.id !== undoable.spawnedId)
+          .map((item) =>
+            item.id === undoable.doneId
+              ? { ...item, status: 'open', completedAt: null }
+              : item,
+          ),
       });
       setUndoable(null);
     }
@@ -152,12 +164,38 @@ export function useDatabase(): {
     },
 
     markDone(id) {
-      mapItems(id, (item) => ({
-        ...item,
-        status: 'done',
-        completedAt: now().toISOString(),
-      }));
-      setUndoable(id);
+      update((current) => {
+        const finished = current.items.find((item) => item.id === id);
+        if (!finished) return current;
+
+        const done = {
+          ...finished,
+          status: 'done' as const,
+          completedAt: now().toISOString(),
+        };
+
+        // AC-28.1. The next one is created when the last is finished, rather
+        // than a year of them up front: twelve rent rows would bury the list
+        // and fill the calendar with work nobody has done.
+        const next =
+          finished.repeat === 'none'
+            ? null
+            : {
+                ...finished,
+                id: crypto.randomUUID(),
+                dueAt: nextOccurrence(finished.dueAt, finished.repeat),
+                status: 'open' as const,
+                completedAt: null,
+                createdAt: now().toISOString(),
+              };
+
+        setUndoable({ doneId: id, spawnedId: next?.id ?? null });
+
+        const items = current.items.map((item) =>
+          item.id === id ? done : item,
+        );
+        return { ...current, items: next ? [...items, next] : items };
+      });
     },
 
     setNote(id, note) {
@@ -245,7 +283,7 @@ export function useDatabase(): {
   return {
     db,
     undoableTitle:
-      db?.items.find((item) => item.id === undoable)?.title ?? null,
+      db?.items.find((item) => item.id === undoable?.doneId)?.title ?? null,
     actions,
   };
 }

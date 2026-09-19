@@ -4,7 +4,7 @@ import type { Course, Database, Goal, Item, Reflection } from '../domain/types';
 export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
-  return { version: 2, items: [], goals: [], courses: [], reflections: [] };
+  return { version: 3, items: [], goals: [], courses: [], reflections: [] };
 }
 
 /**
@@ -47,23 +47,19 @@ export function load(): Database {
   const stored = parsed as Record<string, unknown>;
   const items = stored.items as Item[];
 
-  // Read each collection explicitly. Rebuilding the object from version and
-  // items alone silently dropped goals, courses and reflections.
-  if (stored.version === 2) {
-    return {
-      version: 2,
-      items,
-      goals: Array.isArray(stored.goals) ? (stored.goals as Goal[]) : [],
-      courses: Array.isArray(stored.courses)
-        ? (stored.courses as Course[])
-        : [],
-      reflections: Array.isArray(stored.reflections)
-        ? (stored.reflections as Reflection[])
-        : [],
-    };
-  }
-
-  return upgrade({ version: 1, items });
+  // Read each collection explicitly and hand the whole thing to upgrade.
+  // Rebuilding the object from version and items alone silently dropped goals,
+  // courses and reflections, and branching on the version here meant db.ts had
+  // an opinion about schema versions that only migrate.ts should hold.
+  return upgrade({
+    version: typeof stored.version === 'number' ? stored.version : 1,
+    items,
+    goals: Array.isArray(stored.goals) ? (stored.goals as Goal[]) : [],
+    courses: Array.isArray(stored.courses) ? (stored.courses as Course[]) : [],
+    reflections: Array.isArray(stored.reflections)
+      ? (stored.reflections as Reflection[])
+      : [],
+  });
 }
 
 /** Write the whole database. Called on submit and on blur, never per keystroke. */

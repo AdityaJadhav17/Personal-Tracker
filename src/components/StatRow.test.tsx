@@ -24,6 +24,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeat: 'none',
     ...overrides,
   };
 }

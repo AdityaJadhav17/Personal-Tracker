@@ -114,6 +114,12 @@ export default function ItemRow({
       {/* A link it does not have costs no width and no tab stop. */}
       {course && <span className="item__chip">{course.name}</span>}
       {goal && <span className="item__chip item__chip--goal">{goal.name}</span>}
+      {/* AC-28.6. A thing that comes back should say so where you read it. */}
+      {item.repeat !== 'none' && (
+        <span className="item__chip item__chip--repeat">
+          {item.repeat === 'weekly' ? 'Weekly' : 'Monthly'}
+        </span>
+      )}
       {/*
         The note stays visible when the row is closed. Hiding something you
         wrote behind a click would trade one problem for a worse one.

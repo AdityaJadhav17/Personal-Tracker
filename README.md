@@ -30,6 +30,11 @@ work for CSE 110. The course control only appears once you have a course. Neithe
 choice is remembered: a reload shows everything again, because a filter you
 forgot you set is a list that is lying to you.
 
+Set something to repeat weekly or monthly and finishing it creates the next one,
+so rent is recorded once instead of twelve times a year. The next one only
+appears when you finish the last, which means a repeating item you ignore stops
+repeating.
+
 Pick a date, and a time if it needs one. With no time, a deadline means 23:59
 that day. Dates are stored as fixed moments, so a deadline set at 5pm still
 reads as 5pm on the other side of a daylight saving change.
