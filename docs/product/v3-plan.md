@@ -369,6 +369,111 @@ did I already send" is a table.
 **Docker Compose with two services at most**: the app and Tailscale. Adding a
 third is a decision that needs a reason.
 
+## Where the server runs, which is not the same question as HTTPS
+
+Two things get conflated here and they have different answers.
+
+**Does it need HTTPS?** Yes, for the phone, and there is no way around it.
+Service workers and the Push API only run in a secure context. Browsers exempt
+`http://localhost` and `127.0.0.1`, which is why the spike works on the laptop
+over plain HTTP, but that exemption does not extend to a LAN address. From the
+phone, `http://192.168.1.50:8080` is not a secure context, the service worker
+will not register, and push is impossible.
+
+**Does it need to be on the internet?** No. `tailscale serve` provisions a real
+Let's Encrypt certificate for a `*.ts.net` name and carries traffic over the
+WireGuard tunnel between your own devices. No port forwarding, no inbound rule,
+nothing listening on a public address.
+
+Two things to know. `tailscale funnel` is the opposite of `serve` and publishes
+to the internet; it is not part of this plan. And the hostname appears in
+Certificate Transparency logs, which are public, so the existence of
+`machine.your-tailnet.ts.net` becomes a matter of record. That is metadata
+rather than access, and it should be known rather than discovered.
+
+**Outbound is still needed.** A push does not travel from the server to the
+phone. The server hands it to Apple's push service, which delivers it. Zero
+inbound connections, but it must be able to reach out. The payload is encrypted
+with keys only the server and the phone hold, so Apple relays ciphertext while
+seeing that a message went to that device and when.
+
+### The problem this plan originally skipped
+
+**A server on a laptop cannot wake you up.** The lid is shut at 8am, so the
+scheduler is not running, so no nudge arrives, which is the whole point of phase
+one. "Local to my device" and "reminds me when I am not at my device" pull
+against each other, and the first draft of this plan did not say so.
+
+### Option A: a spare always-on machine at home
+
+A Raspberry Pi, an old laptop, a NAS. On the tailnet, nothing public, and the
+data never leaves the flat.
+
+**Costs.** Sixty to eighty pounds of hardware and an evening of setup. A Pi
+running continuously from an SD card will corrupt it eventually, so boot from
+a USB SSD or accept that the SQLite file needs backing up somewhere. A home
+internet outage means no nudges, and so does going home for a holiday and
+leaving it behind.
+
+**The question that decides whether this is viable:** is there a stable
+always-on place to put it? A flat with its own router, yes. A dorm room with
+managed networking and a move every September, much less clearly.
+
+### Option B: a small VPS
+
+Four to six pounds a month. Always on, survives moving, snapshots are easy, and
+somebody else worries about the power.
+
+**Costs.** A doctor's appointment title and a rent date land on a disk owned by
+a company. Encryption at rest there is close to theatre, because the server
+needs the key in order to decide whether to nudge you about the thing. This is
+the option that most directly contradicts what the security posture was written
+to protect, and it should not be chosen for convenience alone.
+
+### Option C: the laptop, accepting the limit
+
+Free, no new hardware, no new trust boundary at all beyond the push relay. It
+nudges while you are working and not otherwise.
+
+**Costs.** It would have caught an assignment deadline during an evening study
+session. It would not have caught a 9am dentist appointment, which is one of
+the two failures that caused this project to exist.
+
+### The evaluation
+
+**Start with C, move to A when there is evidence, and take B only if there is
+nowhere stable to put A.**
+
+The reasoning has three parts.
+
+**The host is a deployment decision, not an architectural one.** The server is a
+container with a volume. Moving it from a laptop to a Pi is the same compose
+file somewhere else, plus re-pairing the phone. Choosing C now costs nothing
+later, which is what makes starting cheap safe rather than short-sighted.
+
+**C's gap is already half covered.** The time-critical alarm case, the 9am
+appointment, is what the `.ics` export exists for, and your phone fires that
+alarm whether or not any server is awake. What the server adds that nothing else
+can is the sentence about completions from US-33, and a morning digest arriving
+at 8:20 instead of 8:00 is not a failure. So C is weaker than A, but not as much
+weaker as it first looks.
+
+**A is right, but not yet.** Sixty pounds and an evening is a small price for
+keeping the data in the flat, and it is clearly better than B on every axis
+except portability. But buying it before the spike has answered whether iOS
+delivers a push on time, and before a fortnight has shown the nudges are worth
+having, is buying hardware to support a guess.
+
+**Against B, specifically.** It is the only option that moves personal health
+and location data onto someone else's disk, and it buys uptime that A also
+provides. Its one genuine case is having nowhere stable to put a Pi, which is a
+real possibility worth answering before the hardware is bought rather than
+after.
+
+**For the spike, the laptop is correct.** It measures whether iOS delivers a
+push on time, which does not depend on where the sender lives. Do not buy
+anything to answer that question.
+
 ## What the server is allowed to hold
 
 Written before any code, because it is easier to keep a promise than to shrink
