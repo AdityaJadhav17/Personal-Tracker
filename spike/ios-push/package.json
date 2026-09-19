@@ -1,0 +1,12 @@
+{
+  "name": "ios-push-spike",
+  "private": true,
+  "type": "module",
+  "description": "Throwaway. Answers three questions about Web Push on iOS, then gets deleted.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}

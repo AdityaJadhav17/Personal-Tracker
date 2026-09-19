@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Push spike</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        max-width: 34rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      .state {
+        padding: 12px;
+        border: 1px solid currentColor;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      button {
+        display: block;
+        width: 100%;
+        margin-bottom: 8px;
+        padding: 14px;
+        font: inherit;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      ol {
+        padding-left: 20px;
+        font-size: 14px;
+      }
+      code {
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web Push spike</h1>
+
+    <p class="state" id="state">Checking…</p>
+
+    <div id="controls" hidden>
+      <button id="enable" type="button">Turn notifications on</button>
+      <button data-delay="0" data-label="immediate" type="button">
+        Send now
+      </button>
+      <button data-delay="60" data-label="60s idle" type="button">
+        Send in 60 seconds, then lock the phone
+      </button>
+      <button data-delay="300" data-label="5m idle" type="button">
+        Send in 5 minutes
+      </button>
+    </div>
+
+    <h2 style="font-size: 16px">What was sent</h2>
+    <ol id="log">
+      <li>Nothing yet.</li>
+    </ol>
+
+    <p style="font-size: 13px">
+      Every notification carries the second it was sent. Compare that with when
+      it appeared. Run it once with no Focus on, once with a Focus on, and once
+      with this app in a Scheduled Summary.
+    </p>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

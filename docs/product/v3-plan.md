@@ -304,10 +304,61 @@ self-hosted notification relay such as ntfy, which would work for phase 1 in an
 afternoon and then be thrown away when phase 2 arrives. Building something to
 discard it is only worth it if phase 1 has to ship this week, and it does not.
 
-**One caveat to check before committing.** Web Push on iOS works only for a site
-added to the Home Screen, and only on 16.4 and later. On Android it works
-without that. If the phone is an iPhone, the install step is a real usability
-cost and worth knowing about before the plan is approved rather than after.
+**The phone is an iPhone 18 Pro Max**, which settles this in favour of the PWA.
+The Home Screen install has been required for Web Push since iOS 16.4, and it
+is a step phase two would need anyway, so it costs one install rather than two.
+A notification relay would mean an App Store app now and the PWA later.
+
+Three iOS specifics change the risk, and the first could sink phase one. They
+are measured by the spike below rather than assumed.
+
+**Notification Summary and Focus.** iOS can hold non-urgent notifications for a
+scheduled digest. Native apps escape that with the Time Sensitive interruption
+level, and the Web Push API is not believed to expose it. A nudge sent at 8am
+that surfaces at 6pm is worse than none, because you will have trusted it.
+
+**No background sync.** A PWA on iOS cannot refresh itself in the background.
+Push is the only way to reach the phone proactively, which is fine for phase
+one and means phase two updates on open or on push, never quietly.
+
+**Seven day storage eviction.** Safari evicts script-writable storage after
+seven days without interaction. Home Screen web apps are exempt, but it is a
+strong argument for the server owning the data in phase two rather than the
+phone holding anything that matters.
+
+## The spike, and the go/no-go it decides
+
+Written and ready in [../../spike/ios-push](../../spike/ios-push). It is a
+minimal PWA and a server that sends a notification carrying the second it was
+sent, so that the arrival time can be compared with it. It shares no code with
+the app and has its own dependency.
+
+**Run it before approving any of this.** Roughly two hours including the
+waiting.
+
+**Question 1: does a push arrive at all?** Send one and watch.
+
+**Question 2: does it arrive when sent?** The one that matters. Send with the
+phone idle, again with a Focus mode on, and again with the app in a Scheduled
+Summary.
+
+**Question 3: is the subscription alive a week later?** Leave it a week, then
+send. A `404` or `410` means iOS expired it.
+
+**Go.** All three pass, and the plan stands as written.
+
+**No-go on question 2.** Phase one cannot use Web Push for time-critical
+nudges. The fallback is not obvious and would need its own thinking: an ICS
+feed the phone subscribes to, where the calendar rather than a web app owns the
+alert, is the most likely answer, and it changes phase one substantially while
+leaving phase two alone.
+
+**No-go on question 3.** Survivable. It makes US-34 load-bearing rather than
+merely prudent: the app has to notice the subscription has lapsed and ask to
+re-subscribe.
+
+Record the answers here and then delete the spike directory. A spike that
+survives becomes a codebase nobody chose.
 
 **A scheduler inside the server process, not cron.** The nudge logic needs the
 database and the domain functions. A loop that wakes every few minutes, asks

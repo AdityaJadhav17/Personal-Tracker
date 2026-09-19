@@ -1,0 +1,5 @@
+# Generated at runtime. vapid.json holds a private key and subscriptions.json
+# holds a push endpoint for a real device: neither belongs in a repository.
+vapid.json
+subscriptions.json
+node_modules/
