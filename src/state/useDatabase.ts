@@ -12,6 +12,7 @@ import type {
   Item,
   ItemDraft,
   Reflection,
+  Repeat,
 } from '../domain/types';
 import { load, save } from '../storage/db';
 
@@ -23,7 +24,7 @@ export interface DatabaseActions {
   markDone: (id: string) => void;
   setNote: (id: string, note: string) => void;
   /** US-25. Rename an item or move its deadline. */
-  editItem: (id: string, title: string, dueAt: string) => void;
+  editItem: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   /** US-25. Gone for good; goal progress is derived, so it corrects itself. */
   removeItem: (id: string) => void;
   setCourse: (id: string, courseId: string | null) => void;
@@ -219,8 +220,8 @@ export function useDatabase(): {
       mapItems(id, (item) => ({ ...item, note }));
     },
 
-    editItem(id, title, dueAt) {
-      mapItems(id, (item) => ({ ...item, title, dueAt }));
+    editItem(id, title, dueAt, repeat) {
+      mapItems(id, (item) => ({ ...item, title, dueAt, repeat }));
     },
 
     removeItem(id) {

@@ -974,7 +974,12 @@ test('AC-22.3 opening one item does not open another', async () => {
 function renderEditable(
   rest: Partial<Item> = {},
   handlers: Partial<{
-    onEdit: (id: string, title: string, dueAt: string) => void;
+    onEdit: (
+      id: string,
+      title: string,
+      dueAt: string,
+      repeat: Item['repeat'],
+    ) => void;
     onDelete: (id: string) => void;
   }> = {},
 ) {
@@ -1095,4 +1100,78 @@ test('AC-25.4 a closed row offers no delete, so it cannot be hit by accident', (
   renderEditable();
 
   expect(screen.queryByRole('button', { name: 'Delete Midterm' })).toBeNull();
+});
+
+test('AC-29.1 the repeat control opens showing what the item does', async () => {
+  const user = userEvent.setup();
+  renderEditable({ repeat: 'monthly' });
+
+  await openItem(user, 'Midterm');
+
+  expect(screen.getByLabelText('Repeat for Midterm')).toHaveValue('monthly');
+});
+
+test('AC-29.1 an item that does not repeat shows never', async () => {
+  const user = userEvent.setup();
+  renderEditable();
+
+  await openItem(user, 'Midterm');
+
+  expect(screen.getByLabelText('Repeat for Midterm')).toHaveValue('none');
+});
+
+test('AC-29.2 setting a repeat reports it with the rest of the edit', async () => {
+  const user = userEvent.setup();
+  const edits: string[] = [];
+  renderEditable(
+    {},
+    { onEdit: (_id, _title, _dueAt, repeat) => edits.push(repeat) },
+  );
+
+  await openItem(user, 'Midterm');
+  await user.selectOptions(
+    screen.getByLabelText('Repeat for Midterm'),
+    'monthly',
+  );
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(edits).toEqual(['monthly']);
+});
+
+test('AC-29.3 clearing a repeat reports never', async () => {
+  const user = userEvent.setup();
+  const edits: string[] = [];
+  renderEditable(
+    { repeat: 'weekly' },
+    { onEdit: (_id, _title, _dueAt, repeat) => edits.push(repeat) },
+  );
+
+  await openItem(user, 'Midterm');
+  await user.selectOptions(screen.getByLabelText('Repeat for Midterm'), 'none');
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(edits).toEqual(['none']);
+});
+
+test('AC-29.6 changing only the repeat leaves the title and date alone', async () => {
+  const user = userEvent.setup();
+  const saved: { title: string; dueAt: string }[] = [];
+  renderEditable(
+    { repeat: 'none' },
+    { onEdit: (_id, title, dueAt) => saved.push({ title, dueAt }) },
+  );
+
+  await openItem(user, 'Midterm');
+  const before = screen.getByLabelText('Due for Midterm') as HTMLInputElement;
+  const dueBefore = before.value;
+
+  await user.selectOptions(
+    screen.getByLabelText('Repeat for Midterm'),
+    'weekly',
+  );
+  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+
+  expect(saved[0]?.title).toBe('Midterm');
+  expect(saved[0]?.dueAt).toBe(anItem('Midterm', 1).dueAt);
+  expect(dueBefore).not.toBe('');
 });

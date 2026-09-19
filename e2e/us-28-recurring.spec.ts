@@ -207,3 +207,57 @@ test('AC-28.8 a repeating item survives an export and import round trip', async 
   const items = await stored(page);
   expect((items[0] as unknown as { repeat: string }).repeat).toBe('monthly');
 });
+
+test('AC-29.3 and AC-29.4 a repeat can be switched off, and then creates nothing', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await addRepeating(page, 'Rent', 'monthly');
+
+  const row = page.getByRole('listitem').filter({ hasText: 'Rent' });
+  await expect(row.getByText('Monthly')).toBeVisible();
+
+  // Open the row, stop the repeat, save, close.
+  await page.getByRole('button', { name: 'Rent', exact: true }).click();
+  await page.getByLabel('Repeat for Rent').selectOption('none');
+  await page.getByRole('button', { name: 'Save Rent' }).click();
+  await page.getByRole('button', { name: 'Rent', exact: true }).click();
+
+  await expect(row.getByText('Monthly')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Mark Rent done' }).click();
+  expect(await stored(page)).toHaveLength(1);
+});
+
+test('AC-29.2 a repeat switched on survives a reload and then works', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await addRepeating(page, 'Rent', 'none');
+
+  await page.getByRole('button', { name: 'Rent', exact: true }).click();
+  await page.getByLabel('Repeat for Rent').selectOption('monthly');
+  await page.getByRole('button', { name: 'Save Rent' }).click();
+
+  await page.reload();
+
+  const row = page.getByRole('listitem').filter({ hasText: 'Rent' });
+  await expect(row.getByText('Monthly')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Mark Rent done' }).click();
+  expect(await stored(page)).toHaveLength(2);
+});
+
+test('AC-29.6 changing the repeat does not move the deadline', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await addRepeating(page, 'Rent', 'none');
+  const before = (await stored(page))[0]!.dueAt;
+
+  await page.getByRole('button', { name: 'Rent', exact: true }).click();
+  await page.getByLabel('Repeat for Rent').selectOption('weekly');
+  await page.getByRole('button', { name: 'Save Rent' }).click();
+
+  expect((await stored(page))[0]!.dueAt).toBe(before);
+});

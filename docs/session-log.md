@@ -1431,3 +1431,34 @@ so those characters never appear literally in the source at all.
 
 **556 unit tests and 169 Playwright specs green. 99.31% statements, 95.43%
 branches.**
+
+---
+
+## 2026-09-18: US-29, an off switch for a repeat
+
+US-28 shipped a field the edit panel does not offer. `repeat` could be set when
+an item was created and never again, which meant two things: a forgotten Monthly
+could only be fixed by deleting the item and typing it back, and there was no
+way at all to stop something repeating.
+
+The second is the one that matters. A feature that creates work on a schedule
+needs an off switch, and until this the off switch was deletion, which does not
+even work: deleting the open one leaves the one before it to make another when
+you finish it. US-25 exists because an item you cannot correct stops being
+trusted, and US-28 added a field outside that promise the same day.
+
+**One select and one extra argument.** `onEdit` carries the repeat with the
+title and the date because they are edited and saved together. Changing the
+repeat deliberately does not move the deadline: setting monthly on something due
+Friday means the one after this is a month on, not that this one moves.
+
+**The sixth locator collision, and the first that is a design signal rather
+than a test one.** The badge on a row reads "Monthly" and so does an option in
+the repeat select, which now sits inside that same row when it is open, so a
+query scoped to the row still matched twice. Both words are right where they
+are, so nothing was renamed: the test closes the row after saving, which is what
+a person does anyway.
+
+**566 unit tests and 172 Playwright specs green,** then driven in a browser:
+rent set to monthly, switched off through the panel, and the deadline confirmed
+still at Oct 1, 5:00 PM afterwards.

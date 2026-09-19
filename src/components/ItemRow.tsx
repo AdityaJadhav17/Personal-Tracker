@@ -6,7 +6,7 @@ import {
   toDueAt,
   toTimeValue,
 } from '../domain/dates';
-import type { Course, Goal, Item } from '../domain/types';
+import type { Course, Goal, Item, Repeat } from '../domain/types';
 
 /** Same words the add form uses, so there is one definition of the message. */
 const TITLE_REQUIRED = 'Give it a title.';
@@ -22,7 +22,7 @@ interface ItemRowProps {
   onNoteChange: (id: string, note: string) => void;
   onCourseChange: (id: string, courseId: string | null) => void;
   onGoalChange: (id: string, goalId: string | null) => void;
-  onEdit: (id: string, title: string, dueAt: string) => void;
+  onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
 }
 
@@ -60,6 +60,7 @@ export default function ItemRow({
   const [title, setTitle] = useState(item.title);
   const [dueDate, setDueDate] = useState(toDateValue(due));
   const [dueTime, setDueTime] = useState(toTimeValue(due));
+  const [repeat, setRepeat] = useState<Repeat>(item.repeat);
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
   const [confirming, setConfirming] = useState(false);
@@ -76,7 +77,7 @@ export default function ItemRow({
     // AC-25.3. Nothing is written while either half is unusable.
     if (!trimmed || !at) return;
 
-    onEdit(item.id, trimmed, at);
+    onEdit(item.id, trimmed, at, repeat);
   }
 
   return (
@@ -189,6 +190,27 @@ export default function ItemRow({
               value={dueTime}
               onChange={(event) => setDueTime(event.target.value)}
             />
+          </div>
+
+          {/*
+            US-29. A feature that creates work on a schedule needs an off
+            switch, and until this existed the off switch was deleting the item.
+          */}
+          <div className="form__field">
+            <span className="form__label" aria-hidden="true">
+              Repeat
+            </span>
+            <select
+              className="form__input"
+              id={`repeat-${item.id}`}
+              aria-label={`Repeat for ${item.title}`}
+              value={repeat}
+              onChange={(event) => setRepeat(event.target.value as Repeat)}
+            >
+              <option value="none">Never</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
           </div>
 
           {/*

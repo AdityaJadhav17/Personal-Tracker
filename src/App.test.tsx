@@ -1384,3 +1384,87 @@ test('the warning clears once a write succeeds again', async () => {
   expect(screen.queryByText(/could not be saved/i)).toBeNull();
   expect(screen.getByRole('button', { name: 'Rent' })).toBeVisible();
 });
+
+/**
+ * Change an item's repeat through the panel the row opens, then close it.
+ *
+ * Closing is what a person does, and it matters for the assertions too: an
+ * open row contains the repeat select, whose options read the same words as
+ * the badge, so "Monthly" would match twice inside the one row.
+ */
+async function setRepeat(title: string, repeat: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: title }));
+  await user.selectOptions(
+    screen.getByLabelText(`Repeat for ${title}`),
+    repeat,
+  );
+  await user.click(screen.getByRole('button', { name: `Save ${title}` }));
+  await user.click(screen.getByRole('button', { name: title }));
+}
+
+test('AC-29.2 a plain item can be made to repeat, and it sticks', async () => {
+  const first = render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'none');
+
+  await setRepeat('Rent', 'monthly');
+
+  expect(
+    within(screen.getByRole('listitem')).getByText('Monthly'),
+  ).toBeVisible();
+
+  first.unmount();
+  render(<App />);
+  expect(
+    within(screen.getByRole('listitem')).getByText('Monthly'),
+  ).toBeVisible();
+});
+
+test('AC-29.3 a repeating item can be stopped', async () => {
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await setRepeat('Rent', 'none');
+
+  const row = within(screen.getByRole('listitem'));
+  expect(row.queryByText('Monthly')).toBeNull();
+});
+
+test('AC-29.4 a stopped item creates nothing when it is finished', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'monthly');
+
+  await setRepeat('Rent', 'none');
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  // The off switch is the point of the story: no new item.
+  expect(storedTitles()).toHaveLength(1);
+});
+
+test('AC-29.5 weekly changed to monthly comes back a month later', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'weekly');
+
+  await setRepeat('Rent', 'monthly');
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  const raw = localStorage.getItem('personal-tracker/v1')!;
+  const items = (JSON.parse(raw) as { items: Record<string, string>[] }).items;
+  const next = new Date(items.find((i) => i.status === 'open')!.dueAt!);
+
+  expect(next.getMonth()).toBe(10);
+  expect(next.getDate()).toBe(1);
+});
+
+test('AC-29.6 changing the repeat leaves the deadline where it was', async () => {
+  render(<App />);
+  await addRepeating('Rent', '2026-10-01', 'none');
+  const before = storedTitles()[0] as unknown as { dueAt: string };
+
+  await setRepeat('Rent', 'monthly');
+
+  const after = storedTitles()[0] as unknown as { dueAt: string };
+  expect(after.dueAt).toBe(before.dueAt);
+});

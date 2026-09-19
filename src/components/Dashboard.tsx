@@ -1,7 +1,7 @@
 import { groupOf } from '../domain/dates';
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
-import type { Course, Goal, Item } from '../domain/types';
+import type { Course, Goal, Item, Repeat } from '../domain/types';
 import ItemRow from './ItemRow';
 
 /** Render order. Overdue sits above everything, which is AC-03.1. */
@@ -22,7 +22,7 @@ interface DashboardProps {
   onCourseChange: (id: string, courseId: string | null) => void;
   goals: Goal[];
   onGoalChange: (id: string, goalId: string | null) => void;
-  onEdit: (id: string, title: string, dueAt: string) => void;
+  onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
 }
 
