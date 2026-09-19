@@ -542,3 +542,35 @@ describe('the other collections are validated as hostilely as items are', () => 
     expect(result.ok && result.db.reflections).toHaveLength(1);
   });
 });
+
+describe('a file too large to be a real export is refused before parsing', () => {
+  test('a file beyond the limit is refused, saying so', () => {
+    // Built without allocating the whole thing as one literal.
+    const huge = 'x'.repeat(6 * 1024 * 1024);
+
+    const result = parseImport(huge);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toMatch(/too large/i);
+  });
+
+  test('a file at a realistic size is not refused for size', () => {
+    const items = Array.from({ length: 500 }, (_, i) => ({
+      ...anItem(),
+      id: `item-${i}`,
+    }));
+
+    const result = parseImport(
+      JSON.stringify({
+        version: 3,
+        items,
+        goals: [],
+        courses: [],
+        reflections: [],
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.db.items).toHaveLength(500);
+  });
+});

@@ -26,20 +26,44 @@ const MINUTES = 30;
 /** Long enough to act on, early enough not to be noise. */
 const ALARM = '-PT1H';
 
+/** The horizontal tab is the only control character a TEXT value may carry. */
+const TAB = 9;
+const LAST_CONTROL = 31;
+const DELETE = 127;
+
 /**
  * Escape a value so it cannot end its own property.
  *
  * The backslash goes first. Doing it later would escape the backslashes this
- * function just added and double everything. A newline becomes the literal
- * two characters, because a real one would terminate the line and let a title
- * write its own iCalendar properties.
+ * function just added and double everything.
+ *
+ * Every line break becomes the literal two characters, and that means a bare
+ * carriage return as well as CRLF and LF. RFC 5545 delimits content lines with
+ * CRLF, but a parser that also breaks on a lone CR would read the rest of a
+ * title as its own properties, and a title is the one part of this file a
+ * person types. Escaping only CRLF and LF left that open.
+ *
+ * Whatever control characters remain are dropped rather than escaped, because
+ * the TEXT type forbids all of them except the tab and offers no escape to put
+ * them in. The check is written against character codes so that none of them
+ * has to appear literally in this file.
  */
 function escape(value: string): string {
-  return value
+  const escaped = value
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    // CRLF first, so a Windows line ending yields one escape and not two.
+    .replace(/\r\n|\r|\n/g, '\\n');
+
+  let out = '';
+  for (const character of escaped) {
+    const code = character.codePointAt(0)!;
+    if (code === TAB || (code > LAST_CONTROL && code !== DELETE)) {
+      out += character;
+    }
+  }
+  return out;
 }
 
 /**

@@ -306,3 +306,51 @@ describe('calendarFilename', () => {
     expect(calendarFilename(NOW)).toMatch(/^personal-tracker-.*\.ics$/);
   });
 });
+
+describe('AC-24.4 control characters cannot break out of a value', () => {
+  const CR = String.fromCharCode(13);
+  const LF = String.fromCharCode(10);
+
+  test('a lone carriage return is escaped, not passed through', () => {
+    const title = `a${CR}END:VEVENT${CR}BEGIN:VEVENT${CR}SUMMARY:evil`;
+    const ics = toCalendar([anItem({ title })], NOW);
+
+    // RFC 5545 delimits content lines with CRLF and forbids control
+    // characters inside a TEXT value. A lenient parser that splits on a bare
+    // CR would otherwise read the rest of this title as its own properties.
+    const summary = lines(ics).find((line) => line.startsWith('SUMMARY:'));
+    expect(summary).not.toContain(CR);
+    expect(unfold(ics)).toContain('SUMMARY:a\\nEND:VEVENT\\nBEGIN:VEVENT');
+  });
+
+  test('a carriage return in a title cannot add an event', () => {
+    const title = `a${CR}END:VEVENT${CR}BEGIN:VEVENT${CR}SUMMARY:evil`;
+    const ics = toCalendar([anItem({ title })], NOW);
+
+    expect(lines(ics).filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(
+      1,
+    );
+    expect(lines(ics).filter((line) => line === 'END:VEVENT')).toHaveLength(1);
+  });
+
+  test('CRLF, CR and LF all become the same single escape', () => {
+    const ics = toCalendar([anItem({ note: `a${CR}${LF}b${CR}c${LF}d` })], NOW);
+
+    expect(unfold(ics)).toContain('DESCRIPTION:a\\nb\\nc\\nd');
+  });
+
+  test('other control characters are dropped rather than emitted', () => {
+    const title = 'a' + String.fromCharCode(0) + String.fromCharCode(7) + 'b';
+    const ics = toCalendar([anItem({ title })], NOW);
+
+    const summary = lines(ics).find((line) => line.startsWith('SUMMARY:'));
+    expect(summary).toBe('SUMMARY:ab');
+  });
+
+  test('a tab survives, because TEXT allows it', () => {
+    const tab = String.fromCharCode(9);
+    const ics = toCalendar([anItem({ title: `a${tab}b` })], NOW);
+
+    expect(unfold(ics)).toContain(`SUMMARY:a${tab}b`);
+  });
+});

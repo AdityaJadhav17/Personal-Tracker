@@ -30,6 +30,16 @@ const PRIORITIES = ['high', 'normal', 'low'];
 const STATUSES = ['open', 'done'];
 const REPEATS = ['none', 'weekly', 'monthly'];
 
+/**
+ * Refuse a file this app could not have written, before parsing it.
+ *
+ * A browser stores a few megabytes in total, so an export larger than this
+ * cannot round trip anyway, and parsing one only to refuse the write later
+ * means freezing the tab first on something that was never going to fit. Five
+ * megabytes is thousands of items, which is far past what a person types.
+ */
+const MAX_BYTES = 5 * 1024 * 1024;
+
 /** Top level keys each version is allowed to carry. */
 const KEYS: Record<number, string[]> = {
   1: ['version', 'items'],
@@ -227,6 +237,15 @@ function collectionProblem(
  * version, or an error naming what was wrong. Never throws.
  */
 export function parseImport(text: string): ParseResult {
+  // Checked on the string rather than after parsing, so a file designed to be
+  // expensive to read is refused before it is read.
+  if (text.length > MAX_BYTES) {
+    return {
+      ok: false,
+      error: 'That file is too large to be a Personal Tracker export.',
+    };
+  }
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);

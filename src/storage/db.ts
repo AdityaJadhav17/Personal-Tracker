@@ -62,7 +62,21 @@ export function load(): Database {
   });
 }
 
-/** Write the whole database. Called on submit and on blur, never per keystroke. */
-export function save(db: Database): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+/**
+ * Write the whole database. Called on submit and on blur, never per keystroke.
+ *
+ * Returns whether it worked instead of throwing. A write can fail for a reason
+ * the person cannot be expected to predict: the quota is a few megabytes, an
+ * import can arrive larger than that, and Safari refuses to write at all in a
+ * private window. Throwing from here escaped the click handler and left the
+ * screen showing items that were never stored, which is worse than refusing
+ * the change, because the lie only surfaces on the next reload.
+ */
+export function save(db: Database): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    return true;
+  } catch {
+    return false;
+  }
 }

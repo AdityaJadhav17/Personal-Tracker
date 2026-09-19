@@ -57,6 +57,11 @@ function itemFrom(draft: ItemDraft): Item {
   };
 }
 
+/** Said when the browser refuses a write, which the quota and a private window both do. */
+const STORAGE_FULL =
+  'That change could not be saved. This browser will not store any more, ' +
+  'so nothing was changed. Export a backup, then remove some finished items.';
+
 /** Undo is a plain letter, so it must not fire while you are typing. */
 function isTyping(element: Element | null): boolean {
   if (!element) return false;
@@ -78,6 +83,8 @@ export function useDatabase(): {
   db: Database | null;
   /** The item most recently finished, for the undo prompt. */
   undoableTitle: string | null;
+  /** Empty unless the last write was refused. */
+  storageError: string;
   actions: DatabaseActions;
 } {
   // A corrupt or absent key is not the null case: load() returns an empty
@@ -94,14 +101,24 @@ export function useDatabase(): {
    * finishing something able to create a second item, and undo that only
    * reopens the first would leave a duplicate behind.
    */
+  const [storageError, setStorageError] = useState('');
   const [undoable, setUndoable] = useState<{
     doneId: string;
     spawnedId: string | null;
   } | null>(null);
 
+  /**
+   * Write first, then show. If storage refuses the write, the change is not
+   * applied and the caller is told, because a screen that shows an item the
+   * browser never stored is a lie that only surfaces on the next reload.
+   */
   function commit(next: Database) {
+    if (!save(next)) {
+      setStorageError(STORAGE_FULL);
+      return;
+    }
+    setStorageError('');
     setDb(next);
-    save(next);
   }
 
   /**
@@ -282,6 +299,7 @@ export function useDatabase(): {
 
   return {
     db,
+    storageError,
     undoableTitle:
       db?.items.find((item) => item.id === undoable?.doneId)?.title ?? null,
     actions,

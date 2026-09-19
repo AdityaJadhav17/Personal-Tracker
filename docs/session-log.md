@@ -1377,3 +1377,57 @@ branches, 96.83% functions, 99.3% lines.**
 `sessionStorage`, which survives navigation, and the verification added an item
 through the form instead of seeding over storage. Writing the rule down twice
 did not work; changing the method did.
+
+---
+
+## 2026-09-18: a security audit, and three fixes
+
+Run against rules written for a Python desktop app: pickle, `subprocess`,
+`ctypes`, PyQt, an auto-updater. This app is a browser page with two runtime
+dependencies and no server, so most sections had no surface. The audit says so
+per section rather than reporting clean results against checks that could not
+have failed. The full report is
+[engineering/security-audit.md](engineering/security-audit.md).
+
+**The one real vulnerability was in code written this morning.** `escape` in
+`ics.ts` handled `\r?\n`, which does not match a bare carriage return, so a
+title containing one was written raw into a `SUMMARY` value. RFC 5545 forbids
+control characters in a TEXT value, and a parser that breaks on a lone CR would
+read the rest of the title as its own properties. The `.ics` file is the one
+thing this app produces that other software reads, and a title can arrive from
+an imported file, so the input is genuinely untrusted.
+
+It was found by probing rather than by reading: a title of
+`a\rEND:VEVENT\rBEGIN:VEVENT\rSUMMARY:evil` came back with a raw CR in the
+output. The same probe showed the UID path was already safe, which is worth
+recording, because the plausible-looking finding was the one that turned out not
+to be real.
+
+**The one with a real cost was data loss, not disclosure.** `save` called
+`setItem` with no guard and `commit` updated React state before writing, so a
+refused write left the screen showing items the browser never stored. The quota
+is a few megabytes and Safari refuses in a private window always. Reachable by
+accident with a large import, or deliberately by handing someone an export big
+enough to fill the quota. `save` now reports failure instead of throwing, and
+`commit` writes before it shows.
+
+**Prototype pollution was tested and is not possible,** and that got a
+regression test rather than a sentence. It is safe because the top-level key
+allowlist rejects `__proto__` and `constructor` and because `toItem` copies
+named fields rather than spreading. Both of those are the kind of thing a later
+change quietly undoes, so `pollution.test.ts` now fails if it does.
+
+**Three things I expected to find and did not.** No ReDoS in the paste regex,
+timed at under a millisecond on 40,000 characters of pathological input. No XSS
+sink anywhere, which the `react/no-danger` lint rule already guaranteed. No
+secrets, because there is no service to authenticate to.
+
+**Two process notes.** The shell heredoc ate backslashes three separate times
+while editing regular expressions, once writing literal control characters into
+`ics.ts` and turning it into a binary file. Regular expressions and escape
+sequences go through the Write tool from now on, not through a heredoc. And the
+control-character check is written against character codes rather than a regex,
+so those characters never appear literally in the source at all.
+
+**556 unit tests and 169 Playwright specs green. 99.31% statements, 95.43%
+branches.**

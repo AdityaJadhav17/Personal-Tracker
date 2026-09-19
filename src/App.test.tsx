@@ -1318,3 +1318,69 @@ test('AC-24.1 the calendar export writes a real .ics file', async () => {
   expect(text).toContain('BEGIN:VCALENDAR');
   expect(text.replace(/\r\n /g, '')).toContain('SUMMARY:CSE 110 midterm');
 });
+
+/** Make every localStorage write fail, the way a full quota does. */
+function withFullStorage(run: () => void) {
+  const real = Storage.prototype.setItem;
+  Storage.prototype.setItem = () => {
+    const error = new Error('exceeded the quota');
+    error.name = 'QuotaExceededError';
+    throw error;
+  };
+  try {
+    run();
+  } finally {
+    Storage.prototype.setItem = real;
+  }
+}
+
+test('a refused write says so rather than showing an item it did not store', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+
+  let caught: unknown = null;
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: todayIso() },
+  });
+
+  withFullStorage(() => {
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    } catch (error) {
+      caught = error;
+    }
+  });
+
+  // Nothing escapes the handler.
+  expect(caught).toBeNull();
+  // And the screen does not claim to hold something storage refused.
+  expect(screen.getByText(/could not be saved/i)).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Rent' })).toBeNull();
+  expect(localStorage.getItem('personal-tracker/v1')).toBeNull();
+});
+
+test('the warning clears once a write succeeds again', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: todayIso() },
+  });
+  withFullStorage(() => {
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+  });
+  expect(screen.getByText(/could not be saved/i)).toBeVisible();
+
+  // Typed again, because a refused write still clears the form. See the note
+  // in the session log: that is a separate wart, not part of this fix.
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: todayIso() },
+  });
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  expect(screen.queryByText(/could not be saved/i)).toBeNull();
+  expect(screen.getByRole('button', { name: 'Rent' })).toBeVisible();
+});

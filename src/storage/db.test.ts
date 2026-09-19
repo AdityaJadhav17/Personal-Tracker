@@ -114,3 +114,49 @@ describe('a stored database with collections of the wrong shape', () => {
     expect(load().version).toBe(3);
   });
 });
+
+describe('when the browser refuses to store', () => {
+  function withFullStorage(run: () => void) {
+    const real = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      const error = new Error('exceeded the quota');
+      error.name = 'QuotaExceededError';
+      throw error;
+    };
+    try {
+      run();
+    } finally {
+      Storage.prototype.setItem = real;
+    }
+  }
+
+  const EMPTY = {
+    version: 3 as const,
+    items: [],
+    goals: [],
+    courses: [],
+    reflections: [],
+  };
+
+  test('save reports the failure rather than throwing out of the caller', () => {
+    withFullStorage(() => {
+      expect(() => save(EMPTY)).not.toThrow();
+      expect(save(EMPTY)).toBe(false);
+    });
+  });
+
+  test('save says so when it worked', () => {
+    expect(save(EMPTY)).toBe(true);
+  });
+
+  test('a failed save leaves what was already stored alone', () => {
+    save({ ...EMPTY, items: [anItem()] });
+    const before = localStorage.getItem('personal-tracker/v1');
+
+    withFullStorage(() => {
+      save(EMPTY);
+    });
+
+    expect(localStorage.getItem('personal-tracker/v1')).toBe(before);
+  });
+});

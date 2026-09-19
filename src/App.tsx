@@ -23,7 +23,7 @@ import type { Database } from './domain/types';
 import { useDatabase } from './state/useDatabase';
 
 export default function App() {
-  const { db, undoableTitle, actions } = useDatabase();
+  const { db, undoableTitle, storageError, actions } = useDatabase();
 
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
@@ -255,6 +255,12 @@ export default function App() {
 
       {pasting && (
         <BulkAdd onAdd={actions.addItems} onClose={() => setPasting(false)} />
+      )}
+
+      {storageError && (
+        <p className="alert" role="alert">
+          {storageError}
+        </p>
       )}
 
       {importError && (

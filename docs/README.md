@@ -25,6 +25,9 @@ How it is built and what counts as finished.
   reverse it. Newest first. Read this before arguing with a choice.
 - [engineering/definition-of-done.md](engineering/definition-of-done.md) — the
   checklist for one story and the checklist for a release.
+- [engineering/security-audit.md](engineering/security-audit.md) — what the
+  trust boundary is, what was found and fixed, and what was tested and found
+  safe with the reason it is safe.
 
 ## Design
 
