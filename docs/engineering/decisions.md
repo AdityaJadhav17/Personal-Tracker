@@ -5,6 +5,136 @@ we picked, and why. Add an entry before writing code that depends on it.
 
 ---
 
+## 2026-09-18: a refused storage write refuses the change, rather than showing it
+
+**Context.** The security audit found `save` calling `setItem` with no guard
+while `commit` updated React state first. A browser refuses that write when the
+quota is reached, and Safari refuses it in a private window always.
+
+**Options considered.** Keep the change on screen and warn; drop the change and
+warn; retry with older data evicted.
+
+**Choice.** Drop the change and say so. `save` returns whether it worked,
+`commit` writes before it shows, and a refusal names the remedy: export a
+backup, then delete finished items.
+
+**Why.** A screen showing items the browser never stored is a lie that only
+surfaces on the next reload, by which point the work is gone. Refusing the
+change is visible immediately and recoverable. Evicting old data to make room
+means the app deleting your deadlines to save a new one, which is worse than
+either.
+
+**What would reverse it.** A storage backend without a small fixed quota. That
+is the IndexedDB decision, which is still declined for its own reasons.
+
+---
+
+## 2026-09-18: a repeating item creates the next one when it is finished
+
+**Context.** US-28. Rent is due on the 1st of every month and was being entered
+by hand twelve times a year.
+
+**Options considered.** A separate recurring-template entity that spawns items;
+generating a year of occurrences up front; one field on the item and the next
+occurrence created on completion.
+
+**Choice.** The field, and creation on completion.
+
+**Why.** A template needs its own lifecycle, its own editing, and its own answer
+to what happens when you change it after three occurrences. Generating ahead
+would put twelve rent rows on a dashboard whose job is answering what to do
+next, and fill the calendar with work nobody has done.
+
+**The cost, stated rather than hidden.** A repeating item you never mark done
+never comes back. That is written into the story and the README.
+
+**Known limitation.** The monthly clamp is permanent: an item due on the 29th to
+31st walks backwards the first time it crosses a short month and stays there,
+because the next date is computed from the last one and nothing stores the day
+it started on. Anchoring the original day needs a field on the item and is a
+story of its own.
+
+**What would reverse it.** Wanting to see a term of rent on the calendar before
+paying any of it.
+
+---
+
+## 2026-09-18: schema versions are applied as hops, and only migrate.ts knows about them
+
+**Context.** US-28 needed version 3. `upgrade` asked whether the input was
+version 2 and treated anything else as version 1, and `load` had its own branch
+on the version.
+
+**Choice.** `upgrade` applies one step per version in order, and `load` and
+`parseImport` both hand it whatever they have without inspecting the number.
+
+**Why.** The old shape meant every new version was a rethink of every path
+through the function. Adding version 4 is now one `if`. It also removed a real
+bug: a find-and-replace during US-28 changed `load`'s version guard and dropped
+goals, courses and reflections on read, which eight tests caught.
+
+**What would reverse it.** Nothing foreseeable. A migration that cannot be
+expressed as a sequence of steps would, and none has come up.
+
+---
+
+## 2026-09-18: the calendar export is VEVENT and half an hour long
+
+**Context.** US-24 needed to represent a deadline in an `.ics` file.
+
+**Options considered.** `VTODO`, which is semantically a to-do with a due date;
+`VEVENT`, which is an appointment. And for length: a zero-length event, a
+30 minute event ending at the deadline, or an all-day event.
+
+**Choice.** `VEVENT`, 30 minutes, ending at the deadline. Aditya picked both.
+
+**Why.** Apple Calendar does not import `VTODO` at all; it belongs to Reminders.
+The point of the story is that the reminder reaches you, and a thing you see
+beats a thing that is correctly filed. Zero-length events are rendered badly by
+several clients and dropped by some, and an all-day event would lose the 5pm on
+rent.
+
+**What would reverse it.** Only using clients that handle `VTODO` well.
+
+---
+
+## 2026-09-18: a pasted list is parsed strictly, and previewed before it is saved
+
+**Context.** US-26 needed to read dates out of text, which is what US-19
+deliberately removed from the daily path when it deleted `parseDueDate`.
+
+**Choice.** A strict format, `2026-10-03 17:00 Rent`, with an ISO date, an
+optional 24-hour time and then the title. Anything else is reported as
+unreadable rather than interpreted, and nothing is written until the preview has
+shown what every line was understood as.
+
+**Why these are not in conflict.** US-19 is about the path used every day, where
+a silent wrong guess is worse than a picker. A paste is one-off and reviewed:
+parse, show, confirm, which is the same shape the JSON import already uses.
+
+**What would reverse it.** Real use showing the format is too strict to be worth
+having. That is a thing a week of classes would say.
+
+---
+
+## 2026-09-18: a filter is never remembered across a reload
+
+**Context.** US-08 and US-27 both narrow the list. AC-08.2 asked for a reload to
+clear the category filter.
+
+**Choice.** Neither filter is stored. Both are plain component state, so a
+reload shows everything.
+
+**Why.** A filter you forgot you set is a list that is lying to you, and the
+cost of being wrong is missing a deadline. The same reasoning produced AC-08.3,
+which refuses to show the first-run empty state when a filter is what is hiding
+the work.
+
+**What would reverse it.** Aditya saying he re-picks the same filter every time
+he opens the app.
+
+---
+
 ## 2026-09-15: Motion (motion.dev) deferred to the Phase 4 decision
 
 **Context.** Aditya supplied four dashboard screenshots as a visual direction

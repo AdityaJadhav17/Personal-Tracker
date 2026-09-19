@@ -45,13 +45,15 @@ checklist you will lie to yourself about in week nine.
 - [ ] The commit message contains the story ID.
 - [ ] The branch holds this story and nothing else.
 
-## Version 1 is done when
+## A version is done when
 
 **Functionality**
 
 - [ ] Every story in scope passes the story-level checklist above. Version 1 was
-      US-01 to US-06 and US-09 to US-12; version 2 adds US-07 and US-13 to
-      US-20. US-08, the category filter, is still deferred.
+      US-01 to US-06 and US-09 to US-12. Version 2 adds US-07, US-08 and US-13
+      to US-29. US-08 was deferred out of both the MVP and the original version
+      2 scope and was built on 18 September, once US-26 made a fifty item list
+      a realistic thing to have.
 - [ ] Export produces a file that import restores exactly, proven by a
       round-trip test that compares the full database before and after, not by
       spot-checking fields.
@@ -82,6 +84,10 @@ checklist you will lie to yourself about in week nine.
       export shows nothing new to commit.
 - [ ] The dependency list is short enough that you can say out loud what each
       package does and why it is there.
+- [ ] The audit in [security-audit.md](security-audit.md) has been re-run
+      against anything that reads or writes a file, and its findings are fixed
+      or recorded. The import file and the two exports are the whole untrusted
+      surface, so a story that touches either of them re-opens this.
 
 **Documentation**
 
@@ -93,8 +99,11 @@ checklist you will lie to yourself about in week nine.
 - [ ] An MIT `LICENSE` file exists.
 - [ ] `CLAUDE.md` matches how the project actually works, including the
       security rules.
-- [ ] `docs/decisions.md` holds an entry for every architectural decision, each
-      with a date, the options considered, and the choice.
+- [ ] `docs/engineering/decisions.md` holds an entry for every architectural
+      decision, each with a date, the options considered, the choice, and what
+      would reverse it.
+- [ ] The screenshot in the README shows the app as it is now, not as it was at
+      the last release.
 
 **Real use**
 

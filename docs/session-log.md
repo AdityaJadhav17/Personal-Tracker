@@ -1462,3 +1462,41 @@ a person does anyway.
 **566 unit tests and 172 Playwright specs green,** then driven in a browser:
 rent set to monthly, switched off through the panel, and the deadline confirmed
 still at Oct 1, 5:00 PM afterwards.
+
+---
+
+## 2026-09-18: closing the gaps between the app and its own checklist
+
+Asked whether version 2 is ready. Checked against the release checklist rather
+than answered by feel, which turned up four gaps, three of them documentation
+and one of them the checklist contradicting itself.
+
+**The decision log had stopped three days before the code did.** Eight entries,
+newest 15 September, while six features shipped on the 18th. Backfilled six:
+refusing a change rather than showing an unsaved one, creating the next
+occurrence on completion, applying schema versions as hops, VEVENT and thirty
+minutes for the calendar export, a strict previewed paste format, and never
+remembering a filter. Each carries what would reverse it, because that is the
+part that makes the file worth reading later.
+
+**The screenshot was of an app that no longer exists.** Taken 15 September,
+before edit and delete, bulk paste, both filters, recurring items and the repeat
+switch. Retaken through Playwright so it is a real render rather than a crop,
+with an item due today so the stat row and the Today group actually say
+something.
+
+**The checklist disagreed with the repository.** It read "US-08, the category
+filter, is still deferred" and scoped version 2 as US-07 plus US-13 to US-20.
+US-08 shipped that morning and so did US-21 to US-29. It also said "Version 1 is
+done when" while being used for version 2, so it is "A version is done when"
+now.
+
+**Two checks added while in there,** both from things that went wrong today:
+re-run the security audit whenever a story touches the import or either export,
+since that is the whole untrusted surface; and keep the README screenshot
+current, since it had gone stale twice.
+
+**What is left is not code.** Every quality gate passes, every security item is
+met, and the documentation is now true. Version 2 is blocked on three real
+school days of use, which has been the last unticked line since the beginning
+and is the one nobody else can do.
