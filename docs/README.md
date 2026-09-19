@@ -18,6 +18,10 @@ What is being built, for whom, and why.
 
 How it is built and what counts as finished.
 
+- [product/v3-plan.md](product/v3-plan.md) — proposed, not approved. The server,
+  the phone notifications, and the two personas that split at a laptop lid. Read
+  the "How this could be wrong" section before agreeing with it.
+
 - [engineering/plan.md](engineering/plan.md) — data model, storage, directory
   layout, and the risks with their early warning signs.
 - [engineering/decisions.md](engineering/decisions.md) — every architectural
