@@ -12,6 +12,9 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       'node_modules',
+      // Throwaway spike, deleted once it has answered its three questions.
+      // Not shipped, not imported, and not worth a globals config.
+      'spike',
     ],
   },
   js.configs.recommended,
