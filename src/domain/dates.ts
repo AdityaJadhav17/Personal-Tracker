@@ -76,6 +76,11 @@ export function toDateValue(at: Date): string {
   return `${at.getFullYear()}-${month}-${day}`;
 }
 
+/** The local calendar day an instant falls on, "2026-10-07". US-55. */
+export function localDay(iso: string): string {
+  return toDateValue(new Date(iso));
+}
+
 export type Group = 'overdue' | 'today' | 'week' | 'later';
 
 /** Days between two instants, counted in whole local calendar days. */

@@ -367,3 +367,4 @@ passed 1,300 lines.
 - [US-52, repeats you can see coming](stories/US-52.md)
 - [US-53, add from the calendar](stories/US-53.md)
 - [US-54, ten at a time](stories/US-54.md)
+- [US-55, dates first](stories/US-55.md)

@@ -418,7 +418,8 @@ test('AC-04.4 grouping wins over priority', () => {
   expect(groupFor('Midterm')).toBe('This week');
 });
 
-test('AC-04.1 priority ordering applies inside Overdue too', () => {
+// US-55 supersedes this for items on different days: the most overdue leads.
+test('AC-55.3 inside Overdue, the most overdue comes first whatever its priority', () => {
   render(
     <Dashboard
       now={NOW}
@@ -439,7 +440,7 @@ test('AC-04.1 priority ordering applies inside Overdue too', () => {
     />,
   );
 
-  expect(renderedTitles()).toEqual(['aa one', 'bb twelve']);
+  expect(renderedTitles()).toEqual(['bb twelve', 'aa one']);
 });
 
 test('AC-05.1 every open item offers a done control naming that item', () => {
@@ -1378,6 +1379,16 @@ describe('US-54 ten upcoming at a time', () => {
 
     await user.click(screen.getByRole('button', { name: 'Show fewer' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(10);
+  });
+
+  test('AC-55.4 the ten shown are the ten soonest, even with a high one due later', () => {
+    renderItems([
+      ...twelve().slice(0, 11),
+      anItem('Final exam', 30, { priority: 'high' }),
+    ]);
+
+    expect(screen.queryByText('Final exam')).toBeNull();
+    expect(screen.getByText('Day 9')).toBeVisible();
   });
 
   test('AC-54.4 ten or fewer upcoming shows everything and no count', () => {

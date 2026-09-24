@@ -39,16 +39,35 @@ test('AC-04.1 high, then normal, then low', () => {
   expect(titles(sorted)).toEqual(['high one', 'normal one', 'low one']);
 });
 
-test('AC-04.1 priority outranks how soon something is due', () => {
+// US-55 supersedes AC-04.1 across days: priority now only orders one day.
+test('AC-55.1 a sooner day comes first, whatever its priority', () => {
   const sorted = sortWithinGroup([
-    anItem('normal, due tomorrow', 1, 'normal'),
     anItem('high, due in six days', 6, 'high'),
+    anItem('normal, due tomorrow', 1, 'normal'),
   ]);
 
   expect(titles(sorted)).toEqual([
-    'high, due in six days',
     'normal, due tomorrow',
+    'high, due in six days',
   ]);
+});
+
+test('AC-55.2 on the same day, high comes first even if it is due later', () => {
+  const sorted = sortWithinGroup([
+    anItem('normal at nine', 3, 'normal', 9),
+    anItem('high at three', 3, 'high', 15),
+  ]);
+
+  expect(titles(sorted)).toEqual(['high at three', 'normal at nine']);
+});
+
+test('AC-55.3 in Overdue, the most overdue comes first, whatever its priority', () => {
+  const sorted = sortWithinGroup([
+    anItem('high, a day late', -1, 'high'),
+    anItem('low, twelve days late', -12, 'low'),
+  ]);
+
+  expect(titles(sorted)).toEqual(['low, twelve days late', 'high, a day late']);
 });
 
 test('AC-04.2 same priority and day, the earlier time comes first', () => {

@@ -26,7 +26,8 @@ left today and what you finished yesterday, then the list sorts itself.
 - Only the next ten upcoming show, so a whole term never buries this week.
   Overdue items all show and do not count towards the ten. **Show more**
   reveals the rest until you reload.
-- Inside each group, high priority comes first, then whatever is due soonest.
+- Inside each group, whatever is due soonest comes first. On the same day, high
+  priority leads.
 - Anything due in the next three days carries a **Soon** marker, whatever its
   priority.
 
