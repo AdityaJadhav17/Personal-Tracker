@@ -1,18 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
-async function add(page: Page, title: string, daysFromToday = 0) {
-  await page.getByLabel('Title', { exact: true }).fill(title);
-  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
-}
+import { add, open } from './helpers';
 
 /** Export, and hand back the path of the file the browser actually wrote. */
 async function exportToDisk(page: Page) {
@@ -46,15 +33,6 @@ function storedTitles(page: Page) {
       .map((i) => i.title)
       .sort();
   });
-}
-
-/**
- * Open an item's controls. US-22 put the note and the selects behind the
- * title, so anything that edits an item clicks it open first. A reload closes
- * every row again.
- */
-async function open(page: Page, title: string) {
-  await page.getByRole('button', { name: title, exact: true }).click();
 }
 
 test('AC-10.1 a real export imports back into an empty database exactly', async ({

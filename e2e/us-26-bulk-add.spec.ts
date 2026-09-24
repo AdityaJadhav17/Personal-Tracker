@@ -1,12 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-/** An ISO date the pasted format wants, offset from today so it never stales. */
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${String(d.getDate()).padStart(2, '0')}`;
-}
+import { isoDate } from './helpers';
 
 async function paste(page: Page, text: string) {
   await page.getByRole('button', { name: 'Paste a list' }).click();

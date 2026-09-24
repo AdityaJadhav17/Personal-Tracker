@@ -1,12 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
+import { isoDate, open } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 0) {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -19,15 +12,6 @@ async function addGoal(page: Page, name: string, description = '') {
   if (description) await page.getByLabel('Description').fill(description);
   await page.getByLabel('Target date').fill(isoDate(60));
   await page.getByRole('button', { name: 'Add goal' }).click();
-}
-
-/**
- * Open an item's controls. US-22 put the note and the selects behind the
- * title, so anything that edits an item clicks it open first. A reload closes
- * every row again.
- */
-async function open(page: Page, title: string) {
-  await page.getByRole('button', { name: title, exact: true }).click();
 }
 
 test('AC-14.1 and AC-14.3 a goal keeps its details across a reload', async ({

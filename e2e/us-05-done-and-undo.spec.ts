@@ -1,18 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
-async function add(page: Page, title: string, daysFromToday = 0) {
-  await page.getByLabel('Title', { exact: true }).fill(title);
-  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
-}
+import { test, expect } from '@playwright/test';
+import { add } from './helpers';
 
 test('AC-05.1 marking done removes the item from its group', async ({
   page,

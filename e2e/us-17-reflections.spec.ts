@@ -1,12 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
+import { isoDate } from './helpers';
 
 async function goTo(page: Page, view: string) {
   await page.getByRole('button', { name: view }).click();

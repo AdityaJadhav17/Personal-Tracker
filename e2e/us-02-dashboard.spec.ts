@@ -1,23 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-/**
- * Dates are computed from the real clock rather than hardcoded, so these specs
- * keep meaning their thing next month. The browser runs on this machine, so
- * its timezone matches Node's.
- */
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
-async function add(page: Page, title: string, daysFromToday: number) {
-  await page.getByLabel('Title', { exact: true }).fill(title);
-  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
-}
+import { add } from './helpers';
 
 /** The heading of the section an item is rendered inside. */
 function groupOf(page: Page, title: string) {

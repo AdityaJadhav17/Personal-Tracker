@@ -1,28 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
-async function add(
-  page: Page,
-  title: string,
-  daysFromToday: number,
-  options: { priority?: string; time?: string } = {},
-) {
-  await page.getByLabel('Title', { exact: true }).fill(title);
-  await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
-  if (options.time)
-    await page.getByLabel('Time', { exact: true }).fill(options.time);
-  if (options.priority) {
-    await page.getByLabel('Priority').selectOption(options.priority);
-  }
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
-}
+import { test, expect } from '@playwright/test';
+import { add } from './helpers';
 
 test('AC-04.1 high, normal and low order inside one group', async ({
   page,

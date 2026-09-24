@@ -1,21 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
-
-function isoDate(daysFromToday: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysFromToday);
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  return `${d.getFullYear()}-${month}-${String(d.getDate()).padStart(2, '0')}`;
-}
+import { isoDate, open } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 1) {
   await page.getByLabel('Title', { exact: true }).fill(title);
   await page.getByLabel('Due', { exact: true }).fill(isoDate(daysFromToday));
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-}
-
-/** US-25 put the edit controls behind the title, where US-22 put the rest. */
-async function open(page: Page, title: string) {
-  await page.getByRole('button', { name: title, exact: true }).click();
 }
 
 test('AC-25.1 a renamed item keeps its new name across a reload', async ({
