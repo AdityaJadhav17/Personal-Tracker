@@ -43,7 +43,7 @@ How it is built and what counts as finished.
 
 ## Design
 
-- [design/ui-polish-plan.md](design/ui-polish-plan.md) — phases 1, 2 and 4
+- [design/ui-polish-plan.md](design/ui-polish-plan.md) — phases 1 to 4
   built. Motion, feedback, type and phone fixes drawn from six design skills,
   with what was rejected and why.
 - [design/ui-reference.md](design/ui-reference.md) — the dashboard screenshots

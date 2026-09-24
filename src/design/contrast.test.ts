@@ -54,7 +54,17 @@ function palettes(source: string) {
   return { light, dark };
 }
 
-const { light, dark } = palettes(css);
+// US-49. The more-contrast block redefines a few tokens on top of the normal
+// ones, so it is read separately and laid over them; read together, its
+// values would silently replace the normal palette in every test below.
+const [normalCss, moreCss = ''] = css.split('@media (prefers-contrast: more)');
+const { light, dark } = palettes(normalCss!);
+const more = palettes(moreCss);
+const lightMore = { ...light, ...more.light };
+const darkMore = { ...dark, ...more.dark };
+
+/** WCAG 2.2 non-text contrast, 1.4.11: a border that marks a control. */
+const NON_TEXT = 3;
 
 /** Every foreground and background that actually meet on screen. */
 const PAIRS: [fg: string, bg: string, where: string][] = [
@@ -79,6 +89,8 @@ const PAIRS: [fg: string, bg: string, where: string][] = [
 describe.each([
   ['light', light],
   ['dark', dark],
+  ['light, more contrast', lightMore],
+  ['dark, more contrast', darkMore],
 ])('%s mode', (mode, tokens) => {
   test('every colour token used for text is a six digit hex', () => {
     for (const [fg, bg] of PAIRS) {
@@ -97,6 +109,25 @@ describe.each([
       Number(ratio.toFixed(2)),
       `--${fg} (${tokens[fg]}) on --${bg} (${tokens[bg]}) in ${mode} mode`,
     ).toBeGreaterThanOrEqual(AA);
+  });
+});
+
+describe.each([
+  ['light', light, lightMore],
+  ['dark', dark, darkMore],
+])('%s mode when the system asks for more contrast', (_, normal, strong) => {
+  test('AC-49.2 borders reach 3:1 against the page and a card', () => {
+    for (const bg of ['bg', 'surface']) {
+      expect(
+        Number(contrast(strong.border!, strong[bg]!).toFixed(2)),
+      ).toBeGreaterThanOrEqual(NON_TEXT);
+    }
+  });
+
+  test('AC-49.2 muted text is stronger than it is normally', () => {
+    expect(contrast(strong['text-muted']!, strong.surface!)).toBeGreaterThan(
+      contrast(normal['text-muted']!, normal.surface!),
+    );
   });
 });
 

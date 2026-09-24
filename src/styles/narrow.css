@@ -69,6 +69,6 @@
 
   .item__due,
   .item__tag {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 }

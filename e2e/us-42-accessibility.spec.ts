@@ -94,12 +94,21 @@ async function seed(page: Page) {
   await page.reload();
 }
 
-for (const scheme of ['light', 'dark'] as const) {
-  test.describe(`${scheme} scheme`, () => {
-    test.use({ colorScheme: scheme });
+// AC-49.3. The more-contrast palette is scanned as a third and fourth scheme.
+for (const [scheme, contrast] of [
+  ['light', 'no-preference'],
+  ['dark', 'no-preference'],
+  ['light', 'more'],
+  ['dark', 'more'],
+] as const) {
+  const label = contrast === 'more' ? `${scheme}, more contrast` : scheme;
+  const id = contrast === 'more' ? 'AC-49.3' : 'AC-42.1';
+
+  test.describe(`${label} scheme`, () => {
+    test.use({ colorScheme: scheme, contrast });
 
     for (const view of VIEWS) {
-      test(`AC-42.1 ${view} has no WCAG 2.2 AA violations (${scheme})`, async ({
+      test(`${id} ${view} has no WCAG 2.2 AA violations (${label})`, async ({
         page,
       }) => {
         await seed(page);

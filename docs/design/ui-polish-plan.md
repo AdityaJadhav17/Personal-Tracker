@@ -1,10 +1,11 @@
 # UI polish, from six design skills
 
-Proposed 24 September 2026. **Phases 1, 2 and 4 are built** as
-[US-47](../product/stories/US-47.md), [US-48](../product/stories/US-48.md) and
-[US-50](../product/stories/US-50.md), with a light and dark toggle added
-alongside as [US-51](../product/stories/US-51.md). Phases 3 and 5, and the
-phone fixes, are not started.
+Proposed 24 September 2026. **Phases 1 to 4 are built** as
+[US-47](../product/stories/US-47.md), [US-48](../product/stories/US-48.md),
+[US-49](../product/stories/US-49.md) and [US-50](../product/stories/US-50.md),
+with a light and dark toggle added alongside as
+[US-51](../product/stories/US-51.md). Phase 5 and the phone fixes are not
+started.
 
 The skills are six of the thirteen in
 [emilkowalski/skills](https://github.com/emilkowalski/skills), chosen against

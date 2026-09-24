@@ -217,7 +217,10 @@ Two runtime dependencies, React and React DOM. No component library, no state
 library, no router, no date library and no chart library: the sidebar icons and
 the trend charts are inline SVG, and the colour palette is checked for contrast
 by a test that reads the design tokens. Every view is also scanned for WCAG 2.2
-AA in both colour schemes on every CI run.
+AA in both colour schemes on every CI run,
+and again with the system asking for more contrast, which strengthens borders
+and muted text. Text sizes are in rem, so Chrome's font size setting scales
+them.
 
 [docs/](docs/README.md) holds the rest: the user research every test ID traces
 back to, the data model, and a decision log that explains why each choice went

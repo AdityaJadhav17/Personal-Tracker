@@ -2,13 +2,15 @@
 
 .trends__title {
   margin: 0 0 var(--space-3);
-  font-size: 18px;
+  font-size: 1.125rem;
+  /* US-49. Headings tighten a little; body text stays at zero. */
+  letter-spacing: -0.01em;
   font-weight: 600;
 }
 
 .trends__heading {
   margin: var(--space-4) 0 var(--space-2);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -18,7 +20,7 @@
 .trends__empty {
   margin: 0;
   max-width: 44ch;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
@@ -59,7 +61,7 @@
 .trends__table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -71,7 +73,7 @@
 }
 
 .trends__table thead th {
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);

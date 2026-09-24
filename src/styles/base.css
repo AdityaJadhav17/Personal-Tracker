@@ -48,6 +48,19 @@
   --rise: 4px;
 }
 
+/*
+ * US-49. Windows' contrast themes and "Increase contrast" ask for this.
+ * apple-design: near-solid surfaces with a defined border. Borders reach 3:1,
+ * the bar for something that marks a control, and muted text moves most of
+ * the way to body text. Tokens only, so contrast.test.ts checks these too.
+ */
+@media (prefers-contrast: more) {
+  :root {
+    --border: light-dark(#64748b, #7c8aa5);
+    --text-muted: light-dark(#334155, #cbd5e1);
+  }
+}
+
 /* US-51. A choice made with the toggle overrides the system's. */
 :root[data-theme='light'] {
   color-scheme: light;
@@ -70,7 +83,7 @@ body {
     -apple-system,
     'Segoe UI',
     sans-serif;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.5;
 }
 

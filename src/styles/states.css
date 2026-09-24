@@ -18,7 +18,7 @@
 
 .prompt__title {
   margin: 0 0 var(--space-3);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .prompt__list {
@@ -35,7 +35,7 @@
 }
 
 .empty p:first-child {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text);
 }

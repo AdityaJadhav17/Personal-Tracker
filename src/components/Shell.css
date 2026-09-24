@@ -35,7 +35,7 @@
 
 .sidebar__title {
   margin: 0 var(--space-2) var(--space-5);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: #ffffff;
@@ -53,7 +53,7 @@
   gap: var(--space-2);
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   text-align: left;
   color: var(--sidebar-text);

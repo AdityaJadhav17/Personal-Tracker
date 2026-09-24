@@ -13,7 +13,7 @@
 
 .group__title {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -26,7 +26,7 @@
  * a screen reader can count the list itself.
  */
 .group__count {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
@@ -43,14 +43,14 @@
   align-items: center;
   gap: var(--space-3);
   margin: 0 0 var(--space-5);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
 /* US-44. Under the Overdue heading, naming what its rows offer. */
 .group__hint {
   margin: 0 0 var(--space-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 

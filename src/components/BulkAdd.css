@@ -12,23 +12,23 @@
   width: 100%;
   resize: vertical;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .bulk__format {
   margin: var(--space-2) 0 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.7;
   color: var(--text-muted);
 }
 
 .bulk__format code {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .bulk__heading {
   margin: var(--space-4) 0 var(--space-2);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -47,12 +47,12 @@
   justify-content: space-between;
   padding: var(--space-1) 0;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* A line that will not become anything, said in the colour of a problem. */
 .bulk__row--skipped {
   color: var(--danger);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
 }

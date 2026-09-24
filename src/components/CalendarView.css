@@ -26,7 +26,9 @@
 
 .calendar__title {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
+  /* US-49. Headings tighten a little; body text stays at zero. */
+  letter-spacing: -0.01em;
   font-weight: 600;
 }
 
@@ -42,7 +44,7 @@
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
   transition:
     border-color var(--speed) ease,
@@ -68,7 +70,7 @@
 
 .calendar__weekday {
   padding-bottom: var(--space-2);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -115,7 +117,7 @@
 .calendar__date {
   display: block;
   margin-bottom: var(--space-1);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -132,7 +134,7 @@
   border-left: 2px solid var(--accent);
   border-radius: 2px;
   background: var(--accent-soft);
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -153,7 +155,7 @@
 }
 
 .calendar__more {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
 }
 
@@ -166,7 +168,7 @@
   padding: 1px var(--space-1);
   border: 1px dashed var(--accent);
   border-radius: 2px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -191,7 +193,7 @@
 
 .calendar__day-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .calendar__day-goal,
@@ -206,7 +208,7 @@
   width: 56px;
   padding: var(--space-1);
   border-bottom: 1px solid var(--border);
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-align: center;
   vertical-align: middle;
   color: var(--text-muted);
@@ -228,7 +230,7 @@
 .item__step-list {
   margin: 0;
   padding-left: var(--space-5);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .item__step-add {
@@ -267,7 +269,7 @@
 .calendar__moved {
   min-height: 1.5em;
   margin: 0 0 var(--space-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
@@ -278,6 +280,6 @@
   }
 
   .calendar__item {
-    font-size: 10px;
+    font-size: 0.625rem;
   }
 }

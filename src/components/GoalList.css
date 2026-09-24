@@ -19,19 +19,19 @@
 
 .goal__name {
   margin: 0 0 var(--space-1);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .goal__description {
   margin: 0 0 var(--space-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
 .goal__target {
   margin: 0 0 var(--space-3);
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -39,7 +39,7 @@
 
 .goal__count {
   margin: 0 0 var(--space-1);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }

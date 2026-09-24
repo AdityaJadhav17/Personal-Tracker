@@ -363,5 +363,6 @@ passed 1,300 lines.
 - [US-48, feedback where it was missing](stories/US-48.md)
 - [US-50, a title bar that matches](stories/US-50.md)
 - [US-51, choosing light or dark](stories/US-51.md)
+- [US-49, type and contrast](stories/US-49.md)
 - [US-52, repeats you can see coming](stories/US-52.md)
 - [US-54, ten at a time](stories/US-54.md)

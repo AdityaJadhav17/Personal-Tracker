@@ -19,6 +19,6 @@
 .status {
   min-height: 20px;
   margin: var(--space-3) 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
