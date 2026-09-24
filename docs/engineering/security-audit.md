@@ -132,3 +132,33 @@ change. Fixing it means threading a success value back through `addItem`,
 `update` and `commit` to the form, which is a wider change than this audit
 should make on its own. It is a usability wart in an already-degraded state, not
 a security issue.
+
+**Fixed on 24 September 2026 by US-40.** `addItem` now reports whether the write
+worked and the form keeps what was typed when it did not.
+
+## Addendum, 24 September 2026: the roadmap batch
+
+Stories US-40 to US-46 changed the trust boundary in one place: there is now a
+second file the user can choose, a calendar (`.ics`) file, read by
+`src/domain/icsImport.ts`. It is handled the way the JSON import is:
+
+- **Capped before it is read**, at the same 5 MB as the JSON import.
+- **Read as text, never evaluated.** Only four properties are looked at:
+  `SUMMARY`, `DTSTART` or `DUE`, `STATUS` and `RRULE`. Anything else in the file,
+  attachments, URLs and alarms included, is ignored.
+- **Nothing is written until confirmed.** The file becomes drafts, shown in a
+  preview; storage changes only on Add.
+- **Titles render as text**, through React, and a test puts markup in a title to
+  prove it stays text.
+- **No network request.** Canvas publishes a feed URL, and fetching it would be
+  the request the security posture forbids, so the user downloads the file and
+  chooses it, exactly as with the JSON import.
+
+Also checked and found safe in the batch:
+
+- **`navigator.storage.persist()`** asks the browser to keep this origin's
+  storage. It grants no new capability and exposes nothing.
+- **`npm run deploy`'s self-check** reads only the deploy folder it was given and
+  writes nothing.
+- **`@axe-core/playwright`**, the one new dependency, is development only and is
+  never bundled, so it cannot read anyone's deadlines.

@@ -17,7 +17,9 @@ dentist appointment, a friend's birthday. Two numbers at the top say what is
 left today and what you finished yesterday, then the list sorts itself.
 
 - **Overdue** sits above everything, so you never scroll past something you
-  have already missed.
+  have already missed. Each overdue row asks for one decision: done,
+  **Tomorrow** (same time, next day), a new date, or **Drop**, which asks first.
+  The pile empties instead of growing.
 - **Today**, **This week** and **Later** follow. A group with nothing in it does
   not render at all.
 - Inside each group, high priority comes first, then whatever is due soonest.
@@ -52,10 +54,23 @@ The same panel is where you rename something, move its deadline when a professor
 does, or delete it outright. Deleting asks first and then really deletes: it is
 not marked done, so it never inflates what you finished.
 
+A project that takes more than an evening can be broken into **steps**: open it
+and add a step with its own title and date. Each step is a deadline in its own
+right, in the list, on the calendar and on your phone, and it takes the
+project's course and goal. The project says how many of its steps are done.
+Deleting a project takes its steps with it, and says so first.
+
 **Calendar** lays the same items out as a month, so you can tell a heavy week
-from a light one before it arrives. Today is marked, you can step through the
-months, and a day with more than two things says how many more rather than
-hiding them. Finished items drop off, matching Home.
+from a light one before it arrives. A column counts each week's deadlines and
+marks six or more as heavy. Goals show on their target day, outlined so they
+never read as one more deadline. Today is marked, and finished items drop off,
+matching Home.
+
+Press a date, an item or "2 more" and that day opens below the grid with every
+row in full, so anything a row can do on Home works from the calendar too,
+including changing its date from the keyboard. Drag an item to another day to
+move its deadline, keeping its time; hold it over Next month or Previous month
+to carry it further.
 
 **Goals** are things to aim at with a date on them. Items can belong to a goal,
 and each goal shows how much of its work is finished.
@@ -74,8 +89,15 @@ time, then the title. It shows you what every line was understood as, and lists
 the ones it could not read, before anything is saved. The format is strict on
 purpose: it reports a line it cannot read rather than guessing at it.
 
+Add from calendar file reads an `.ics` from Canvas or a course site, the
+"Download iCal File" kind. It shows what it found and what it left out, such as
+anything already past or already in your list, and adds nothing until you press
+Add. It can put everything under one course. You do the download; the app still
+makes no network request.
+
 Export everything to a JSON file you keep, and import it back on another
-machine. Files written by the first version still import.
+machine. Files written by the first version still import. Once a week has
+passed since the last export, a line by the Export button says so.
 
 Export calendar writes an `.ics` file of every open deadline, with reminders
 set by priority: a high priority item warns a day before and an hour before, a
@@ -120,8 +142,13 @@ window to stop the server, delete the shortcut to stop it starting.
 $s = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Startup'))\Personal Tracker.lnk"); $s.TargetPath = $env:ComSpec; $s.Arguments = '/c npm run live'; $s.WorkingDirectory = (Get-Location).Path; $s.WindowStyle = 7; $s.Save()
 ```
 
-Then open http://localhost:4180 in Edge and use Apps, then **Install this site
-as an app**, and pin it to the taskbar.
+Then open http://localhost:4180 and install it as an app: in Chrome, the ⋮ menu,
+then **Cast, save, and share**, then **Install page as app**; in Edge, Apps,
+then **Install this site as an app**. Pin it to the taskbar. Stay with one
+browser: each keeps its own copy of the data.
+
+`npm run deploy` checks its own output and fails, naming the files, if the
+deployed `index.html` and its assets do not match.
 
 **Your data does not move by itself.** The browser keeps storage per address,
 so 4180 starts empty. Export from 5173 once, Import it at 4180, and from then
@@ -169,14 +196,12 @@ deadlines by accident.
 No accounts, no cloud sync, no hosted backend, no mobile app, no collaboration.
 GitHub holds the source and nothing else.
 
-Also absent, and deliberately: phone notifications, calendar export, recurring
-items, and filtering by category. Items still carry a category so that today's
-export files stay readable once filtering arrives.
-
-The honest limitation: a browser tab on a laptop cannot reach your phone without
-a server, so this version reminds you only while you have it open. Calendar
-export is the leading candidate for fixing that, and
-[docs/engineering/decisions.md](docs/engineering/decisions.md) explains why it waited.
+Also absent, and deliberately: push notifications. A browser tab on a laptop
+cannot reach your phone without a server, so the app itself reminds you only
+while it is open. The calendar export routes around that by letting your phone's
+own calendar do the reminding.
+[docs/product/v3-plan.md](docs/product/v3-plan.md) is the proposal for a private
+server that would add nudges, and it is waiting on a spike.
 
 ## How it is built
 
@@ -186,7 +211,8 @@ component tests, Playwright for end to end.
 Two runtime dependencies, React and React DOM. No component library, no state
 library, no router, no date library and no chart library: the sidebar icons and
 the trend charts are inline SVG, and the colour palette is checked for contrast
-by a test that reads the stylesheet.
+by a test that reads the design tokens. Every view is also scanned for WCAG 2.2
+AA in both colour schemes on every CI run.
 
 [docs/](docs/README.md) holds the rest: the user research every test ID traces
 back to, the data model, and a decision log that explains why each choice went

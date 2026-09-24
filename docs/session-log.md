@@ -1500,3 +1500,43 @@ current, since it had gone stale twice.
 met, and the documentation is now true. Version 2 is blocked on three real
 school days of use, which has been the last unticked line since the beginning
 and is the one nobody else can do.
+
+## 2026-09-24: the whole roadmap in one day
+
+Aditya asked for a snapshot of the product, the five best problems from research
+on why people abandon trackers, a review of six qualities, and a plan; then for
+all of it to be built. [The roadmap](product/review-and-roadmap.md) is the plan,
+and every step has a story file under [product/stories/](product/stories/).
+
+**Built, in order.** US-40 guards the one copy of the data: a backup reminder,
+persistent storage, a deploy that checks itself, and two old warts fixed
+(a refused save clearing the form, and monthly repeats drifting after a short
+month). US-41 put goals on the calendar and made any day openable. US-42 added
+a WCAG 2.2 AA scan of every view and a skip link. US-46 scaled phone alarms by
+priority. US-43 reads calendar files from Canvas and course sites. US-44 gave
+every overdue item a decision. US-45 added dated steps and a weekly load
+column. The database went to version 4 and then 5, one hop each.
+
+**Maintainability, done rather than listed.** One copy of the Playwright helpers
+instead of nineteen (278 lines gone). Each component's CSS beside it, with the
+build proving the result byte-identical. One file per story. A checklist for
+adding a field or a view, and a rule about Playwright's substring matching.
+
+**What went wrong, so it does not again.**
+
+- A deploy-check test ran against the real deploy folder and put uncommitted
+  code live on `localhost:4180`. It was tested and the migration additive, so
+  nothing was lost, but `CLAUDE.md` now says never to deploy while developing.
+- A dev server started for a screenshot kept serving stale code, and Playwright
+  reused it, so a spec passed against the old `.ics` writer. Preview servers are
+  now stopped after every visual check, and the suite was rerun fresh.
+- Twice a commit went in with a Prettier failure because the check did not stop
+  the command. Commits are now chained behind a passing format check.
+- The eighth Playwright substring collision: "Step title for Midterm" contained
+  "Title for Midterm". Hence the rule.
+- Heredocs ate backslashes twice more. Anything with a backslash now goes
+  through the editor.
+
+**Where it stands.** 642 unit tests and 201 Playwright specs pass, lint and
+typecheck are clean, and the build passes. What is left is Aditya's: push,
+deploy, re-export the calendar to the phone, and use it.
