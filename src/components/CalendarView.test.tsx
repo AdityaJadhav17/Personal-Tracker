@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CalendarView from './CalendarView';
-import type { Item } from '../domain/types';
+import type { Goal, Item } from '../domain/types';
 
 /** Tuesday 15 September 2026, 10:00 local. */
 const NOW = new Date(2026, 8, 15, 10, 0, 0, 0);
@@ -33,6 +33,17 @@ function dueOn(
   };
 }
 
+/** What App hands in for an open day: the titles, as a list. */
+function listTitles(items: Item[]) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={item.id}>{item.title}</li>
+      ))}
+    </ul>
+  );
+}
+
 /** The grid cell for a day, found by its accessible name. */
 function cell(day: string) {
   return screen.getByRole('cell', { name: new RegExp(day, 'i') });
@@ -44,6 +55,8 @@ test('AC-21.1 an item shows in the cell for the day it is due', () => {
       items={[dueOn('2026-09-16', 'CSE 110 midterm')]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -58,6 +71,8 @@ test('AC-21.1 an item due another day is not in this day', () => {
       items={[dueOn('2026-09-16', 'Midterm')]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -65,14 +80,30 @@ test('AC-21.1 an item due another day is not in this day', () => {
 });
 
 test('AC-21.2 today is marked as today', () => {
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   expect(cell('September 15')).toHaveAttribute('aria-current', 'date');
   expect(cell('September 16')).not.toHaveAttribute('aria-current');
 });
 
 test('AC-21.3 the calendar opens on the current month', () => {
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
 });
@@ -84,6 +115,8 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
       items={[dueOn('2026-09-16', 'Midterm'), dueOn('2026-10-01', 'Rent')]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -96,7 +129,15 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
 
 test('AC-21.3 moving back returns to the month you came from', async () => {
   const user = userEvent.setup();
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   await user.click(screen.getByRole('button', { name: /next month/i }));
   await user.click(screen.getByRole('button', { name: /previous month/i }));
@@ -106,7 +147,15 @@ test('AC-21.3 moving back returns to the month you came from', async () => {
 
 test('AC-21.2 today is only marked in the month it falls in', async () => {
   const user = userEvent.setup();
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   await user.click(screen.getByRole('button', { name: /next month/i }));
 
@@ -124,6 +173,8 @@ test('AC-21.4 a day with more items than fit says how many more', () => {
       ]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -136,6 +187,8 @@ test('AC-21.4 a day that fits says nothing about more', () => {
       items={[dueOn('2026-09-16', 'First'), dueOn('2026-09-16', 'Second')]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -143,7 +196,15 @@ test('AC-21.4 a day that fits says nothing about more', () => {
 });
 
 test('AC-21.5 a month with nothing in it still draws the grid', () => {
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   expect(screen.getAllByRole('cell')).toHaveLength(30);
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
@@ -160,6 +221,8 @@ test('AC-21.6 a done item is not on the calendar', () => {
       ]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -167,7 +230,15 @@ test('AC-21.6 a done item is not on the calendar', () => {
 });
 
 test('the weekday headings name the columns', () => {
-  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
+  render(
+    <CalendarView
+      items={[]}
+      now={NOW}
+      onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   expect(screen.getByRole('columnheader', { name: 'Sunday' })).toBeVisible();
   expect(screen.getByRole('columnheader', { name: 'Saturday' })).toBeVisible();
@@ -188,7 +259,15 @@ function drag(title: string, day: string) {
 test('AC-39.1 dropping an item on another day moves it there at the same time', () => {
   const onMove = vi.fn();
   const homework = dueOn('2026-09-16', 'CSE 123 HW 1');
-  render(<CalendarView items={[homework]} now={NOW} onMove={onMove} />);
+  render(
+    <CalendarView
+      items={[homework]}
+      now={NOW}
+      onMove={onMove}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   drag('CSE 123 HW 1', 'September 18, 2026');
 
@@ -204,6 +283,8 @@ test('AC-39.3 a line says what moved and where it went', () => {
       items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
       now={NOW}
       onMove={() => {}}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -221,6 +302,8 @@ test('AC-39.4 dropping an item back on its own day changes nothing', () => {
       items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
       now={NOW}
       onMove={onMove}
+      goals={[]}
+      renderDay={listTitles}
     />,
   );
 
@@ -233,7 +316,15 @@ test('AC-39.4 dropping an item back on its own day changes nothing', () => {
 test('AC-39.6 dragging over Next month turns the page, and the drop lands there', () => {
   const onMove = vi.fn();
   const booking = dueOn('2026-09-25', 'MGT 18 Book midterm');
-  render(<CalendarView items={[booking]} now={NOW} onMove={onMove} />);
+  render(
+    <CalendarView
+      items={[booking]}
+      now={NOW}
+      onMove={onMove}
+      goals={[]}
+      renderDay={listTitles}
+    />,
+  );
 
   const data = new Map<string, string>();
   const dataTransfer = {
@@ -256,4 +347,79 @@ test('AC-39.6 dragging over Next month turns the page, and the drop lands there'
     booking,
     new Date(2026, 9, 21, 12).toISOString(),
   );
+});
+
+function renderWith(items: Item[], goals: Goal[] = []) {
+  render(
+    <CalendarView
+      items={items}
+      now={NOW}
+      onMove={() => {}}
+      goals={goals}
+      renderDay={listTitles}
+    />,
+  );
+}
+
+test('AC-41.1 a goal shows on its target day, marked as a goal', () => {
+  renderWith(
+    [],
+    [
+      {
+        id: 'g',
+        name: 'AWS certification',
+        description: '',
+        targetAt: new Date(2026, 8, 20, 12).toISOString(),
+        createdAt: '2026-09-01T00:00:00.000Z',
+      },
+    ],
+  );
+
+  expect(
+    within(cell('September 20, 2026')).getByText('Goal: AWS certification'),
+  ).toBeVisible();
+});
+
+test('AC-41.2 "more" opens the day and lists everything due on it', async () => {
+  const user = userEvent.setup();
+  renderWith([
+    dueOn('2026-09-16', 'First'),
+    dueOn('2026-09-16', 'Second'),
+    dueOn('2026-09-16', 'Third'),
+  ]);
+
+  await user.click(screen.getByRole('button', { name: '1 more' }));
+
+  const day = screen.getByRole('region', { name: 'September 16, 2026' });
+  expect(within(day).getByText('Third')).toBeVisible();
+  expect(within(day).getAllByRole('listitem')).toHaveLength(3);
+});
+
+test('AC-41.3 clicking an item opens its day', async () => {
+  const user = userEvent.setup();
+  renderWith([dueOn('2026-09-16', 'CSE 123 HW 1')]);
+
+  await user.click(screen.getByRole('button', { name: 'CSE 123 HW 1' }));
+
+  expect(
+    within(
+      screen.getByRole('region', { name: 'September 16, 2026' }),
+    ).getByText('CSE 123 HW 1'),
+  ).toBeVisible();
+});
+
+test('AC-41.4 the date opens an empty day too, and Close shuts it', async () => {
+  const user = userEvent.setup();
+  renderWith([]);
+
+  await user.click(
+    screen.getByRole('button', { name: 'Open September 17, 2026' }),
+  );
+  const day = screen.getByRole('region', { name: 'September 17, 2026' });
+  expect(within(day).getByText('Nothing due this day.')).toBeVisible();
+
+  await user.click(within(day).getByRole('button', { name: 'Close' }));
+  expect(
+    screen.queryByRole('region', { name: 'September 17, 2026' }),
+  ).toBeNull();
 });

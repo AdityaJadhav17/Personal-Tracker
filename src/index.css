@@ -1084,6 +1084,23 @@ button {
   border-color: var(--accent);
 }
 
+/* US-41. The date, each item and "more" are buttons that open the day. They
+   keep the look they had as plain text; the rules below set what shows. */
+.calendar__date,
+.calendar__item,
+.calendar__more {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar__item {
+  width: 100%;
+}
+
 .calendar__date {
   display: block;
   margin-bottom: var(--space-1);
@@ -1118,6 +1135,49 @@ button {
 
 .calendar__more {
   font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* AC-41.1. A goal is a date that matters, not something due: outlined, not
+   filled, so it never reads as one more deadline. */
+.calendar__goal {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 2px;
+  padding: 1px var(--space-1);
+  border: 1px dashed var(--accent);
+  border-radius: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+/* US-41. The open day, below the grid. */
+.calendar__day {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.calendar__day-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.calendar__day-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.calendar__day-goal,
+.calendar__day-empty {
+  margin: 0 0 var(--space-2);
   color: var(--text-muted);
 }
 

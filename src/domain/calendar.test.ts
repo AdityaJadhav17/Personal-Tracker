@@ -50,6 +50,7 @@ describe('monthGrid', () => {
       day: '2026-09-17',
       date: 17,
       items: [],
+      goals: [],
     });
   });
 
@@ -123,5 +124,29 @@ describe('monthGrid', () => {
   test('the date number is the day of the month, not the index of the cell', () => {
     expect(cellFor('2026-09', '2026-09-01', [])?.date).toBe(1);
     expect(cellFor('2026-09', '2026-09-30', [])?.date).toBe(30);
+  });
+});
+
+describe('goals on the calendar', () => {
+  const goal = {
+    id: 'goal-1',
+    name: 'AWS certification',
+    description: '',
+    targetAt: new Date(2026, 8, 20, 12).toISOString(),
+    createdAt: '2026-09-01T00:00:00.000Z',
+  };
+
+  test('AC-41.1 a goal lands on the day of its target', () => {
+    const cell = monthGrid('2026-09', [], [goal]).find(
+      (one) => one?.day === '2026-09-20',
+    );
+    expect(cell?.goals).toEqual([goal]);
+  });
+
+  test('AC-41.1 a day with no goal has an empty list', () => {
+    const cell = monthGrid('2026-09', [], [goal]).find(
+      (one) => one?.day === '2026-09-21',
+    );
+    expect(cell?.goals).toEqual([]);
   });
 });

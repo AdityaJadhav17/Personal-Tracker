@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { monthGrid } from '../domain/calendar';
 import type { DayCell } from '../domain/calendar';
 import {
@@ -9,7 +10,7 @@ import {
   shiftMonth,
   toDateValue,
 } from '../domain/dates';
-import type { Item } from '../domain/types';
+import type { Goal, Item } from '../domain/types';
 
 /** Sunday first, matching the date control the add form already uses. */
 const WEEKDAYS = [
@@ -36,6 +37,13 @@ interface CalendarViewProps {
   now: Date;
   /** US-39. An item was dropped on another day; `dueAt` is its new deadline. */
   onMove: (item: Item, dueAt: string) => void;
+  /** AC-41.1. Shown on their target day. */
+  goals: Goal[];
+  /**
+   * US-41. The open day's items, drawn the way the dashboard draws them, so
+   * everything a row can do, including changing its date, works from here.
+   */
+  renderDay: (items: Item[]) => ReactNode;
 }
 
 /**
@@ -54,14 +62,24 @@ export default function CalendarView({
   items,
   now,
   onMove,
+  goals,
+  renderDay,
 }: CalendarViewProps) {
   const [month, setMonth] = useState(() => monthValue(now));
   // AC-39.3. There is no undo, so a drop that lands on the wrong day has to
   // at least be said out loud, to eyes and to screen readers alike.
   const [moved, setMoved] = useState('');
+  // US-41. The day opened below the grid, if any. Kept when the month turns,
+  // so looking ahead does not lose what you were reading.
+  const [opened, setOpened] = useState<string | null>(null);
 
   const today = toDateValue(now);
-  const cells = monthGrid(month, items);
+  const cells = monthGrid(month, items, goals);
+  const openCell = opened
+    ? monthGrid(opened.slice(0, 7), items, goals).find(
+        (cell) => cell?.day === opened,
+      )
+    : undefined;
 
   function drop(id: string, day: string) {
     const item = items.find((one) => one.id === id);
@@ -133,6 +151,7 @@ export default function CalendarView({
                     key={cell.day}
                     isToday={cell.day === today}
                     onDrop={drop}
+                    onOpen={setOpened}
                   />
                 ),
               )}
@@ -140,6 +159,33 @@ export default function CalendarView({
           ))}
         </tbody>
       </table>
+
+      {openCell && (
+        <section className="calendar__day" aria-labelledby="calendar-day">
+          <div className="calendar__day-bar">
+            <h3 className="calendar__day-title" id="calendar-day">
+              {dayLabel(openCell.day)}
+            </h3>
+            <button
+              className="calendar__move"
+              type="button"
+              onClick={() => setOpened(null)}
+            >
+              Close
+            </button>
+          </div>
+          {openCell.goals.map((goal) => (
+            <p className="calendar__day-goal" key={goal.id}>
+              Goal: {goal.name}
+            </p>
+          ))}
+          {openCell.items.length > 0 ? (
+            renderDay(openCell.items)
+          ) : (
+            <p className="calendar__day-empty">Nothing due this day.</p>
+          )}
+        </section>
+      )}
     </section>
   );
 }
@@ -157,10 +203,12 @@ function Cell({
   cell,
   isToday,
   onDrop,
+  onOpen,
 }: {
   cell: DayCell;
   isToday: boolean;
   onDrop: (id: string, day: string) => void;
+  onOpen: (day: string) => void;
 }) {
   const extra = cell.items.length - SHOWN;
 
@@ -176,26 +224,50 @@ function Cell({
       }}
     >
       {/* The full date is read, the bare number is seen. Without it a screen
-          reader announces "16" with nothing saying which month. */}
-      <time className="calendar__date" dateTime={cell.day}>
-        <span className="visually-hidden">{dayLabel(cell.day)}</span>
-        <span aria-hidden="true">{cell.date}</span>
-      </time>
+          reader announces "16" with nothing saying which month. US-41 made it
+          the way into the day, including one with nothing due yet. */}
+      <button
+        className="calendar__date"
+        type="button"
+        onClick={() => onOpen(cell.day)}
+      >
+        <time dateTime={cell.day}>
+          <span className="visually-hidden">Open {dayLabel(cell.day)}</span>
+          <span aria-hidden="true">{cell.date}</span>
+        </time>
+      </button>
+
+      {cell.goals.map((goal) => (
+        <span className="calendar__goal" key={goal.id}>
+          Goal: {goal.name}
+        </span>
+      ))}
 
       {cell.items.slice(0, SHOWN).map((item) => (
-        <span
+        <button
           className={`calendar__item calendar__item--${item.priority}`}
           key={item.id}
+          type="button"
           draggable
           onDragStart={(event) =>
             event.dataTransfer.setData('text/plain', item.id)
           }
+          onClick={() => onOpen(cell.day)}
         >
           {item.title}
-        </span>
+        </button>
       ))}
 
-      {extra > 0 && <span className="calendar__more">{extra} more</span>}
+      {/* AC-41.2. A count you cannot open is a dead end. */}
+      {extra > 0 && (
+        <button
+          className="calendar__more"
+          type="button"
+          onClick={() => onOpen(cell.day)}
+        >
+          {extra} more
+        </button>
+      )}
     </td>
   );
 }

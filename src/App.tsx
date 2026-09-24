@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
 import GoalList from './components/GoalList';
+import ItemRow from './components/ItemRow';
 import ReflectionView from './components/ReflectionView';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
@@ -155,6 +156,26 @@ export default function App() {
           onMove={(item, dueAt) =>
             actions.editItem(item.id, item.title, dueAt, item.repeat)
           }
+          goals={db.goals}
+          renderDay={(dayItems) => (
+            <ul className="group__list">
+              {dayItems.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  now={current}
+                  onDone={actions.markDone}
+                  onNoteChange={actions.setNote}
+                  courses={db.courses}
+                  onCourseChange={actions.setCourse}
+                  goals={db.goals}
+                  onGoalChange={actions.setGoal}
+                  onEdit={actions.editItem}
+                  onDelete={actions.removeItem}
+                />
+              ))}
+            </ul>
+          )}
         />
       ) : view === 'trends' ? (
         <TrendsView series={dailySeries(db.items, db.reflections)} />

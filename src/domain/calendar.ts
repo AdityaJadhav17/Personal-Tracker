@@ -1,5 +1,5 @@
 import { monthCells, toDateValue } from './dates';
-import type { Item } from './types';
+import type { Goal, Item } from './types';
 
 export interface DayCell {
   /** Local calendar day, "2026-09-16". */
@@ -8,6 +8,8 @@ export interface DayCell {
   date: number;
   /** Open items due that day, earliest first. */
   items: Item[];
+  /** Goals whose target falls that day. AC-41.1. */
+  goals: Goal[];
 }
 
 /**
@@ -20,12 +22,24 @@ export interface DayCell {
  * is coming", and something already finished is not coming. Nothing is stored
  * here, it is the same items read a second way.
  */
-export function monthGrid(month: string, items: Item[]): (DayCell | null)[] {
+export function monthGrid(
+  month: string,
+  items: Item[],
+  goals: Goal[] = [],
+): (DayCell | null)[] {
   const byDay = new Map<string, Item[]>();
   for (const item of items) {
     if (item.status !== 'open') continue;
     const day = toDateValue(new Date(item.dueAt));
     byDay.set(day, [...(byDay.get(day) ?? []), item]);
+  }
+
+  // AC-41.1. A goal's target is a date that matters, so it belongs here even
+  // though nothing is due on it.
+  const goalsByDay = new Map<string, Goal[]>();
+  for (const goal of goals) {
+    const day = toDateValue(new Date(goal.targetAt));
+    goalsByDay.set(day, [...(goalsByDay.get(day) ?? []), goal]);
   }
 
   for (const list of byDay.values()) {
@@ -39,6 +53,7 @@ export function monthGrid(month: string, items: Item[]): (DayCell | null)[] {
           day,
           date: Number(day.slice(-2)),
           items: byDay.get(day) ?? [],
+          goals: goalsByDay.get(day) ?? [],
         },
   );
 }
