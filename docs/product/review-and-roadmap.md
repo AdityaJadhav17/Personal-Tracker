@@ -22,19 +22,19 @@ and no data leaves the machine.
 
 **What it does, as of `2959b07`:**
 
-| Area | What you can do |
-|---|---|
-| Home | Add an item with a title, due date, optional time, category, priority and repeat. See it grouped as overdue, today, tomorrow, this week and later, with a count of what is left today and what you finished yesterday. |
-| An item | Open it to edit the title, date, time and repeat. Link it to a course or a goal, add a note, mark it done (`u` undoes), or delete it. |
-| Filters | Filter by category or by course. |
-| Bulk | Paste a list, one `2026-10-07 23:59 Title` per line. |
-| Calendar | See a month. Drag an item to another day, or over Next and Previous month to cross months. |
-| Goals | Set a target date. Progress counts from the linked items. |
-| Courses | Record the meeting place, professor email and office hours. |
-| Reflections | Rate the day from one to five and add a note. |
-| Trends | A chart of completions against reflections. |
-| Data | Export and import JSON (Replace or Merge). Export an `.ics` with a 30 minute alarm on every open deadline, for the phone's calendar. |
-| Running it | `npm run deploy` then `npm run live` serves it at `localhost:4180`. A Startup shortcut runs it at login, and Chrome shows it as an installed app. |
+| Area        | What you can do                                                                                                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home        | Add an item with a title, due date, optional time, category, priority and repeat. See it grouped as overdue, today, tomorrow, this week and later, with a count of what is left today and what you finished yesterday. |
+| An item     | Open it to edit the title, date, time and repeat. Link it to a course or a goal, add a note, mark it done (`u` undoes), or delete it.                                                                                  |
+| Filters     | Filter by category or by course.                                                                                                                                                                                       |
+| Bulk        | Paste a list, one `2026-10-07 23:59 Title` per line.                                                                                                                                                                   |
+| Calendar    | See a month. Drag an item to another day, or over Next and Previous month to cross months.                                                                                                                             |
+| Goals       | Set a target date. Progress counts from the linked items.                                                                                                                                                              |
+| Courses     | Record the meeting place, professor email and office hours.                                                                                                                                                            |
+| Reflections | Rate the day from one to five and add a note.                                                                                                                                                                          |
+| Trends      | A chart of completions against reflections.                                                                                                                                                                            |
+| Data        | Export and import JSON (Replace or Merge). Export an `.ics` with a 30 minute alarm on every open deadline, for the phone's calendar.                                                                                   |
+| Running it  | `npm run deploy` then `npm run live` serves it at `localhost:4180`. A Startup shortcut runs it at login, and Chrome shows it as an installed app.                                                                      |
 
 **How it works:**
 
@@ -116,12 +116,14 @@ recent or most urgent, and long projects get ignored until the deadline is
 close. The fix everyone recommends is milestones with their own dates.
 
 **Where you will hit it.**
+
 - CSE 123 Project 2b is one line due 11/30. It was released 11/16, and
   nothing reminds you of it in between.
 - The week of 10/26 has two midterms, a project and an exam window closing,
   and the calendar can only show two titles a day.
 
 **What to build (US-45).** Two parts:
+
 - Milestones under an item: steps with their own dates that feed the item's
   progress. This is reading C from US-39, the "work on it" day, done
   properly. It needs database version 4.
@@ -141,6 +143,7 @@ losing the Chrome profile takes everything, and nothing prompts you to
 export.
 
 **What to build (US-40).**
+
 - Ask Chrome to treat the storage as persistent. That is one call,
   `navigator.storage.persist()`.
 - Show "last backup 9 days ago" once it has been a week, with Export next
@@ -157,6 +160,7 @@ same 30 minute alarm, from "book PrairieTest" to the CSE 120 final. By
 November you will be swiping them away unread.
 
 **What to build (US-46).** Alarms by priority:
+
 - A high priority item, like every exam, gets an alarm a day before and
   another an hour before.
 - A normal item gets one alarm, the evening before at 8pm.
@@ -177,6 +181,7 @@ would improve it.
 ### Accessibility
 
 **Strong already:**
+
 - A test fails the build if a colour pair drops below WCAG contrast.
 - Every control has a label, driven by roles in the tests.
 - `role="status"` and `role="alert"` regions announce changes.
@@ -184,6 +189,7 @@ would improve it.
 - There is a `prefers-reduced-motion` rule and a visible focus ring.
 
 **Gaps:**
+
 - Moving a deadline on the calendar needs a mouse, and calendar items cannot
   be opened.
 - Items behind "2 more" cannot be reached at all.
@@ -192,6 +198,7 @@ would improve it.
   colours.
 
 **Improve:**
+
 - Make calendar items buttons that open the item's panel, which also gives a
   keyboard way to move them.
 - Make "2 more" open the whole day.
@@ -206,6 +213,7 @@ would improve it.
 bulk paste. The calendar now takes drag and drop.
 
 **Gaps, all found in the first two days of real use:**
+
 - Goals are not on the calendar.
 - "2 more" is a dead end.
 - The `.ics` on the phone goes stale the moment anything changes, and
@@ -214,6 +222,7 @@ bulk paste. The calendar now takes drag and drop.
   wart.
 
 **Improve:**
+
 - Put goal targets on the calendar as markers.
 - Make a day expandable.
 - After export, say what changed since the last export, so you know when the
@@ -223,12 +232,14 @@ bulk paste. The calendar now takes drag and drop.
 ### Stability
 
 **Strong already:**
+
 - A refused write never shows data that was not saved.
 - Imports are validated field by field and capped at 5 MB.
 - Merge now keeps every collection.
 - Nothing runs on the network.
 
 **Gaps:**
+
 - Everything lives in one copy (problem 4 above).
 - A monthly repeat on the 29th to 31st drifts earlier after a short month,
   and stays there.
@@ -236,6 +247,7 @@ bulk paste. The calendar now takes drag and drop.
   unknown.
 
 **Improve:**
+
 - US-40 for backups.
 - Fix the monthly clamp, test first.
 - Make `deploy` check itself. After building, a short script confirms that
@@ -245,11 +257,13 @@ bulk paste. The calendar now takes drag and drop.
 ### Maintainability
 
 **Strong already:**
+
 - The domain logic is pure and the tests read like the acceptance criteria.
 - There is one dependency.
 - Every decision has a reason written down.
 
 **Gaps:**
+
 - 22 Playwright spec files each carry their own copy of the date and seeding
   helpers.
 - The CSS is one file of 1,283 lines, so changing the calendar means
@@ -259,6 +273,7 @@ bulk paste. The calendar now takes drag and drop.
   this project.
 
 **Improve:**
+
 - One shared `e2e/helpers.ts` for dates and seeding.
 - Move each component's CSS next to it. Vite does this natively and the
   output is identical.
@@ -272,17 +287,20 @@ of these is its own small task, not something slipped into a feature.
 ### Extensibility
 
 **Strong already:**
+
 - A new schema version is one migration hop in one file.
 - The domain layer does not know the UI exists, which is what lets the v3
   server reuse it.
 
 **Gaps:**
+
 - Adding a field to an item touches the type, the migration, the import
   validation, the form and the row. Nothing lists those places, so one gets
   missed.
 - Views are a chain of five conditionals in `App.tsx`.
 
 **Improve:**
+
 - Write the "adding a field" and "adding a view" checklists into
   `docs/engineering/`.
 - Leave the view chain alone until a sixth view exists. Replacing it now
@@ -295,6 +313,7 @@ of these is its own small task, not something slipped into a feature.
 thousand rows is not a problem for React. Nothing needs to change for size.
 
 **Where scale does bite:**
+
 - A single day can hold more items than the calendar can show. Fixed by
   making a day expandable.
 - One browser on one laptop. Reaching a second device, your phone, is v3,
@@ -309,6 +328,7 @@ Each step is a story with its own plan and your approval, written test first,
 committed separately.
 
 **Step 0. Already under way, and it decides the order after step 3.**
+
 - Three school days of real use, with notes.
 - The iOS push spike.
 
@@ -317,17 +337,20 @@ steps 4 to 7.
 
 **Step 1. Protect the data.** Small, and first because the rest is worth
 nothing if the data is lost.
+
 - US-40: persistent storage, and the "last backup" reminder.
 - The bug fixes: keep the form when a save fails, and the monthly repeat
   drift.
 - `deploy` checks itself.
 
 **Step 2. What the first two days showed (US-41).**
+
 - Goal targets on the calendar.
 - A day that opens to show everything.
 - Calendar items open their panel when clicked.
 
 **Step 3. Accessibility (US-42).**
+
 - A keyboard way to move an item, through the panel from step 2.
 - A skip link.
 - The automated scan in Playwright, if you approve the dev dependency.
