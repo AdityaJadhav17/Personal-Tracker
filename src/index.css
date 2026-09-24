@@ -285,6 +285,19 @@ button {
   color: var(--danger);
 }
 
+/* US-44. Under the Overdue heading, naming what its rows offer. */
+.group__hint {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* US-44. Tomorrow and Drop, on overdue rows only. */
+.item__triage {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
 .group__list {
   margin: 0;
   padding: 0;

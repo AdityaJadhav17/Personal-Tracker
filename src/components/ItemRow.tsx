@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import {
   formatDue,
+  groupOf,
   isUpcoming,
+  moveToDay,
   toDateValue,
   toDueAt,
   toTimeValue,
+  tomorrowOf,
 } from '../domain/dates';
 import type { Course, Goal, Item, Repeat } from '../domain/types';
 
@@ -64,6 +67,9 @@ export default function ItemRow({
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
   const [confirming, setConfirming] = useState(false);
+  // US-44. Dropping from the overdue list asks first, like Delete does.
+  const [dropping, setDropping] = useState(false);
+  const overdue = groupOf(item.dueAt, now) === 'overdue';
 
   const course = courses.find((one) => one.id === item.courseId);
   const goal = goals.find((one) => one.id === item.goalId);
@@ -127,6 +133,61 @@ export default function ItemRow({
       */}
       {!open && item.note !== '' && (
         <span className="item__written">{item.note}</span>
+      )}
+      {/*
+        US-44. An overdue item gets a decision, not a guilt trip: finish it,
+        give it tomorrow, open it for another date, or drop it. Only the two
+        that are not already on the row are added here.
+      */}
+      {overdue && (
+        <span className="item__triage">
+          <button
+            className="data__button"
+            type="button"
+            aria-label={`Move ${item.title} to tomorrow`}
+            onClick={() =>
+              onEdit(
+                item.id,
+                item.title,
+                moveToDay(item.dueAt, tomorrowOf(now)),
+                item.repeat,
+              )
+            }
+          >
+            Tomorrow
+          </button>
+          <button
+            className="data__button"
+            type="button"
+            aria-label={`Drop ${item.title}`}
+            onClick={() => setDropping(true)}
+          >
+            Drop
+          </button>
+        </span>
+      )}
+      {dropping && (
+        <div className="item__confirm">
+          <p className="status" role="status">
+            Drop {item.title}? It is gone for good.
+          </p>
+          <div className="prompt__actions">
+            <button
+              className="prompt__button"
+              type="button"
+              onClick={() => onDelete(item.id)}
+            >
+              Yes, drop it
+            </button>
+            <button
+              className="prompt__button prompt__button--quiet"
+              type="button"
+              onClick={() => setDropping(false)}
+            >
+              Keep
+            </button>
+          </div>
+        </div>
       )}
       {open && (
         <div className="item__edit">

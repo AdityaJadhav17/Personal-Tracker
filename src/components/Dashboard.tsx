@@ -62,6 +62,12 @@ export default function Dashboard({
                 {ordered.length}
               </span>
             </div>
+            {/* US-44. Each overdue row carries the choices; this names them. */}
+            {key === 'overdue' && (
+              <p className="group__hint">
+                Decide each one: done, tomorrow, a new date, or drop it.
+              </p>
+            )}
             <ul className="group__list">
               {ordered.map((item) => (
                 <ItemRow

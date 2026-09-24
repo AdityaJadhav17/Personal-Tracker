@@ -249,6 +249,13 @@ export function fromIcsDate(value: string): string | null {
     : null;
 }
 
+/** US-44. The local day after `now`, "2026-09-16", for moving to tomorrow. */
+export function tomorrowOf(now: Date): string {
+  return toDateValue(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+  );
+}
+
 /** The same instant, moved by `minutes`, still as an ISO instant. */
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();

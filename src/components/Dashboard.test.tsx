@@ -1176,3 +1176,80 @@ test('AC-29.6 changing only the repeat leaves the title and date alone', async (
   expect(saved[0]?.dueAt).toBe(anItem('Midterm', 1).dueAt);
   expect(dueBefore).not.toBe('');
 });
+
+function renderTriage(
+  items: Item[],
+  handlers: { onEdit?: () => void; onDelete?: () => void } = {},
+) {
+  render(
+    <Dashboard
+      now={NOW}
+      onDone={noop}
+      onNoteChange={noop}
+      courses={[]}
+      onCourseChange={noop}
+      goals={[]}
+      onGoalChange={noop}
+      onEdit={handlers.onEdit ?? noop}
+      onDelete={handlers.onDelete ?? noop}
+      items={items}
+    />,
+  );
+}
+
+test('AC-44.1 an overdue row offers Tomorrow and Drop, and a current one does not', () => {
+  renderTriage([anItem('Missed lab', -2), anItem('Quiz', 0)]);
+
+  expect(
+    screen.getByRole('button', { name: 'Move Missed lab to tomorrow' }),
+  ).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Drop Missed lab' })).toBeVisible();
+  expect(
+    screen.queryByRole('button', { name: 'Move Quiz to tomorrow' }),
+  ).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Drop Quiz' })).toBeNull();
+});
+
+test('AC-44.1 the overdue group says what to do with each one', () => {
+  renderTriage([anItem('Missed lab', -2)]);
+
+  expect(
+    screen.getByText(
+      'Decide each one: done, tomorrow, a new date, or drop it.',
+    ),
+  ).toBeVisible();
+});
+
+test('AC-44.2 Tomorrow moves the deadline to tomorrow at the time it had', async () => {
+  const user = userEvent.setup();
+  const onEdit = vi.fn();
+  const lab = anItem('Missed lab', -2, { dueAt: hoursOn(-2, 17) });
+  renderTriage([lab], { onEdit });
+
+  await user.click(
+    screen.getByRole('button', { name: 'Move Missed lab to tomorrow' }),
+  );
+
+  expect(onEdit).toHaveBeenCalledWith(
+    lab.id,
+    'Missed lab',
+    hoursOn(1, 17),
+    'none',
+  );
+});
+
+test('AC-44.3 Drop asks first, then deletes; Keep leaves it', async () => {
+  const user = userEvent.setup();
+  const onDelete = vi.fn();
+  const lab = anItem('Missed lab', -2);
+  renderTriage([lab], { onDelete });
+
+  await user.click(screen.getByRole('button', { name: 'Drop Missed lab' }));
+  expect(onDelete).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Keep' }));
+  expect(onDelete).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole('button', { name: 'Drop Missed lab' }));
+  await user.click(screen.getByRole('button', { name: 'Yes, drop it' }));
+  expect(onDelete).toHaveBeenCalledWith(lab.id);
+});
