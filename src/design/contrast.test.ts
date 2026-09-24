@@ -1,9 +1,9 @@
-import css from '../index.css?raw';
+import css from '../styles/base.css?raw';
 
 /**
  * Aditya's pain point is reading this at 11pm with the lights off, and Phase 4
  * requires checking contrast in dark mode. This turns that from a claim into a
- * gate: the colour tokens are read straight out of index.css, so there is one
+ * gate: the colour tokens are read straight out of styles/base.css, so there is one
  * source of truth and a future palette tweak that quietly breaks legibility
  * fails here instead of on his laptop at midnight.
  *

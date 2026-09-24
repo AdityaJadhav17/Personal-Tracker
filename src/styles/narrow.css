@@ -1,0 +1,65 @@
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 700px) {
+  .shell {
+    /* minmax(0, 1fr), not 1fr: a grid track sized 1fr still refuses to go
+       below its content's minimum, which is how a single wide child used to
+       push the whole page past the screen. */
+    grid-template-columns: minmax(0, 1fr);
+    /* Sidebar as tall as its icons, content takes the rest. Without this the
+       grid stretches both rows to fill 100vh and the sidebar becomes a band
+       of empty colour above the page. */
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: var(--space-3);
+  }
+
+  .sidebar__title {
+    margin-bottom: var(--space-3);
+  }
+
+  /*
+   * Icons only. Six labelled items measure 568px, which is why the page used
+   * to have a floor of 592px and every phone scrolled sideways. Six icons fit
+   * a 320px screen in one row with room left over.
+   */
+  .sidebar__nav {
+    flex-direction: row;
+    gap: var(--space-1);
+  }
+
+  .sidebar__item {
+    justify-content: center;
+    width: auto;
+    flex: 1 1 0;
+    padding: var(--space-2);
+  }
+
+  /* Hidden from the eye, not from the accessibility tree. Same declarations
+     as .visually-hidden, which cannot be reached from here. */
+  .sidebar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .shell__main {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .form__field {
+    flex: 1 1 100%;
+  }
+
+  .item__due,
+  .item__tag {
+    font-size: 12px;
+  }
+}

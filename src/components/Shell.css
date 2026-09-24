@@ -1,0 +1,79 @@
+/* AC-42.2. Off screen until it has focus, then over the sidebar's corner. */
+.skip {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 10;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  padding: var(--space-5) var(--space-3);
+  background: var(--sidebar-bg);
+}
+
+.sidebar__title {
+  margin: 0 var(--space-2) var(--space-5);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  transition:
+    color var(--speed) ease,
+    background var(--speed) ease;
+}
+
+.sidebar__item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar__item--current {
+  color: var(--sidebar-current);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__icon {
+  flex: none;
+}
+
+.shell__main {
+  max-width: 900px;
+  padding: var(--space-5) var(--space-5) var(--space-5);
+}

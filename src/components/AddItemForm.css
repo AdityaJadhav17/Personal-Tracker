@@ -1,0 +1,73 @@
+/* ---------- Add form: one row wide, stacked narrow ---------- */
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/*
+ * Only the title grows. The date, time and select controls have a natural
+ * width, and letting them stretch pushed Priority and Add onto a second row.
+ */
+.form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 0 1 auto;
+}
+
+.form__field--title {
+  flex: 1 1 160px;
+}
+
+.form__field--time {
+  flex: 0 0 auto;
+}
+
+.form__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.form__input,
+.form__select {
+  font: inherit;
+  padding: var(--space-2);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color var(--speed) ease;
+}
+
+.form__input:hover,
+.form__select:hover {
+  border-color: var(--accent);
+}
+
+.form__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.form__submit {
+  padding: var(--space-2) var(--space-4);
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: opacity var(--speed) ease;
+}
+
+.form__submit:hover {
+  opacity: 0.88;
+}

@@ -1,0 +1,60 @@
+/* ---------- Groups ---------- */
+
+.group {
+  margin-bottom: var(--space-5);
+}
+
+.group__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.group__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/*
+ * The count sits beside the heading rather than inside it, so the heading's
+ * accessible name stays exactly "Overdue". Hidden from assistive tech because
+ * a screen reader can count the list itself.
+ */
+.group__count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.group--overdue .group__title,
+.group--overdue .group__count {
+  color: var(--danger);
+}
+
+/* US-44. Under the Overdue heading, naming what its rows offer. */
+.group__hint {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* US-44. Tomorrow and Drop, on overdue rows only. */
+.item__triage {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.group__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}

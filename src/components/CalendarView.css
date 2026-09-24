@@ -1,0 +1,244 @@
+/* ---------- Calendar ---------- */
+
+/*
+ * Present to a screen reader, absent to the eye. Used for the full date in a
+ * calendar cell, where the number alone does not say which month it is in.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.calendar__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.calendar__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.calendar__moves {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.calendar__move {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--speed);
+}
+
+.calendar__move:hover {
+  border-color: var(--accent);
+}
+
+.calendar__grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendar__weekday {
+  padding-bottom: var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.calendar__cell {
+  height: 88px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  vertical-align: top;
+}
+
+/* Padding days belong to another month. Nothing to read, nothing to click. */
+.calendar__cell--outside {
+  border-color: transparent;
+  background: none;
+}
+
+.calendar__cell--today {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* US-41. The date, each item and "more" are buttons that open the day. They
+   keep the look they had as plain text; the rules below set what shows. */
+.calendar__date,
+.calendar__item,
+.calendar__more {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar__item {
+  width: 100%;
+}
+
+.calendar__date {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.calendar__cell--today .calendar__date {
+  color: var(--accent);
+}
+
+.calendar__item {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 2px;
+  padding: 2px var(--space-1);
+  border-left: 2px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent-soft);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.calendar__item--high {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.calendar__more {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* AC-41.1. A goal is a date that matters, not something due: outlined, not
+   filled, so it never reads as one more deadline. */
+.calendar__goal {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 2px;
+  padding: 1px var(--space-1);
+  border: 1px dashed var(--accent);
+  border-radius: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+/* US-41. The open day, below the grid. */
+.calendar__day {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.calendar__day-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.calendar__day-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.calendar__day-goal,
+.calendar__day-empty {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+}
+
+/* AC-45.6. The week's count, narrow and quiet unless the week is heavy. */
+.calendar__load {
+  width: 56px;
+  padding: var(--space-1);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-align: center;
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+
+.calendar__load--heavy {
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* US-45. Steps inside an item's open panel. */
+.item__steps {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.item__step-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 13px;
+}
+
+.item__step-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* US-39. Items can be dragged to another day. */
+.calendar__item[draggable='true'] {
+  cursor: grab;
+}
+
+/* Holds its height while empty, so the grid does not jump on the first drop. */
+.calendar__moved {
+  min-height: 1.5em;
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 700px) {
+  .calendar__cell {
+    height: 64px;
+    padding: var(--space-1);
+  }
+
+  .calendar__item {
+    font-size: 10px;
+  }
+}

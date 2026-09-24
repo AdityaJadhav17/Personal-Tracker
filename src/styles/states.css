@@ -1,0 +1,78 @@
+/* ---------- Empty and error states ---------- */
+
+.empty,
+.error,
+.prompt {
+  padding: var(--space-5) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* US-43. The calendar file preview lives inside the data row, so it takes the
+   whole width, and its alert does too. */
+.data .prompt,
+.data .alert {
+  flex-basis: 100%;
+}
+
+.prompt__title {
+  margin: 0 0 var(--space-3);
+  font-size: 15px;
+}
+
+.prompt__list {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.empty p,
+.prompt p {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+}
+
+.empty p:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty__action,
+.prompt__button {
+  padding: var(--space-2) var(--space-4);
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: opacity var(--speed) ease;
+}
+
+.empty__action:hover,
+.prompt__button:hover {
+  opacity: 0.88;
+}
+
+.prompt__button--quiet {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border);
+}
+
+.error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.error p:first-child {
+  margin-top: 0;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.error p {
+  color: var(--text);
+}

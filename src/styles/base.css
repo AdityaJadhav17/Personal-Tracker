@@ -1,0 +1,85 @@
+/*
+ * Design tokens. See docs/ui-plan.md for why each value is what it is.
+ * No component below uses a raw colour: every one reads a custom property,
+ * which is what lets src/design/contrast.test.ts check the whole palette.
+ */
+:root {
+  color-scheme: light dark;
+
+  --bg: #f7f9f9;
+  --surface: #ffffff;
+  --text: #134e4a;
+  --text-muted: #475569;
+  --border: #d9e4e3;
+  --accent: #0f766e;
+  --on-accent: #ffffff;
+  --accent-soft: #e6f4f2;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+
+  /* The sidebar stays dark in both schemes, as in the reference screenshots. */
+  --sidebar-bg: #172033;
+  --sidebar-text: #cbd5e1;
+  --sidebar-current: #2dd4bf;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius: 6px;
+  --speed: 150ms;
+}
+
+/*
+ * Dark follows the system, so it matches whatever the laptop is already doing
+ * at 11pm. Only values are redefined here, never rules.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --surface: #192134;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #2a3550;
+    --accent: #2dd4bf;
+    --on-accent: #0f172a;
+    --accent-soft: #163a37;
+    --danger: #f87171;
+    --danger-soft: #3a1c1c;
+
+    /* Same values: the sidebar does not follow the scheme. */
+    --sidebar-bg: #172033;
+    --sidebar-text: #cbd5e1;
+    --sidebar-current: #2dd4bf;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Keyboard users get a ring, mouse users do not. Never outline: none. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+}

@@ -1,0 +1,19 @@
+/* ---------- Editing an item ---------- */
+
+.item__actions {
+  display: flex;
+  flex: 1 1 100%;
+  order: 3;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.item__confirm {
+  flex: 1 1 100%;
+  order: 4;
+}
+
+/* The edit panel stacks its fields; the selects stay on one line. */
+.item__edit .form__field {
+  flex: 1 1 100%;
+}
