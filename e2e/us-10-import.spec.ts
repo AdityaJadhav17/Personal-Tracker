@@ -181,6 +181,45 @@ test('AC-10.4 Merge keeps both, and merging the same file twice is a no-op', asy
   expect(await storedTitles(page)).toEqual(['New thing', 'Old thing']);
 });
 
+test('AC-10.4 Merge keeps the courses you already had, after a reload', async ({
+  page,
+}) => {
+  const withCourse = (name: string) =>
+    JSON.stringify({
+      version: 3,
+      items: [],
+      goals: [],
+      courses: [
+        {
+          id: name,
+          name,
+          meetingLocation: '',
+          professorEmail: '',
+          officeHours: '',
+          createdAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      reflections: [],
+    });
+
+  await page.goto('/');
+  await uploadText(page, withCourse('CSE 120'));
+  // Anything held, so the second file asks Replace or Merge.
+  await add(page, 'Rent');
+  await uploadText(page, withCourse('CSE 123'));
+  await page.getByRole('button', { name: 'Merge' }).click();
+  await page.reload();
+
+  const courses = await page.evaluate(() =>
+    (
+      JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+        courses: { name: string }[];
+      }
+    ).courses.map((c) => c.name),
+  );
+  expect(courses).toEqual(['CSE 120', 'CSE 123']);
+});
+
 test('importing sends nothing off-origin', async ({ page }) => {
   const offOrigin: string[] = [];
   page.on('request', (req) => {

@@ -611,6 +611,103 @@ test('AC-10.4 merging your own export twice does not duplicate anything', async 
   expect(storedItems()).toHaveLength(1);
 });
 
+function databaseWith(tag: string, day: string) {
+  const at = '2026-09-01T00:00:00.000Z';
+  return {
+    version: 3,
+    items: [
+      {
+        id: `item-${tag}`,
+        title: `Item ${tag}`,
+        dueAt: '2026-10-01T06:59:00.000Z',
+        category: 'academic',
+        priority: 'normal',
+        status: 'open',
+        note: '',
+        createdAt: at,
+        completedAt: null,
+        goalId: `goal-${tag}`,
+        courseId: `course-${tag}`,
+        repeat: 'none',
+      },
+    ],
+    goals: [
+      {
+        id: `goal-${tag}`,
+        name: `Goal ${tag}`,
+        description: '',
+        targetAt: '2026-12-01T08:00:00.000Z',
+        createdAt: at,
+      },
+    ],
+    courses: [
+      {
+        id: `course-${tag}`,
+        name: `Course ${tag}`,
+        meetingLocation: '',
+        professorEmail: '',
+        officeHours: '',
+        createdAt: at,
+      },
+    ],
+    reflections: [
+      { id: `ref-${tag}`, day, score: 4, note: `Day ${tag}`, createdAt: at },
+    ],
+  };
+}
+
+function stored() {
+  return JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+    goals: { name: string }[];
+    courses: { name: string }[];
+    reflections: { note: string }[];
+  };
+}
+
+test('AC-10.4 Merge keeps your courses, goals and reflections as well as the file’s', async () => {
+  const user = userEvent.setup();
+  localStorage.setItem(
+    'personal-tracker/v1',
+    JSON.stringify(databaseWith('mine', '2026-09-20')),
+  );
+  render(<App />);
+
+  await importFile(
+    jsonFile(JSON.stringify(databaseWith('file', '2026-09-21'))),
+  );
+  await user.click(await screen.findByRole('button', { name: 'Merge' }));
+
+  const after = stored();
+  expect(after.courses.map((c) => c.name).sort()).toEqual([
+    'Course file',
+    'Course mine',
+  ]);
+  expect(after.goals.map((g) => g.name).sort()).toEqual([
+    'Goal file',
+    'Goal mine',
+  ]);
+  expect(after.reflections.map((r) => r.note).sort()).toEqual([
+    'Day file',
+    'Day mine',
+  ]);
+});
+
+test('AC-10.4 Merge keeps your reflection when the file has one for the same day', async () => {
+  const user = userEvent.setup();
+  localStorage.setItem(
+    'personal-tracker/v1',
+    JSON.stringify(databaseWith('mine', '2026-09-20')),
+  );
+  render(<App />);
+
+  await importFile(
+    jsonFile(JSON.stringify(databaseWith('file', '2026-09-20'))),
+  );
+  await user.click(await screen.findByRole('button', { name: 'Merge' }));
+
+  expect(stored().reflections.map((r) => r.note)).toEqual(['Day mine']);
+});
+
 test('AC-10.4 Cancel writes nothing', async () => {
   const user = userEvent.setup();
   render(<App />);

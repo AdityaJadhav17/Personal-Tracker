@@ -36,7 +36,7 @@ export interface DatabaseActions {
   recordToday: (score: Reflection['score'], note: string) => void;
   /** Import chose to replace. */
   replaceAll: (next: Database) => void;
-  /** Import chose to keep both. Incoming ids we already hold are dropped. */
+  /** Import chose to keep both, in every collection. What we hold wins. */
   merge: (next: Database) => void;
 }
 
@@ -62,6 +62,16 @@ function itemFrom(draft: ItemDraft): Item {
 const STORAGE_FULL =
   'That change could not be saved. This browser will not store any more, ' +
   'so nothing was changed. Export a backup, then remove some finished items.';
+
+/** Everything in `held`, then whatever in `incoming` has a key not held. */
+function keepBoth<T>(
+  held: T[],
+  incoming: T[],
+  key: (record: T) => string,
+): T[] {
+  const keys = new Set(held.map(key));
+  return [...held, ...incoming.filter((record) => !keys.has(key(record)))];
+}
 
 /** Undo is a plain letter, so it must not fire while you are typing. */
 function isTyping(element: Element | null): boolean {
@@ -282,18 +292,21 @@ export function useDatabase(): {
     },
 
     merge(next) {
-      update((current) => {
-        const existing = new Set(current.items.map((item) => item.id));
-        return {
-          ...next,
-          items: [
-            ...current.items,
-            // Dropping ids we already hold is what makes importing your own
-            // export twice a no-op rather than a way to duplicate everything.
-            ...next.items.filter((item) => !existing.has(item.id)),
-          ],
-        };
-      });
+      // Keep everything held, and add what the file has that is not. Dropping
+      // what we already hold is what makes importing your own export twice a
+      // no-op rather than a way to duplicate everything. Reflections are one
+      // per day, so on a clash the one already here wins.
+      update((current) => ({
+        ...current,
+        items: keepBoth(current.items, next.items, (item) => item.id),
+        goals: keepBoth(current.goals, next.goals, (goal) => goal.id),
+        courses: keepBoth(current.courses, next.courses, (c) => c.id),
+        reflections: keepBoth(
+          current.reflections,
+          next.reflections,
+          (r) => r.day,
+        ),
+      }));
       setUndoable(null);
     },
   };
