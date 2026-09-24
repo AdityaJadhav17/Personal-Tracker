@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
 import BulkAdd from './components/BulkAdd';
+import CalendarFileImport from './components/CalendarFileImport';
 import CalendarView from './components/CalendarView';
 import CategoryFilter from './components/CategoryFilter';
 import type { Filter } from './components/CategoryFilter';
@@ -291,6 +292,13 @@ export default function App() {
             onChange={handleImportFile}
           />
         </span>
+
+        <CalendarFileImport
+          items={db.items}
+          courses={db.courses}
+          now={current}
+          onAdd={actions.addItems}
+        />
       </div>
 
       {pasting && (

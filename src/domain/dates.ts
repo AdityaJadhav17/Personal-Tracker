@@ -223,6 +223,32 @@ export function minutesBetween(from: string, to: string): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / 60_000);
 }
 
+/**
+ * US-43. An iCalendar date or date-time as an instant, or null.
+ *
+ * "20261008T065900Z" is UTC and converts exactly. "20261027T080000", floating
+ * or carrying a TZID, is read as local wall clock: this app has no timezone
+ * tables, and every calendar it will read comes from the zone it runs in.
+ * "20261018" is a whole day, due at 23:59 like any date typed without a time.
+ */
+export function fromIcsDate(value: string): string | null {
+  const day = /^(\d{4})(\d{2})(\d{2})$/.exec(value);
+  if (day) return toDueAt(`${day[1]}-${day[2]}-${day[3]}`, '');
+
+  const time = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})\d{2}(Z?)$/.exec(value);
+  if (!time) return null;
+  const [, year, month, date, hours, minutes, utc] = time;
+  if (!utc) return toDueAt(`${year}-${month}-${date}`, `${hours}:${minutes}`);
+
+  const at = new Date(
+    Date.UTC(+year!, +month! - 1, +date!, +hours!, +minutes!),
+  );
+  // Date.UTC rolls 31 September into October; reading back rejects it.
+  return at.getUTCMonth() === +month! - 1 && at.getUTCDate() === +date!
+    ? at.toISOString()
+    : null;
+}
+
 /** The same instant, moved by `minutes`, still as an ISO instant. */
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();

@@ -38,7 +38,7 @@ const REPEATS = ['none', 'weekly', 'monthly'];
  * means freezing the tab first on something that was never going to fit. Five
  * megabytes is thousands of items, which is far past what a person types.
  */
-const MAX_BYTES = 5 * 1024 * 1024;
+export const MAX_BYTES = 5 * 1024 * 1024;
 
 /** Top level keys each version is allowed to carry. */
 const KEYS: Record<number, string[]> = {

@@ -21,7 +21,7 @@ export interface DatabaseActions {
   addItem: (draft: ItemDraft) => boolean;
   /** US-26. One commit, because fifty addItem calls would all see one stale
       database and only the last would survive. */
-  addItems: (drafts: ItemDraft[]) => void;
+  addItems: (drafts: ItemDraft[], courseId?: string | null) => void;
   markDone: (id: string) => void;
   setNote: (id: string, note: string) => void;
   /** US-25. Rename an item or move its deadline. */
@@ -191,8 +191,9 @@ export function useDatabase(): {
       }));
     },
 
-    addItems(drafts) {
-      const items = drafts.map(itemFrom);
+    addItems(drafts, courseId = null) {
+      // US-43 files a whole calendar under one course in the same commit.
+      const items = drafts.map((draft) => ({ ...itemFrom(draft), courseId }));
       update((current) => ({
         ...current,
         items: [...current.items, ...items],

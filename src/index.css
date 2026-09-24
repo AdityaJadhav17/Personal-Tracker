@@ -488,6 +488,25 @@ button {
   border-radius: var(--radius);
 }
 
+/* US-43. The calendar file preview lives inside the data row, so it takes the
+   whole width, and its alert does too. */
+.data .prompt,
+.data .alert {
+  flex-basis: 100%;
+}
+
+.prompt__title {
+  margin: 0 0 var(--space-3);
+  font-size: 15px;
+}
+
+.prompt__list {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
 .empty p,
 .prompt p {
   margin: 0 0 var(--space-3);
@@ -575,8 +594,16 @@ button {
 
 .data__import {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  max-width: 100%;
+}
+
+/* A file input's width is the browser's to choose; on a 320px phone, US-43's
+   longer label beside it did not fit, so the pair wraps and the input yields. */
+.data__import input {
+  max-width: 100%;
 }
 
 .alert {
