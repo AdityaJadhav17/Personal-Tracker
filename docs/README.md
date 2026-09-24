@@ -13,6 +13,9 @@ What is being built, for whom, and why.
   and the security posture.
 - [product/v2-plan.md](product/v2-plan.md) — the current scope: goals, courses,
   reflections and trends, derived from the dashboard screenshots.
+- [product/review-and-roadmap.md](product/review-and-roadmap.md) — a snapshot
+  of the product, five problems from research worth solving, a review of six
+  qualities, and the plan in order. Proposed, not approved.
 
 ## Engineering
 
