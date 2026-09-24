@@ -37,7 +37,9 @@ on Node 20.
 
 Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
-for why.
+for why. The one other key, `personal-tracker/theme`, is a display setting for
+this browser (US-51), read by `public/theme.js` before paint and written by the
+theme toggle; it is not app data and is never exported.
 
 The database is at version 5: items, goals, courses and reflections, with a
 `repeat`, a `repeatDay` and a `parentId` on every item and a `lastBackupAt`

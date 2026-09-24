@@ -3,19 +3,26 @@
  * No component below uses a raw colour: every one reads a custom property,
  * which is what lets src/design/contrast.test.ts check the whole palette.
  */
+/*
+ * Each colour is light-dark(light, dark): the browser picks one by the page's
+ * color-scheme. With no choice made that follows the system, so it matches
+ * whatever the laptop is already doing at 11pm; US-51's toggle sets
+ * data-theme to force one. Keeping both values in one declaration means the
+ * two palettes cannot drift apart.
+ */
 :root {
   color-scheme: light dark;
 
-  --bg: #f7f9f9;
-  --surface: #ffffff;
-  --text: #134e4a;
-  --text-muted: #475569;
-  --border: #d9e4e3;
-  --accent: #0f766e;
-  --on-accent: #ffffff;
-  --accent-soft: #e6f4f2;
-  --danger: #b91c1c;
-  --danger-soft: #fef2f2;
+  --bg: light-dark(#f7f9f9, #0f172a);
+  --surface: light-dark(#ffffff, #192134);
+  --text: light-dark(#134e4a, #e2e8f0);
+  --text-muted: light-dark(#475569, #94a3b8);
+  --border: light-dark(#d9e4e3, #2a3550);
+  --accent: light-dark(#0f766e, #2dd4bf);
+  --on-accent: light-dark(#ffffff, #0f172a);
+  --accent-soft: light-dark(#e6f4f2, #163a37);
+  --danger: light-dark(#b91c1c, #f87171);
+  --danger-soft: light-dark(#fef2f2, #3a1c1c);
 
   /* The sidebar stays dark in both schemes, as in the reference screenshots. */
   --sidebar-bg: #172033;
@@ -31,28 +38,13 @@
   --speed: 150ms;
 }
 
-/*
- * Dark follows the system, so it matches whatever the laptop is already doing
- * at 11pm. Only values are redefined here, never rules.
- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f172a;
-    --surface: #192134;
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --border: #2a3550;
-    --accent: #2dd4bf;
-    --on-accent: #0f172a;
-    --accent-soft: #163a37;
-    --danger: #f87171;
-    --danger-soft: #3a1c1c;
+/* US-51. A choice made with the toggle overrides the system's. */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
 
-    /* Same values: the sidebar does not follow the scheme. */
-    --sidebar-bg: #172033;
-    --sidebar-text: #cbd5e1;
-    --sidebar-current: #2dd4bf;
-  }
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 * {

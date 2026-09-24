@@ -31,6 +31,13 @@ export default tseslint.config(
     },
   },
   {
+    // US-51. A classic browser script served as-is, outside the bundle.
+    files: ['public/**/*.js'],
+    languageOptions: {
+      globals: { document: 'readonly', localStorage: 'readonly' },
+    },
+  },
+  {
     // Build tooling that runs in Node, never in the browser.
     files: ['scripts/**/*.mjs'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly' } },

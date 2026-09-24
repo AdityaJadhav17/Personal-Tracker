@@ -23,8 +23,14 @@
 }
 
 .sidebar {
+  position: relative;
   padding: var(--space-5) var(--space-3);
   background: var(--sidebar-bg);
+}
+
+/* US-51. Below the views, set apart from them: it is a setting, not a place. */
+.sidebar__theme {
+  margin-top: var(--space-5);
 }
 
 .sidebar__title {

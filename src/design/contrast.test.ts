@@ -34,26 +34,27 @@ function contrast(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-function tokensIn(block: string): Record<string, string> {
-  const found: Record<string, string> = {};
-  for (const match of block.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6})\s*;/gi)) {
-    found[match[1]!.toLowerCase()] = match[2]!;
+const HEX = '#[0-9a-f]{6}';
+const TOKEN = new RegExp(
+  String.raw`--([a-z-]+):\s*(?:light-dark\(\s*(${HEX})\s*,\s*(${HEX})\s*\)|(${HEX}))\s*;`,
+  'gi',
+);
+
+/**
+ * US-51. Each colour token is either one hex, the same in both schemes, or
+ * `light-dark(light, dark)`, so both palettes come from one declaration.
+ */
+function palettes(source: string) {
+  const light: Record<string, string> = {};
+  const dark: Record<string, string> = {};
+  for (const [, name, inLight, inDark, both] of source.matchAll(TOKEN)) {
+    light[name!.toLowerCase()] = (inLight ?? both)!;
+    dark[name!.toLowerCase()] = (inDark ?? both)!;
   }
-  return found;
+  return { light, dark };
 }
 
-/** The `:root { ... }` block starting at or after `from`. */
-function rootBlockAfter(source: string, from: number): string {
-  const start = source.indexOf(':root {', from);
-  const end = source.indexOf('}', start);
-  return source.slice(start, end);
-}
-
-const light = tokensIn(rootBlockAfter(css, 0));
-const dark = {
-  ...light,
-  ...tokensIn(rootBlockAfter(css, css.indexOf('prefers-color-scheme: dark'))),
-};
+const { light, dark } = palettes(css);
 
 /** Every foreground and background that actually meet on screen. */
 const PAIRS: [fg: string, bg: string, where: string][] = [
@@ -100,13 +101,12 @@ describe.each([
 });
 
 describe('the two palettes', () => {
-  test('dark redefines every colour token, so none leaks from light', () => {
-    const darkOnly = tokensIn(
-      rootBlockAfter(css, css.indexOf('prefers-color-scheme: dark')),
-    );
-    const lightColours = Object.keys(light);
-
-    expect(Object.keys(darkOnly).sort()).toEqual(lightColours.sort());
+  test('AC-51.4 every scheme-dependent colour is declared once, for both schemes', () => {
+    // A separate dark block, or one only for the toggle, is two lists that can
+    // drift apart. light-dark() keeps each colour's two values side by side.
+    expect(css).not.toMatch(/prefers-color-scheme/);
+    const differing = Object.keys(light).filter((k) => light[k] !== dark[k]);
+    expect(differing.length).toBeGreaterThanOrEqual(10);
   });
 
   test('the contrast maths matches known values', () => {

@@ -50,6 +50,15 @@
     white-space: nowrap;
   }
 
+  /* US-51. Beside the title, so a phone gains no extra row for it. */
+  .sidebar__theme {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-3);
+    margin-top: 0;
+    flex: none;
+  }
+
   .shell__main {
     padding: var(--space-4) var(--space-3);
   }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 export type View =
   'home' | 'calendar' | 'goals' | 'courses' | 'reflections' | 'trends';
@@ -97,6 +98,9 @@ export default function Shell({ view, onNavigate, children }: ShellProps) {
             </button>
           ))}
         </nav>
+
+        {/* US-51. Outside the nav: it changes how things look, not where you are. */}
+        <ThemeToggle />
       </div>
 
       {/* tabIndex lets the skip link move focus here, not only scroll. */}
