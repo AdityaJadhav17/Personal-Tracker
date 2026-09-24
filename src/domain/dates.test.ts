@@ -1,5 +1,6 @@
 import {
   dayLabel,
+  daysBetween,
   formatDue,
   groupOf,
   isUpcoming,
@@ -411,6 +412,24 @@ describe('nextOccurrence', () => {
     expect(next.day).toBe(28);
   });
 
+  test('AC-40.6 a monthly item anchored to the 31st returns to the 31st after February', () => {
+    // The clamp used to be permanent: 31 Jan, 28 Feb, then 28 Mar forever.
+    const february = new Date(2027, 1, 28, 9, 0).toISOString();
+    const next = fields(nextOccurrence(february, 'monthly', 31));
+
+    expect(next.month).toBe(3);
+    expect(next.day).toBe(31);
+    expect(next.hours).toBe(9);
+  });
+
+  test('AC-40.6 the anchor still clamps when the next month is short too', () => {
+    const march = new Date(2027, 2, 31, 9, 0).toISOString();
+    const next = fields(nextOccurrence(march, 'monthly', 31));
+
+    expect(next.month).toBe(4);
+    expect(next.day).toBe(30);
+  });
+
   test('AC-28.5 the 31st clamps to 29 February in a leap year', () => {
     const at = new Date(2028, 0, 31, 9, 0).toISOString();
     const next = fields(nextOccurrence(at, 'monthly'));
@@ -474,5 +493,22 @@ describe('moveToDay', () => {
     expect(moved.day).toBe(2);
     expect(moved.hours).toBe(8);
     expect(moved.minutes).toBe(0);
+  });
+});
+
+describe('daysBetween', () => {
+  test('AC-40.3 counts local calendar days, not 24 hour blocks', () => {
+    // 11pm on the 14th to 10am on the 15th is under a day, but it is yesterday.
+    const lateOnThe14th = new Date(2026, 8, 14, 23, 0).toISOString();
+    expect(daysBetween(lateOnThe14th, NOW)).toBe(1);
+  });
+
+  test('AC-40.3 the same day is zero', () => {
+    expect(daysBetween(new Date(2026, 8, 15, 1, 0).toISOString(), NOW)).toBe(0);
+  });
+
+  test('AC-40.3 a week is seven, across the November clock change too', () => {
+    const before = new Date(2026, 9, 29, 12, 0).toISOString();
+    expect(daysBetween(before, new Date(2026, 10, 5, 12, 0))).toBe(7);
   });
 });

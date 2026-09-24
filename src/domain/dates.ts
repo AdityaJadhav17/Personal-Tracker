@@ -234,13 +234,15 @@ export type Repeat = 'none' | 'weekly' | 'monthly';
  * to the last day when that month is shorter: the 31st of January becomes the
  * 28th of February, not the 3rd of March.
  *
- * ponytail: the clamp is permanent, because the next date is computed from the
- * last one and nothing stores the day it started on. An item due on the 29th
- * to 31st walks backwards the first time it crosses a short month and stays
- * there. Anchoring the original day would need a field on the item, and is a
- * story of its own if it ever matters.
+ * `day` is the day of the month the series aims for. Without it, the 28th of
+ * February would lead to the 28th of March and stay there; with 31 it leads
+ * back to the 31st. AC-40.6. It defaults to the day `iso` falls on.
  */
-export function nextOccurrence(iso: string, repeat: Repeat): string {
+export function nextOccurrence(
+  iso: string,
+  repeat: Repeat,
+  day?: number,
+): string {
   const at = new Date(iso);
 
   if (repeat === 'weekly') {
@@ -260,8 +262,18 @@ export function nextOccurrence(iso: string, repeat: Repeat): string {
   return new Date(
     at.getFullYear(),
     at.getMonth() + 1,
-    Math.min(at.getDate(), lastDay),
+    Math.min(day ?? at.getDate(), lastDay),
     at.getHours(),
     at.getMinutes(),
   ).toISOString();
+}
+
+/** The local day of the month an instant falls on. */
+export function dayOfMonth(iso: string): number {
+  return new Date(iso).getDate();
+}
+
+/** Whole local calendar days from `iso` to `now`, so 11pm yesterday is 1. */
+export function daysBetween(iso: string, now: Date): number {
+  return localDaysBetween(new Date(iso), now);
 }

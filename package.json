@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build -- --outDir \"%LOCALAPPDATA%\\PersonalTracker\" --emptyOutDir",
+    "deploy": "npm run build -- --outDir \"%LOCALAPPDATA%\\PersonalTracker\" --emptyOutDir && node scripts/check-deploy.mjs \"%LOCALAPPDATA%\\PersonalTracker\"",
     "live": "vite preview --outDir \"%LOCALAPPDATA%\\PersonalTracker\" --port 4180 --strictPort",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",

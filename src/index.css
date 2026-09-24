@@ -521,6 +521,14 @@ button {
 
 /* ---------- Data footer: export and import ---------- */
 
+/* US-40. Its own line above the buttons, in body text rather than muted: it
+   only appears when there is something worth doing about it. */
+.data__backup {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text);
+}
+
 .data {
   display: flex;
   flex-wrap: wrap;

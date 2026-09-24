@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
-import { nextOccurrence, now, toDateValue } from '../domain/dates';
+import { dayOfMonth, nextOccurrence, now, toDateValue } from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
 import { recordReflection } from '../domain/reflections';
 import type {
@@ -17,7 +17,8 @@ import type {
 import { load, save } from '../storage/db';
 
 export interface DatabaseActions {
-  addItem: (draft: ItemDraft) => void;
+  /** False when storage refused it, so the form can keep what was typed. */
+  addItem: (draft: ItemDraft) => boolean;
   /** US-26. One commit, because fifty addItem calls would all see one stale
       database and only the last would survive. */
   addItems: (drafts: ItemDraft[]) => void;
@@ -34,6 +35,8 @@ export interface DatabaseActions {
   addGoal: (draft: GoalDraft) => void;
   removeGoal: (id: string) => void;
   recordToday: (score: Reflection['score'], note: string) => void;
+  /** US-40. An export was just taken at this instant. */
+  recordBackup: (at: string) => void;
   /** Import chose to replace. */
   replaceAll: (next: Database) => void;
   /** Import chose to keep both, in every collection. What we hold wins. */
@@ -55,6 +58,7 @@ function itemFrom(draft: ItemDraft): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
   };
 }
 
@@ -123,22 +127,23 @@ export function useDatabase(): {
    * applied and the caller is told, because a screen that shows an item the
    * browser never stored is a lie that only surfaces on the next reload.
    */
-  function commit(next: Database) {
+  function commit(next: Database): boolean {
     if (!save(next)) {
       setStorageError(STORAGE_FULL);
-      return;
+      return false;
     }
     setStorageError('');
     setDb(next);
+    return true;
   }
 
   /**
    * The one place that guards the null database. Every action goes through it,
    * so none of them repeats the check and none of them can forget it.
    */
-  function update(change: (current: Database) => Database) {
-    if (!db) return;
-    commit(change(db));
+  function update(change: (current: Database) => Database): boolean {
+    if (!db) return false;
+    return commit(change(db));
   }
 
   function mapItems(id: string, change: (item: Item) => Item) {
@@ -180,7 +185,10 @@ export function useDatabase(): {
   const actions: DatabaseActions = {
     addItem(draft) {
       const item = itemFrom(draft);
-      update((current) => ({ ...current, items: [...current.items, item] }));
+      return update((current) => ({
+        ...current,
+        items: [...current.items, item],
+      }));
     },
 
     addItems(drafts) {
@@ -211,7 +219,17 @@ export function useDatabase(): {
             : {
                 ...finished,
                 id: crypto.randomUUID(),
-                dueAt: nextOccurrence(finished.dueAt, finished.repeat),
+                dueAt: nextOccurrence(
+                  finished.dueAt,
+                  finished.repeat,
+                  finished.repeatDay ?? undefined,
+                ),
+                // AC-40.6. Remember the day the series aims for, so a clamp
+                // into a short month does not become the new normal.
+                repeatDay:
+                  finished.repeat === 'monthly'
+                    ? (finished.repeatDay ?? dayOfMonth(finished.dueAt))
+                    : null,
                 status: 'open' as const,
                 completedAt: null,
                 createdAt: now().toISOString(),
@@ -231,7 +249,14 @@ export function useDatabase(): {
     },
 
     editItem(id, title, dueAt, repeat) {
-      mapItems(id, (item) => ({ ...item, title, dueAt, repeat }));
+      mapItems(id, (item) => ({
+        ...item,
+        title,
+        dueAt,
+        repeat,
+        // A deadline moved by hand sets a new day for the series to aim for.
+        repeatDay: dueAt === item.dueAt ? item.repeatDay : null,
+      }));
     },
 
     removeItem(id) {
@@ -284,6 +309,10 @@ export function useDatabase(): {
       update((current) =>
         recordReflection(current, toDateValue(now()), score, note, now()),
       );
+    },
+
+    recordBackup(at) {
+      update((current) => ({ ...current, lastBackupAt: at }));
     },
 
     replaceAll(next) {

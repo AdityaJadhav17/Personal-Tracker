@@ -15,6 +15,7 @@ function anItem(id: string, courseId: string | null): Item {
     goalId: null,
     courseId,
     repeat: 'none',
+    repeatDay: null,
   };
 }
 
@@ -30,7 +31,14 @@ function aCourse(id: string, name = id): Course {
 }
 
 function aDatabase(courses: Course[], items: Item[]): Database {
-  return { version: 3, items, courses, goals: [], reflections: [] };
+  return {
+    version: 4,
+    items,
+    courses,
+    goals: [],
+    reflections: [],
+    lastBackupAt: null,
+  };
 }
 
 test('AC-07.3 deleting a course removes it', () => {
@@ -87,7 +95,7 @@ test('the other collections are carried through untouched', () => {
 
   const next = deleteCourse(db, 'c1');
 
-  expect(next.version).toBe(3);
+  expect(next.version).toBe(4);
   expect(next.goals).toEqual([]);
   expect(next.reflections).toEqual([]);
 });

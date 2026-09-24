@@ -405,7 +405,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(3);
+  expect(parsed.version).toBe(4);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -447,11 +447,13 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 3,
+    version: 4,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
+    // AC-40.4. The file records its own export.
+    lastBackupAt: expect.any(String) as unknown,
   });
 });
 
@@ -1470,12 +1472,7 @@ test('the warning clears once a write succeeds again', async () => {
   });
   expect(screen.getByText(/could not be saved/i)).toBeVisible();
 
-  // Typed again, because a refused write still clears the form. See the note
-  // in the session log: that is a separate wart, not part of this fix.
-  await user.type(screen.getByLabelText('Title'), 'Rent');
-  fireEvent.change(screen.getByLabelText('Due'), {
-    target: { value: todayIso() },
-  });
+  // AC-40.5 kept what was typed, so trying again is one click.
   await user.click(screen.getByRole('button', { name: 'Add' }));
 
   expect(screen.queryByText(/could not be saved/i)).toBeNull();
@@ -1564,4 +1561,67 @@ test('AC-29.6 changing the repeat leaves the deadline where it was', async () =>
 
   const after = storedTitles()[0] as unknown as { dueAt: string };
   expect(after.dueAt).toBe(before.dueAt);
+});
+
+test('AC-40.5 a refused save keeps what you typed in the form', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+
+  await user.type(screen.getByLabelText('Title'), 'Rent');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: todayIso() },
+  });
+  withFullStorage(() => {
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+  });
+
+  expect(screen.getByLabelText('Title')).toHaveValue('Rent');
+  expect(screen.getByLabelText('Due')).toHaveValue(todayIso());
+});
+
+test('AC-40.2 items that were never exported say they are not backed up', async () => {
+  render(<App />);
+  expect(screen.queryByText('Not backed up yet.')).toBeNull();
+
+  await addItem('Rent', todayIso());
+
+  expect(screen.getByText('Not backed up yet.')).toBeVisible();
+});
+
+test('AC-40.4 Export records the backup, and the reminder stays gone after a reload', async () => {
+  const user = userEvent.setup();
+  captureExport();
+  const first = render(<App />);
+  await addItem('Rent', todayIso());
+
+  await user.click(screen.getByRole('button', { name: 'Export' }));
+
+  expect(screen.queryByText('Not backed up yet.')).toBeNull();
+  first.unmount();
+  render(<App />);
+  await screen.findByText('Rent');
+  expect(screen.queryByText('Not backed up yet.')).toBeNull();
+  const stored = JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+    lastBackupAt: string | null;
+  };
+  expect(stored.lastBackupAt).not.toBeNull();
+});
+
+test('AC-40.6 a monthly item on the 31st comes back on the 31st after February', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', '2027-01-31');
+  await setRepeat('Rent', 'monthly');
+
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  const open = (
+    JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+      items: { status: string; dueAt: string }[];
+    }
+  ).items.filter((item) => item.status === 'open');
+  expect(open).toHaveLength(1);
+  const due = new Date(open[0]!.dueAt);
+  expect([due.getMonth() + 1, due.getDate()]).toEqual([3, 31]);
 });

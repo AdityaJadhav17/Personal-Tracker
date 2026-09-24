@@ -45,6 +45,7 @@ const KEYS: Record<number, string[]> = {
   1: ['version', 'items'],
   2: ['version', 'items', 'goals', 'courses', 'reflections'],
   3: ['version', 'items', 'goals', 'courses', 'reflections'],
+  4: ['version', 'items', 'goals', 'courses', 'reflections', 'lastBackupAt'],
 };
 
 export type ParseResult =
@@ -97,6 +98,17 @@ function itemProblem(value: unknown): string | null {
     (!isText(raw.repeat) || !REPEATS.includes(raw.repeat))
   ) {
     return 'its repeat must be none, weekly or monthly';
+  }
+  // Absent before version 4.
+  if (
+    raw.repeatDay !== undefined &&
+    raw.repeatDay !== null &&
+    (typeof raw.repeatDay !== 'number' ||
+      !Number.isInteger(raw.repeatDay) ||
+      raw.repeatDay < 1 ||
+      raw.repeatDay > 31)
+  ) {
+    return 'its repeat day must be a day of the month or null';
   }
   if (!isLink(raw.goalId)) return 'its goal must be an id or null';
   if (!isLink(raw.courseId)) return 'its course must be an id or null';
@@ -167,6 +179,7 @@ function toItem(value: unknown): Item {
     // Absent before version 3, and upgrade would fill it anyway; defaulting
     // here keeps toItem total so the mapper never returns a partial item.
     repeat: (raw.repeat as Item['repeat'] | undefined) ?? 'none',
+    repeatDay: (raw.repeatDay as number | null | undefined) ?? null,
   };
 }
 
@@ -259,7 +272,7 @@ export function parseImport(text: string): ParseResult {
   }
 
   const version = raw.version;
-  if (version !== 1 && version !== 2 && version !== 3) {
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
     return {
       ok: false,
       error: 'That file is not a version this app can read.',
@@ -301,6 +314,14 @@ export function parseImport(text: string): ParseResult {
     if (problem) return { ok: false, error: problem };
   }
 
+  if (
+    raw.lastBackupAt !== undefined &&
+    raw.lastBackupAt !== null &&
+    !isInstant(raw.lastBackupAt)
+  ) {
+    return { ok: false, error: 'The last backup date is not a date.' };
+  }
+
   const days = new Set<string>();
   for (const entry of raw.reflections as Record<string, unknown>[]) {
     const day = entry.day as string;
@@ -320,6 +341,7 @@ export function parseImport(text: string): ParseResult {
       goals: (raw.goals as unknown[]).map(toGoal),
       courses: (raw.courses as unknown[]).map(toCourse),
       reflections: (raw.reflections as unknown[]).map(toReflection),
+      lastBackupAt: (raw.lastBackupAt as string | null | undefined) ?? null,
     }),
   };
 }

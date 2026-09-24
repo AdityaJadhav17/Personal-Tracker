@@ -29,6 +29,7 @@ function anItem(title: string, daysFromNow: number, rest: Partial<Item> = {}) {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
     repeat: 'none',
     ...rest,
   };

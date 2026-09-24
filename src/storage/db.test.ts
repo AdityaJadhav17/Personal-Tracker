@@ -14,13 +14,21 @@ function anItem(overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
     repeat: 'none',
     ...overrides,
   };
 }
 
 function aDatabase(items: Item[] = [anItem()]): Database {
-  return { version: 3, items, goals: [], courses: [], reflections: [] };
+  return {
+    version: 4,
+    items,
+    goals: [],
+    courses: [],
+    reflections: [],
+    lastBackupAt: null,
+  };
 }
 
 beforeEach(() => {
@@ -111,7 +119,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(3);
+    expect(load().version).toBe(4);
   });
 });
 
@@ -131,11 +139,12 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 3 as const,
+    version: 4 as const,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
+    lastBackupAt: null,
   };
 
   test('save reports the failure rather than throwing out of the caller', () => {

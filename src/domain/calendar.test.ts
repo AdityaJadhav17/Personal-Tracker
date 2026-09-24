@@ -19,6 +19,7 @@ function dueOn(day: string, overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
     repeat: 'none',
     ...overrides,
   };

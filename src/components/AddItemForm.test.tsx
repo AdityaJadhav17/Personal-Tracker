@@ -5,7 +5,7 @@ import AddItemForm from './AddItemForm';
 import type { ItemDraft } from '../domain/types';
 
 function setup() {
-  const onAdd = vi.fn<(draft: ItemDraft) => void>();
+  const onAdd = vi.fn<(draft: ItemDraft) => boolean>(() => true);
   const titleRef = createRef<HTMLInputElement>();
   render(<AddItemForm onAdd={onAdd} titleRef={titleRef} />);
   return { onAdd, user: userEvent.setup() };
@@ -197,7 +197,15 @@ test('AC-01.3 category and priority go back to their defaults after a submit', a
 test('AC-28.1 an item can be set to repeat when it is added', async () => {
   const user = userEvent.setup();
   const drafts: ItemDraft[] = [];
-  render(<AddItemForm onAdd={(d) => drafts.push(d)} titleRef={createRef()} />);
+  render(
+    <AddItemForm
+      onAdd={(d) => {
+        drafts.push(d);
+        return true;
+      }}
+      titleRef={createRef()}
+    />,
+  );
 
   await user.type(screen.getByLabelText('Title'), 'Rent');
   fireEvent.change(screen.getByLabelText('Due'), {
@@ -212,7 +220,15 @@ test('AC-28.1 an item can be set to repeat when it is added', async () => {
 test('AC-28.3 an item does not repeat unless you say so', async () => {
   const user = userEvent.setup();
   const drafts: ItemDraft[] = [];
-  render(<AddItemForm onAdd={(d) => drafts.push(d)} titleRef={createRef()} />);
+  render(
+    <AddItemForm
+      onAdd={(d) => {
+        drafts.push(d);
+        return true;
+      }}
+      titleRef={createRef()}
+    />,
+  );
 
   await user.type(screen.getByLabelText('Title'), 'Midterm');
   fireEvent.change(screen.getByLabelText('Due'), {
@@ -225,7 +241,7 @@ test('AC-28.3 an item does not repeat unless you say so', async () => {
 
 test('AC-28.1 the repeat choice resets with the rest of the form', async () => {
   const user = userEvent.setup();
-  render(<AddItemForm onAdd={() => {}} titleRef={createRef()} />);
+  render(<AddItemForm onAdd={() => true} titleRef={createRef()} />);
 
   await user.type(screen.getByLabelText('Title'), 'Rent');
   fireEvent.change(screen.getByLabelText('Due'), {

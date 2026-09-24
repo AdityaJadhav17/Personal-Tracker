@@ -14,6 +14,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
     repeat: 'none',
     ...overrides,
   };
@@ -21,7 +22,14 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
-  return { version: 3, items, goals: [], courses: [], reflections: [] };
+  return {
+    version: 4,
+    items,
+    goals: [],
+    courses: [],
+    reflections: [],
+    lastBackupAt: null,
+  };
 }
 
 describe('serialize', () => {
@@ -57,7 +65,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(3);
+    expect(parsed.version).toBe(4);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -164,8 +172,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 3 is current since US-28, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 4, "items": []}')).toMatch(/version/i);
+    // 4 is current since US-40, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 5, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -267,7 +275,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(3);
+    expect(result.ok && result.db.version).toBe(4);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -284,6 +292,7 @@ describe('parseImport of a version 1 file', () => {
       priority: 'high',
       goalId: null,
       courseId: null,
+      repeatDay: null,
       repeat: 'none',
     });
   });
@@ -572,5 +581,57 @@ describe('a file too large to be a real export is refused before parsing', () =>
 
     expect(result.ok).toBe(true);
     expect(result.ok && result.db.items).toHaveLength(500);
+  });
+});
+
+describe('version 4 files', () => {
+  function v4(overrides: Record<string, unknown> = {}) {
+    return {
+      version: 4,
+      items: [{ ...anItem(), repeatDay: 31 }],
+      goals: [],
+      courses: [],
+      reflections: [],
+      lastBackupAt: '2026-09-20T17:00:00.000Z',
+      ...overrides,
+    };
+  }
+
+  test('AC-40.7 the backup date and a repeat anchor survive a round trip', () => {
+    const result = parseImport(JSON.stringify(v4()));
+
+    expect(result.ok && result.db.lastBackupAt).toBe(
+      '2026-09-20T17:00:00.000Z',
+    );
+    expect(result.ok && result.db.items[0]?.repeatDay).toBe(31);
+  });
+
+  test('AC-40.7 a backup date that is not a date is refused by name', () => {
+    const result = parseImport(JSON.stringify(v4({ lastBackupAt: 'soon' })));
+
+    expect(!result.ok && result.error).toMatch(/backup/i);
+  });
+
+  test('AC-40.7 a repeat anchor outside 1 to 31 is refused', () => {
+    const result = parseImport(
+      JSON.stringify(v4({ items: [{ ...anItem(), repeatDay: 32 }] })),
+    );
+
+    expect(!result.ok && result.error).toMatch(/repeat day/i);
+  });
+
+  test('AC-40.7 a version 3 file still imports, with nothing backed up', () => {
+    const result = parseImport(
+      JSON.stringify({
+        version: 3,
+        items: [anItem()],
+        goals: [],
+        courses: [],
+        reflections: [],
+      }),
+    );
+
+    expect(result.ok && result.db.version).toBe(4);
+    expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });

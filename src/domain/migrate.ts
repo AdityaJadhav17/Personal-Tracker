@@ -7,6 +7,7 @@ interface Partial {
   goals?: unknown[];
   courses?: unknown[];
   reflections?: unknown[];
+  lastBackupAt?: string | null;
 }
 
 /**
@@ -14,7 +15,8 @@ interface Partial {
  *
  * Version 1 had only `items`, and items had no goal or course. Version 2 adds
  * goals, courses and reflections, and a null link on every item. Version 3
- * adds `repeat`. Anything already current is handed straight back.
+ * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
+ * database. Anything already current is handed straight back.
  *
  * Written as steps rather than one branch per starting version, so adding
  * version 4 means adding one hop instead of revisiting every path through.
@@ -49,6 +51,18 @@ export function upgrade(db: Partial): Database {
         // Spread second, so anything that already carries the field keeps it.
         ...(item as object),
       })),
+    };
+  }
+
+  if (current.version < 4) {
+    current = {
+      ...current,
+      version: 4,
+      items: current.items.map((item) => ({
+        repeatDay: null,
+        ...(item as object),
+      })),
+      lastBackupAt: current.lastBackupAt ?? null,
     };
   }
 

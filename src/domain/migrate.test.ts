@@ -24,11 +24,12 @@ function v1Database(items: unknown[] = [v1Item()]) {
 describe('upgrade', () => {
   test('a database already at the current version is returned untouched', () => {
     const already: Database = {
-      version: 3,
+      version: 4,
       items: [],
       goals: [],
       courses: [],
       reflections: [],
+      lastBackupAt: null,
     };
     expect(upgrade(already)).toBe(already);
   });
@@ -38,7 +39,7 @@ describe('upgrade', () => {
 
     // US-28 moved the destination from 2 to 3; the point of the test is that
     // a version 1 file arrives at whatever current is, with nothing missing.
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect(upgraded.goals).toEqual([]);
     expect(upgraded.courses).toEqual([]);
     expect(upgraded.reflections).toEqual([]);
@@ -83,11 +84,12 @@ describe('upgrade', () => {
 
   test('an empty version 1 database upgrades without complaint', () => {
     expect(upgrade(v1Database([]))).toEqual({
-      version: 3,
+      version: 4,
       items: [],
       goals: [],
       courses: [],
       reflections: [],
+      lastBackupAt: null,
     });
   });
 
@@ -106,11 +108,11 @@ describe('upgrade', () => {
   });
 });
 
-describe('AC-28.7 upgrading to version 3', () => {
-  test('a version 1 database arrives at 3 with everything filled in', () => {
+describe('AC-28.7 upgrading past version 3', () => {
+  test('a version 1 database arrives at the current version with everything filled in', () => {
     const upgraded = upgrade(v1Database());
 
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect(upgraded.items[0]).toMatchObject({
       title: 'CSE 100 project',
       goalId: null,
@@ -130,7 +132,7 @@ describe('AC-28.7 upgrading to version 3', () => {
 
     const upgraded = upgrade(v2 as never);
 
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect(upgraded.items[0]?.repeat).toBe('none');
     // The links it already had survive the second hop.
     expect(upgraded.items[0]?.goalId).toBe('g1');
@@ -162,5 +164,33 @@ describe('AC-28.7 upgrading to version 3', () => {
     // Version 2 never wrote this field, but if something did, it is kept
     // rather than stamped over.
     expect(upgrade(v2 as never).items[0]?.repeat).toBe('weekly');
+  });
+});
+
+describe('version 4', () => {
+  test('AC-40.7 a version 3 database gains no backup date and no repeat anchors', () => {
+    const upgraded = upgrade({
+      version: 3,
+      items: [v1Item({ goalId: null, courseId: null, repeat: 'monthly' })],
+      goals: [],
+      courses: [],
+      reflections: [],
+    });
+
+    expect(upgraded.version).toBe(4);
+    expect(upgraded.lastBackupAt).toBeNull();
+    expect(upgraded.items[0]?.repeatDay).toBeNull();
+    expect(upgraded.items[0]?.repeat).toBe('monthly');
+  });
+
+  test('AC-40.7 a version 1 file still reaches the current version whole', () => {
+    const upgraded = upgrade(v1Database());
+
+    expect(upgraded.version).toBe(4);
+    expect(upgraded.items[0]).toMatchObject({
+      repeat: 'none',
+      repeatDay: null,
+      goalId: null,
+    });
   });
 });

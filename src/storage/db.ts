@@ -4,7 +4,14 @@ import type { Course, Database, Goal, Item, Reflection } from '../domain/types';
 export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
-  return { version: 3, items: [], goals: [], courses: [], reflections: [] };
+  return {
+    version: 4,
+    items: [],
+    goals: [],
+    courses: [],
+    reflections: [],
+    lastBackupAt: null,
+  };
 }
 
 /**
@@ -59,6 +66,8 @@ export function load(): Database {
     reflections: Array.isArray(stored.reflections)
       ? (stored.reflections as Reflection[])
       : [],
+    lastBackupAt:
+      typeof stored.lastBackupAt === 'string' ? stored.lastBackupAt : null,
   });
 }
 

@@ -15,6 +15,7 @@ import Shell from './components/Shell';
 import type { View } from './components/Shell';
 import StatRow from './components/StatRow';
 import TrendsView from './components/TrendsView';
+import { backupNotice } from './domain/backup';
 import { now, toDateValue } from './domain/dates';
 import { calendarFilename, toCalendar } from './domain/ics';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
@@ -69,8 +70,16 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  /** AC-40.4. The file records its own export, and so does the app. */
   function handleExport() {
-    download(serialize(data), exportFilename(now()), 'application/json');
+    const at = now();
+    const stamp = at.toISOString();
+    download(
+      serialize({ ...data, lastBackupAt: stamp }),
+      exportFilename(at),
+      'application/json',
+    );
+    actions.recordBackup(stamp);
   }
 
   /** US-24. The backup is for you; this one is for your phone. */
@@ -102,6 +111,7 @@ export default function App() {
   }
 
   const current = now();
+  const backup = backupNotice(db.lastBackupAt, db.items.length > 0, current);
 
   // Based on open items rather than on the array being empty, so finishing
   // everything shows the empty state instead of a blank page.
@@ -228,6 +238,9 @@ export default function App() {
         keyboard path, which is the one used every day.
       */}
       <div className="data">
+        {/* US-40. Next to Export, because that is what fixes it. */}
+        {backup && <p className="data__backup">{backup}</p>}
+
         <button className="data__button" type="button" onClick={handleExport}>
           Export
         </button>

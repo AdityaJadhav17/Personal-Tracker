@@ -28,6 +28,11 @@ export interface Item {
   courseId: string | null;
   /** How often it comes back. Added in version 3. */
   repeat: Repeat;
+  /**
+   * The day of the month a monthly series aims for, once it has had to clamp.
+   * Null means the day `dueAt` falls on. Added in version 4, AC-40.6.
+   */
+  repeatDay: number | null;
 }
 
 /** Something to get to by a date, that items belong to. */
@@ -64,11 +69,13 @@ export interface Reflection {
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 3;
+  version: 4;
   items: Item[];
   goals: Goal[];
   courses: Course[];
   reflections: Reflection[];
+  /** When the last export was taken, or null for never. Added in version 4. */
+  lastBackupAt: string | null;
 }
 
 /** What the goal form produces, before the app assigns identity and time. */

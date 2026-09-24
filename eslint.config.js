@@ -30,5 +30,10 @@ export default tseslint.config(
       'react/jsx-no-target-blank': 'error',
     },
   },
+  {
+    // Build tooling that runs in Node, never in the browser.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+  },
   prettier,
 );

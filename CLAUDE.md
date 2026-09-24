@@ -18,12 +18,16 @@ npm test             # vitest run with coverage
 npm run test:watch   # vitest in watch mode
 npm run e2e          # playwright, starts the dev server itself
 npm run build        # typecheck then vite build
-npm run deploy       # build into %LOCALAPPDATA%\PersonalTracker (US-38)
+npm run deploy       # build into %LOCALAPPDATA%\PersonalTracker, then check it (US-38, US-40)
 npm run live         # serve that copy on http://localhost:4180
 ```
 
 Aditya's real data lives at `localhost:4180`, not 5173. Never open, seed or
 clear storage at 4180; develop and test against 5173, which Playwright uses.
+Never run `npm run deploy` while developing: it replaces the app he is using.
+Test deploy tooling against a scratch folder.
+
+New stories go in `docs/product/stories/US-NN.md`, one file each.
 
 ## Stack
 
@@ -35,11 +39,12 @@ Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
 for why.
 
-The database is at version 3: items, goals, courses and reflections, with a
-`repeat` on every item. Both `load` and `parseImport` route through
+The database is at version 4: items, goals, courses and reflections, with a
+`repeat` and a `repeatDay` on every item and a `lastBackupAt` on the whole.
+Both `load` and `parseImport` route through
 `upgrade` in `src/domain/migrate.ts`, which applies one hop per version, so an
 export taken before goals existed still opens. Neither module branches on the
-version itself; adding version 4 means adding one hop there and nowhere else.
+version itself; adding version 5 means adding one hop there and nowhere else.
 
 ## How we work
 

@@ -6,7 +6,8 @@ const TITLE_REQUIRED = 'Give it a title.';
 const DUE_REQUIRED = 'Pick a date.';
 
 interface AddItemFormProps {
-  onAdd: (draft: ItemDraft) => void;
+  /** False when storage refused it. AC-40.5 keeps the form as it was. */
+  onAdd: (draft: ItemDraft) => boolean;
   /** Lets the empty state hand focus to the first field. */
   titleRef: React.RefObject<HTMLInputElement>;
 }
@@ -31,7 +32,7 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
     setDueError(dueAt ? '' : DUE_REQUIRED);
     if (!trimmed || !dueAt) return;
 
-    onAdd({ title: trimmed, dueAt, category, priority, repeat });
+    if (!onAdd({ title: trimmed, dueAt, category, priority, repeat })) return;
 
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.

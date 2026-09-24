@@ -21,6 +21,7 @@ function anItem(
     completedAt: null,
     goalId: null,
     courseId: null,
+    repeatDay: null,
     repeat: 'none',
   };
 }
