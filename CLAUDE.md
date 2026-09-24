@@ -18,7 +18,12 @@ npm test             # vitest run with coverage
 npm run test:watch   # vitest in watch mode
 npm run e2e          # playwright, starts the dev server itself
 npm run build        # typecheck then vite build
+npm run deploy       # build into %LOCALAPPDATA%\PersonalTracker (US-38)
+npm run live         # serve that copy on http://localhost:4180
 ```
+
+Aditya's real data lives at `localhost:4180`, not 5173. Never open, seed or
+clear storage at 4180; develop and test against 5173, which Playwright uses.
 
 ## Stack
 

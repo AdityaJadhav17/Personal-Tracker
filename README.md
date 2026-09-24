@@ -96,6 +96,35 @@ npm run dev
 That serves the app at http://localhost:5173. Nothing else to configure, and no
 database to set up: your deadlines live in the browser's own storage.
 
+## Use it every day
+
+`npm run dev` is for working on the app. To use it without opening a terminal,
+build a copy outside the repo and serve that instead:
+
+```bash
+npm run deploy   # builds into %LOCALAPPDATA%\PersonalTracker
+npm run live     # serves it at http://localhost:4180, this laptop only
+```
+
+The copy lives outside the repo so that a build on a half-finished branch never
+changes the app you rely on. It only changes when you run `deploy` again, and
+the running server picks the new files up without a restart: reload the window.
+
+To start `live` at login, run this once in PowerShell from the repo folder. It
+puts a shortcut in your Startup folder that opens a minimized window; close the
+window to stop the server, delete the shortcut to stop it starting.
+
+```powershell
+$s = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Startup'))\Personal Tracker.lnk"); $s.TargetPath = $env:ComSpec; $s.Arguments = '/c npm run live'; $s.WorkingDirectory = (Get-Location).Path; $s.WindowStyle = 7; $s.Save()
+```
+
+Then open http://localhost:4180 in Edge and use Apps, then **Install this site
+as an app**, and pin it to the taskbar.
+
+**Your data does not move by itself.** The browser keeps storage per address,
+so 4180 starts empty. Export from 5173 once, Import it at 4180, and from then
+on 4180 holds your real deadlines and 5173 is only for development.
+
 ## Test it
 
 ```bash
