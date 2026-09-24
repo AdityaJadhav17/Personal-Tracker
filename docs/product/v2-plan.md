@@ -359,3 +359,7 @@ passed 1,300 lines.
 - [US-44, deciding what to do with what is late](stories/US-44.md)
 - [US-45, big work in steps, and a week you can see coming](stories/US-45.md)
 - [US-46, alarms that mean something](stories/US-46.md)
+- [US-47, motion that feels right](stories/US-47.md)
+- [US-48, feedback where it was missing](stories/US-48.md)
+- [US-50, a title bar that matches](stories/US-50.md)
+- [US-51, choosing light or dark](stories/US-51.md)

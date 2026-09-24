@@ -10,7 +10,8 @@ nothing leaves the machine.
 
 ## What it does
 
-Six views, in a sidebar.
+Six views, in a sidebar, and a button at its foot that switches between light
+and dark. With no choice made, the app follows your system.
 
 **Home** holds anything with a date and a consequence: a midterm, rent, a
 dentist appointment, a friend's birthday. Two numbers at the top say what is
