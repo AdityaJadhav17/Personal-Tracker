@@ -43,6 +43,9 @@ How it is built and what counts as finished.
 
 ## Design
 
+- [design/ui-polish-plan.md](design/ui-polish-plan.md) — proposed, not
+  approved. Motion, feedback, type and phone fixes drawn from six design skills,
+  with what was rejected and why.
 - [design/ui-reference.md](design/ui-reference.md) — the dashboard screenshots
   that set the visual direction, what transfers from them and what does not.
 - [design/ui-plan.md](design/ui-plan.md) — the layout reasoning, with each
