@@ -21,6 +21,19 @@ function shownTheme(): Theme {
 }
 
 /**
+ * US-50. Paint the title bar the page's own background when a theme has been
+ * chosen. The two theme-color tags in index.html follow the system; once the
+ * page no longer does, both must say what the page actually shows.
+ */
+function matchTitleBar() {
+  if (!document.documentElement.dataset.theme) return;
+  const background = getComputedStyle(document.body).backgroundColor;
+  for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+    meta.setAttribute('content', background);
+  }
+}
+
+/**
  * US-51. One button that switches between light and dark.
  *
  * The page's colours come from light-dark() tokens, so switching is one
@@ -29,6 +42,10 @@ function shownTheme(): Theme {
  */
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(shownTheme);
+
+  // A choice saved last time was applied before paint by theme.js; the title
+  // bar has to catch up with it.
+  useEffect(matchTitleBar, []);
 
   // With no choice saved, the system can change scheme while the app is
   // open; the label has to follow it or it offers the mode already showing.
@@ -51,6 +68,7 @@ export default function ThemeToggle() {
     const apply = () => {
       document.documentElement.dataset.theme = next;
       setTheme(next);
+      matchTitleBar();
     };
     // apple-design: ease a change between light and dark rather than jump.
     // A view transition crossfades the whole page in Chrome with no library;

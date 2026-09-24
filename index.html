@@ -11,6 +11,21 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'"
     />
+    <!--
+      US-50. The installed app's title bar, one colour per system scheme: the
+      page background, the --bg token in styles/base.css. A theme chosen with
+      the toggle rewrites both to the page's own background.
+    -->
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f7f9f9"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#0f172a"
+    />
     <title>Personal Tracker</title>
     <!-- US-51. Before anything paints, so a saved theme never flashes the other. -->
     <script src="/theme.js"></script>
