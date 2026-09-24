@@ -228,3 +228,31 @@ test('AC-39.4 dropping an item back on its own day changes nothing', () => {
   expect(onMove).not.toHaveBeenCalled();
   expect(screen.getByRole('status')).toBeEmptyDOMElement();
 });
+
+test('AC-39.6 dragging over Next month turns the page, and the drop lands there', () => {
+  const onMove = vi.fn();
+  const booking = dueOn('2026-09-25', 'MGT 18 Book midterm');
+  render(<CalendarView items={[booking]} now={NOW} onMove={onMove} />);
+
+  const data = new Map<string, string>();
+  const dataTransfer = {
+    setData: (type: string, value: string) => data.set(type, value),
+    getData: (type: string) => data.get(type) ?? '',
+  };
+  fireEvent.dragStart(screen.getByText('MGT 18 Book midterm'), {
+    dataTransfer,
+  });
+  fireEvent.dragEnter(screen.getByRole('button', { name: 'Next month' }), {
+    dataTransfer,
+  });
+
+  expect(screen.getByRole('heading', { name: 'October 2026' })).toBeVisible();
+
+  fireEvent.dragOver(cell('October 21, 2026'), { dataTransfer });
+  fireEvent.drop(cell('October 21, 2026'), { dataTransfer });
+
+  expect(onMove).toHaveBeenCalledWith(
+    booking,
+    new Date(2026, 9, 21, 12).toISOString(),
+  );
+});

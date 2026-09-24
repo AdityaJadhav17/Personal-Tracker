@@ -83,6 +83,9 @@ export default function CalendarView({
             className="calendar__move"
             type="button"
             onClick={() => setMonth(shiftMonth(month, -1))}
+            // AC-39.6. Hovering here mid-drag turns the page, so an item can
+            // be dropped in a month that was not on screen when it was picked up.
+            onDragEnter={() => setMonth(shiftMonth(month, -1))}
           >
             Previous month
           </button>
@@ -90,6 +93,7 @@ export default function CalendarView({
             className="calendar__move"
             type="button"
             onClick={() => setMonth(shiftMonth(month, 1))}
+            onDragEnter={() => setMonth(shiftMonth(month, 1))}
           >
             Next month
           </button>

@@ -1338,7 +1338,16 @@ Acceptance criteria:
            then nothing changes and nothing is said.
   AC-39.5  Given an 8am item moved across the November clock change,
            then it is still due at 8am.
+  AC-39.6  Given I am dragging an item,
+           when I hold it over Next month or Previous month,
+           then the page turns and I can drop it on a day in that month.
 ```
+
+AC-39.6 was reported the same evening: the first version could only drop on
+a day already on screen, so a deadline could not leave its month. Each time
+the drag enters a month button the page turns once. Chromium carries on with
+the drag after the item's own cell has gone from the screen, which only the
+Playwright spec could show.
 
 ## Decisions
 

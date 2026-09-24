@@ -107,3 +107,42 @@ test('AC-39.4 dropping it back on its own day leaves the deadline alone', async 
   await expect(page.getByRole('status')).toBeEmpty();
   expect(await storedDue(page)).toEqual(before);
 });
+
+test('AC-39.6 an item dragged over Next month can be dropped in the next month', async ({
+  page,
+}) => {
+  await seedHomework(page);
+  const heading = page.getByRole('heading', { level: 2 });
+  const thisMonth = await heading.textContent();
+
+  const next = new Date();
+  next.setDate(1);
+  next.setMonth(next.getMonth() + 1);
+  next.setDate(10);
+  const target = next.toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  // Held down the whole way, as a hand would: pick up, rest on the button
+  // until the page turns, then carry on to a day that was not on screen.
+  await page.getByText('CSE 123 HW 1').hover();
+  await page.mouse.down();
+  const button = await page
+    .getByRole('button', { name: 'Next month' })
+    .boundingBox();
+  await page.mouse.move(button!.x + 10, button!.y + 10, { steps: 5 });
+  await expect(heading).not.toHaveText(thisMonth!);
+  const day = await page
+    .getByRole('cell', { name: new RegExp(target) })
+    .boundingBox();
+  await page.mouse.move(day!.x + 20, day!.y + 20, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole('status')).toHaveText(
+    `CSE 123 HW 1 moved to ${target}`,
+  );
+  await page.reload();
+  expect(await storedDue(page)).toEqual({ day: 10, hours: 8 });
+});
