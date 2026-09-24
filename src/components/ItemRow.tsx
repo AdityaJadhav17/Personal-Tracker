@@ -27,6 +27,11 @@ interface ItemRowProps {
   onGoalChange: (id: string, goalId: string | null) => void;
   onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
+  /** US-45. This item's steps, in date order; empty for most items. */
+  steps: Item[];
+  /** US-45. The title of the item this is a step of, or null. */
+  parentTitle: string | null;
+  onAddStep: (parentId: string, title: string, dueAt: string) => void;
 }
 
 /**
@@ -51,6 +56,9 @@ export default function ItemRow({
   onGoalChange,
   onEdit,
   onDelete,
+  steps,
+  parentTitle,
+  onAddStep,
 }: ItemRowProps) {
   // The note is held locally while you type and reported on blur, so a save
   // does not run on every keystroke. See the storage note in docs/plan.md.
@@ -67,6 +75,25 @@ export default function ItemRow({
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
   const [confirming, setConfirming] = useState(false);
+  // US-45. The add-a-step form, held until Add step.
+  const [stepTitle, setStepTitle] = useState('');
+  const [stepDate, setStepDate] = useState('');
+  const [stepError, setStepError] = useState('');
+  const stepsDone = steps.filter((step) => step.status === 'done').length;
+
+  function handleAddStep() {
+    const trimmed = stepTitle.trim();
+    const at = toDueAt(stepDate, '');
+    if (!trimmed || !at) {
+      setStepError('A step needs a title and a date.');
+      return;
+    }
+    setStepError('');
+    onAddStep(item.id, trimmed, at);
+    setStepTitle('');
+    setStepDate('');
+  }
+
   // US-44. Dropping from the overdue list asks first, like Delete does.
   const [dropping, setDropping] = useState(false);
   const overdue = groupOf(item.dueAt, now) === 'overdue';
@@ -125,6 +152,13 @@ export default function ItemRow({
       {item.repeat !== 'none' && (
         <span className="item__chip item__chip--repeat">
           {item.repeat === 'weekly' ? 'Weekly' : 'Monthly'}
+        </span>
+      )}
+      {/* AC-45.2 and AC-45.3: where a step belongs, how a project is going. */}
+      {parentTitle && <span className="item__chip">Step of {parentTitle}</span>}
+      {steps.length > 0 && (
+        <span className="item__chip">
+          {stepsDone} of {steps.length} steps done
         </span>
       )}
       {/*
@@ -323,6 +357,51 @@ export default function ItemRow({
             onBlur={() => onNoteChange(item.id, note)}
           />
 
+          {/*
+            AC-45.1. Steps belong to a project, and only one level down: a
+            step's own panel does not offer this.
+          */}
+          {item.parentId === null && (
+            <div className="item__steps">
+              <span className="form__label">Steps</span>
+              {steps.length > 0 && (
+                <ul className="item__step-list">
+                  {steps.map((step) => (
+                    <li key={step.id}>
+                      {step.status === 'done' ? 'Done: ' : ''}
+                      {step.title}, {formatDue(step.dueAt)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="item__step-add">
+                <input
+                  className="form__input"
+                  aria-label={`New step for ${item.title}`}
+                  placeholder="Next step"
+                  value={stepTitle}
+                  onChange={(e) => setStepTitle(e.target.value)}
+                />
+                <input
+                  className="form__input"
+                  type="date"
+                  aria-label={`Step date for ${item.title}`}
+                  value={stepDate}
+                  onChange={(e) => setStepDate(e.target.value)}
+                />
+                <button
+                  className="data__button"
+                  type="button"
+                  aria-label={`Add step to ${item.title}`}
+                  onClick={handleAddStep}
+                >
+                  Add step
+                </button>
+              </div>
+              {stepError && <p className="form__error">{stepError}</p>}
+            </div>
+          )}
+
           <div className="item__actions">
             <button
               className="prompt__button"
@@ -353,7 +432,11 @@ export default function ItemRow({
                 items survive. Nothing survives this one, so it says so.
               */}
               <p className="status" role="status">
-                Delete {item.title}? It is gone for good.
+                {steps.length === 0
+                  ? `Delete ${item.title}? It is gone for good.`
+                  : `Delete ${item.title} and its ${steps.length} ${
+                      steps.length === 1 ? 'step' : 'steps'
+                    }? They are gone for good.`}
               </p>
               <div className="prompt__actions">
                 <button

@@ -22,6 +22,7 @@ function anItem(
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
   };
 }

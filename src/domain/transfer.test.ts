@@ -15,6 +15,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
     ...overrides,
   };
@@ -23,7 +24,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 4,
+    version: 5,
     items,
     goals: [],
     courses: [],
@@ -65,7 +66,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(4);
+    expect(parsed.version).toBe(5);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -172,8 +173,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 4 is current since US-40, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 5, "items": []}')).toMatch(/version/i);
+    // 5 is current since US-45, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 6, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -275,7 +276,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(4);
+    expect(result.ok && result.db.version).toBe(5);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -293,6 +294,7 @@ describe('parseImport of a version 1 file', () => {
       goalId: null,
       courseId: null,
       repeatDay: null,
+      parentId: null,
       repeat: 'none',
     });
   });
@@ -631,7 +633,41 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(4);
+    expect(result.ok && result.db.version).toBe(5);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
+  });
+});
+
+describe('version 5 files', () => {
+  test('AC-45.5 a step keeps its parent through a round trip', () => {
+    const parent = { ...anItem(), id: 'project' };
+    const step = { ...anItem(), id: 'step', parentId: 'project' };
+    const result = parseImport(
+      JSON.stringify({
+        version: 5,
+        items: [parent, step],
+        goals: [],
+        courses: [],
+        reflections: [],
+        lastBackupAt: null,
+      }),
+    );
+
+    expect(result.ok && result.db.items[1]?.parentId).toBe('project');
+  });
+
+  test('AC-45.5 a parent that is not an id is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        version: 5,
+        items: [{ ...anItem(), parentId: 42 }],
+        goals: [],
+        courses: [],
+        reflections: [],
+        lastBackupAt: null,
+      }),
+    );
+
+    expect(!result.ok && result.error).toMatch(/parent/i);
   });
 });

@@ -57,3 +57,16 @@ export function monthGrid(
         },
   );
 }
+
+/** AC-45.6. From this many deadlines in one week, the calendar calls it heavy. */
+export const HEAVY_WEEK = 6;
+
+/**
+ * AC-45.6. How many open deadlines fall in one row of the grid.
+ *
+ * A plain count rather than a weighted score: "6 due" needs no explanation,
+ * and a heavy week is heavy because of how many things land in it.
+ */
+export function weekLoad(week: (DayCell | null)[]): number {
+  return week.reduce((total, cell) => total + (cell?.items.length ?? 0), 0);
+}

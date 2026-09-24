@@ -16,7 +16,8 @@ interface Partial {
  * Version 1 had only `items`, and items had no goal or course. Version 2 adds
  * goals, courses and reflections, and a null link on every item. Version 3
  * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
- * database. Anything already current is handed straight back.
+ * database. Version 5 adds `parentId`, for steps. Anything already current is
+ * handed straight back.
  *
  * Written as steps rather than one branch per starting version, so adding
  * version 4 means adding one hop instead of revisiting every path through.
@@ -63,6 +64,17 @@ export function upgrade(db: Partial): Database {
         ...(item as object),
       })),
       lastBackupAt: current.lastBackupAt ?? null,
+    };
+  }
+
+  if (current.version < 5) {
+    current = {
+      ...current,
+      version: 5,
+      items: current.items.map((item) => ({
+        parentId: null,
+        ...(item as object),
+      })),
     };
   }
 

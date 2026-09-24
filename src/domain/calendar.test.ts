@@ -1,4 +1,4 @@
-import { monthGrid } from './calendar';
+import { monthGrid, weekLoad } from './calendar';
 import type { Item } from './types';
 
 let nextId = 0;
@@ -20,6 +20,7 @@ function dueOn(day: string, overrides: Partial<Item> = {}): Item {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
     ...overrides,
   };
@@ -148,5 +149,28 @@ describe('goals on the calendar', () => {
       (one) => one?.day === '2026-09-21',
     );
     expect(cell?.goals).toEqual([]);
+  });
+});
+
+describe('weekLoad', () => {
+  test('AC-45.6 counts the open deadlines in one row of the grid', () => {
+    const items = [
+      dueOn('2026-09-14'),
+      dueOn('2026-09-16'),
+      dueOn('2026-09-16'),
+      dueOn('2026-09-21'),
+      dueOn('2026-09-15', { status: 'done' }),
+    ];
+    const grid = monthGrid('2026-09', items);
+    // September 2026 starts on a Tuesday, so the row holding the 14th is the
+    // third: 13th to 19th.
+    const week = grid.slice(14, 21);
+
+    expect(week[1]?.day).toBe('2026-09-14');
+    expect(weekLoad(week)).toBe(3);
+  });
+
+  test('AC-45.6 a week of padding cells counts nothing', () => {
+    expect(weekLoad([null, null, null])).toBe(0);
   });
 });

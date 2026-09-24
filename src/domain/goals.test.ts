@@ -15,6 +15,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     goalId,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
   };
 }
@@ -31,7 +32,7 @@ function aGoal(id: string, name = id): Goal {
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
   return {
-    version: 4,
+    version: 5,
     items,
     goals,
     courses: [],
@@ -135,7 +136,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(4);
+    expect(next.version).toBe(5);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

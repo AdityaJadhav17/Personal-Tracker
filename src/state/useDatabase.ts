@@ -26,8 +26,11 @@ export interface DatabaseActions {
   setNote: (id: string, note: string) => void;
   /** US-25. Rename an item or move its deadline. */
   editItem: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
-  /** US-25. Gone for good; goal progress is derived, so it corrects itself. */
+  /** US-25. Gone for good; goal progress is derived, so it corrects itself.
+      US-45: its steps go with it. */
   removeItem: (id: string) => void;
+  /** US-45. A dated step under an item, inheriting its course, goal and kind. */
+  addStep: (parentId: string, title: string, dueAt: string) => void;
   setCourse: (id: string, courseId: string | null) => void;
   setGoal: (id: string, goalId: string | null) => void;
   addCourse: (draft: CourseDraft) => void;
@@ -59,6 +62,7 @@ function itemFrom(draft: ItemDraft): Item {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
   };
 }
 
@@ -263,10 +267,34 @@ export function useDatabase(): {
     removeItem(id) {
       update((current) => ({
         ...current,
-        items: current.items.filter((item) => item.id !== id),
+        // AC-45.4. A step without its project has nothing to be a step of.
+        items: current.items.filter(
+          (item) => item.id !== id && item.parentId !== id,
+        ),
       }));
       // An item that no longer exists cannot be un-finished.
       setUndoable(null);
+    },
+
+    addStep(parentId, title, dueAt) {
+      update((current) => {
+        const parent = current.items.find((item) => item.id === parentId);
+        if (!parent) return current;
+        const step: Item = {
+          ...itemFrom({
+            title,
+            dueAt,
+            category: parent.category,
+            priority: 'normal',
+            repeat: 'none',
+          }),
+          // AC-45.2. Filters and goal progress count it without being told.
+          courseId: parent.courseId,
+          goalId: parent.goalId,
+          parentId,
+        };
+        return { ...current, items: [...current.items, step] };
+      });
     },
 
     setCourse(id, courseId) {

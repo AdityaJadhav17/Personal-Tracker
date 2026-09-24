@@ -24,6 +24,7 @@ function completedOn(day: string): Item {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
   };
 }

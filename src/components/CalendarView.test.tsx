@@ -28,6 +28,7 @@ function dueOn(
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
     ...overrides,
   };
@@ -206,7 +207,8 @@ test('AC-21.5 a month with nothing in it still draws the grid', () => {
     />,
   );
 
-  expect(screen.getAllByRole('cell')).toHaveLength(30);
+  // Day cells only: AC-45.6 added a load cell to the end of each week.
+  expect(screen.getAllByRole('cell', { name: /^Open / })).toHaveLength(30);
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
 });
 
@@ -422,4 +424,25 @@ test('AC-41.4 the date opens an empty day too, and Close shuts it', async () => 
   expect(
     screen.queryByRole('region', { name: 'September 17, 2026' }),
   ).toBeNull();
+});
+
+test('AC-45.6 each week says how many deadlines fall in it', () => {
+  renderWith([
+    dueOn('2026-09-14', 'A'),
+    dueOn('2026-09-16', 'B'),
+    dueOn('2026-09-21', 'C'),
+  ]);
+
+  expect(screen.getByRole('cell', { name: '2 due' })).toBeVisible();
+  expect(screen.getByRole('cell', { name: '1 due' })).toBeVisible();
+});
+
+test('AC-45.6 a week with six or more is marked heavy, in words', () => {
+  renderWith(
+    Array.from({ length: 6 }, (_, index) =>
+      dueOn('2026-09-16', `Thing ${index}`),
+    ),
+  );
+
+  expect(screen.getByRole('cell', { name: '6 due, heavy' })).toBeVisible();
 });

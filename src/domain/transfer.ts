@@ -46,6 +46,7 @@ const KEYS: Record<number, string[]> = {
   2: ['version', 'items', 'goals', 'courses', 'reflections'],
   3: ['version', 'items', 'goals', 'courses', 'reflections'],
   4: ['version', 'items', 'goals', 'courses', 'reflections', 'lastBackupAt'],
+  5: ['version', 'items', 'goals', 'courses', 'reflections', 'lastBackupAt'],
 };
 
 export type ParseResult =
@@ -111,6 +112,7 @@ function itemProblem(value: unknown): string | null {
     return 'its repeat day must be a day of the month or null';
   }
   if (!isLink(raw.goalId)) return 'its goal must be an id or null';
+  if (!isLink(raw.parentId)) return 'its parent must be an id or null';
   if (!isLink(raw.courseId)) return 'its course must be an id or null';
   return null;
 }
@@ -180,6 +182,7 @@ function toItem(value: unknown): Item {
     // here keeps toItem total so the mapper never returns a partial item.
     repeat: (raw.repeat as Item['repeat'] | undefined) ?? 'none',
     repeatDay: (raw.repeatDay as number | null | undefined) ?? null,
+    parentId: (raw.parentId as string | null | undefined) ?? null,
   };
 }
 
@@ -272,7 +275,13 @@ export function parseImport(text: string): ParseResult {
   }
 
   const version = raw.version;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
+  if (
+    version !== 1 &&
+    version !== 2 &&
+    version !== 3 &&
+    version !== 4 &&
+    version !== 5
+  ) {
     return {
       ok: false,
       error: 'That file is not a version this app can read.',

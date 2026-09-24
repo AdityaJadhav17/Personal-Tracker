@@ -30,6 +30,7 @@ function anItem(title: string, daysFromNow: number, rest: Partial<Item> = {}) {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
     ...rest,
   };
@@ -48,6 +49,8 @@ test('AC-02.1 items land in Overdue, Today, This week, and Later', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('Missed lab', -1),
         anItem('Quiz', 0),
@@ -83,6 +86,8 @@ test('AC-02.2 a group with no items renders no heading', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -111,6 +116,8 @@ test('AC-02.3 an item marked done is not shown in its group', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('Quiz', 0),
         anItem('Already handed in', 0, {
@@ -137,6 +144,8 @@ test('AC-02.3 a group whose only item is done renders no heading', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Handed in', 0, { status: 'done' })]}
     />,
   );
@@ -158,6 +167,8 @@ test('AC-02.1 Overdue is rendered above Today', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Quiz', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -180,6 +191,8 @@ test('each item shows its due date', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Quiz', 0)]}
     />,
   );
@@ -198,6 +211,8 @@ test('AC-03.1 an overdue open item appears in Overdue, above Today', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Quiz today', 0), anItem('Missed lab', -1)]}
     />,
   );
@@ -222,6 +237,8 @@ test('AC-03.2 with nothing overdue the Overdue group is not rendered', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Quiz today', 0)]}
     />,
   );
@@ -243,6 +260,8 @@ test('AC-03.2 an overdue item that is done does not bring back the group', () =>
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Handed in late', -3, { status: 'done' })]}
     />,
   );
@@ -264,6 +283,8 @@ test('AC-03.3 overdue items render most overdue first', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('one day late', -1),
         anItem('twelve days late', -12),
@@ -306,6 +327,8 @@ test('AC-04.1 inside a group, high comes before normal before low', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('bb normal', 3, { priority: 'normal' }),
         anItem('cc low', 3, { priority: 'low' }),
@@ -329,6 +352,8 @@ test('AC-04.2 same priority and day, the 9am item is listed first', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('bb evening', 3, { dueAt: hoursOn(3, 17) }),
         anItem('aa morning', 3, { dueAt: hoursOn(3, 9) }),
@@ -351,6 +376,8 @@ test('AC-04.3 two items due at the same minute are both rendered', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('aa first', 3, { dueAt: hoursOn(3, 9) }),
         anItem('bb second', 3, { dueAt: hoursOn(3, 9) }),
@@ -374,6 +401,8 @@ test('AC-04.4 grouping wins over priority', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('Laundry', 0, { priority: 'low' }),
         anItem('Midterm', 6, { priority: 'high' }),
@@ -401,6 +430,8 @@ test('AC-04.1 priority ordering applies inside Overdue too', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('bb twelve', -12, { priority: 'low' }),
         anItem('aa one', -1, { priority: 'high' }),
@@ -423,6 +454,8 @@ test('AC-05.1 every open item offers a done control naming that item', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -449,6 +482,8 @@ test('AC-05.1 activating the control reports the item id', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[rent]}
     />,
   );
@@ -469,6 +504,8 @@ test('AC-05.3 the done controls follow the order the items are displayed', () =>
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('cc low', 3, { priority: 'low' }),
         anItem('aa high', 3, { priority: 'high' }),
@@ -503,6 +540,8 @@ test('AC-06.1 each item offers a note field that names the item', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Rent', 0), anItem('Midterm', 3)]}
     />,
   );
@@ -529,6 +568,8 @@ test('AC-06.1 an existing note is shown in the field', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Rent', 0, { note: 'Zelle, not Venmo' })]}
     />,
   );
@@ -558,6 +599,8 @@ test('AC-06.1 the note is reported on blur, not on every keystroke', async () =>
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[rent]}
     />,
   );
@@ -586,6 +629,8 @@ test('AC-12.1 an item due in two days carries the upcoming marker', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Midterm', 2)]}
     />,
   );
@@ -605,6 +650,8 @@ test('AC-12.2 an item due in nine days carries no marker', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Finals', 9)]}
     />,
   );
@@ -624,6 +671,8 @@ test('AC-12.3 priority does not suppress the marker', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Laundry', 2, { priority: 'low' })]}
     />,
   );
@@ -643,6 +692,8 @@ test('AC-12.1 only the items inside the window are marked', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[
         anItem('Late thing', -2),
         anItem('Today thing', 0),
@@ -691,6 +742,8 @@ test('AC-07.2 an item shows which course it belongs to', () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Project', 3, { courseId: 'c1' })]}
     />,
   );
@@ -712,6 +765,8 @@ test('AC-07.2 an item with no course says so', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Rent', 3)]}
     />,
   );
@@ -739,6 +794,8 @@ test('AC-07.2 choosing a course reports the item and the course', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[project]}
     />,
   );
@@ -765,6 +822,8 @@ test('AC-07.2 clearing the course reports null, not an empty string', async () =
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[project]}
     />,
   );
@@ -787,6 +846,8 @@ test('AC-07.2 with no courses recorded, the item offers no course control', () =
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Rent', 3)]}
     />,
   );
@@ -833,6 +894,8 @@ function renderOne(
       onGoalChange={handlers.onGoalChange ?? noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Midterm', 1, rest)]}
     />,
   );
@@ -961,6 +1024,8 @@ test('AC-22.3 opening one item does not open another', async () => {
       onGoalChange={noop}
       onEdit={noop}
       onDelete={noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Midterm', 1), anItem('Rent', 2)]}
     />,
   );
@@ -995,6 +1060,8 @@ function renderEditable(
       onGoalChange={noop}
       onEdit={handlers.onEdit ?? noop}
       onDelete={handlers.onDelete ?? noop}
+      allItems={[]}
+      onAddStep={noop}
       items={[anItem('Midterm', 1, rest)]}
     />,
   );
@@ -1192,6 +1259,8 @@ function renderTriage(
       onGoalChange={noop}
       onEdit={handlers.onEdit ?? noop}
       onDelete={handlers.onDelete ?? noop}
+      allItems={items}
+      onAddStep={noop}
       items={items}
     />,
   );

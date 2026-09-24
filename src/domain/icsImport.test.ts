@@ -209,6 +209,7 @@ describe('newOnly', () => {
     courseId: null,
     repeat: 'none' as const,
     repeatDay: null,
+    parentId: null,
   };
 
   test('AC-43.8 a deadline already in the list is not added twice', () => {

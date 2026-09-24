@@ -12,6 +12,7 @@ import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
 import GoalList from './components/GoalList';
 import ItemRow from './components/ItemRow';
+import { stepsOf } from './domain/steps';
 import ReflectionView from './components/ReflectionView';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
@@ -173,6 +174,12 @@ export default function App() {
                   onGoalChange={actions.setGoal}
                   onEdit={actions.editItem}
                   onDelete={actions.removeItem}
+                  steps={stepsOf(item.id, db.items)}
+                  parentTitle={
+                    db.items.find((one) => one.id === item.parentId)?.title ??
+                    null
+                  }
+                  onAddStep={actions.addStep}
                 />
               ))}
             </ul>
@@ -248,6 +255,8 @@ export default function App() {
               onGoalChange={actions.setGoal}
               onEdit={actions.editItem}
               onDelete={actions.removeItem}
+              allItems={db.items}
+              onAddStep={actions.addStep}
             />
           ) : (
             <EmptyState onAddFirst={() => titleRef.current?.focus()} />

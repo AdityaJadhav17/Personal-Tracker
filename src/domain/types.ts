@@ -33,6 +33,11 @@ export interface Item {
    * Null means the day `dueAt` falls on. Added in version 4, AC-40.6.
    */
   repeatDay: number | null;
+  /**
+   * The item this is a step of, or null for an ordinary item. One level only:
+   * a step never has steps. Added in version 5, US-45.
+   */
+  parentId: string | null;
 }
 
 /** Something to get to by a date, that items belong to. */
@@ -69,7 +74,7 @@ export interface Reflection {
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 4;
+  version: 5;
   items: Item[];
   goals: Goal[];
   courses: Course[];

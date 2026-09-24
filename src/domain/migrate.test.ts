@@ -24,7 +24,7 @@ function v1Database(items: unknown[] = [v1Item()]) {
 describe('upgrade', () => {
   test('a database already at the current version is returned untouched', () => {
     const already: Database = {
-      version: 4,
+      version: 5,
       items: [],
       goals: [],
       courses: [],
@@ -39,7 +39,7 @@ describe('upgrade', () => {
 
     // US-28 moved the destination from 2 to 3; the point of the test is that
     // a version 1 file arrives at whatever current is, with nothing missing.
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
     expect(upgraded.goals).toEqual([]);
     expect(upgraded.courses).toEqual([]);
     expect(upgraded.reflections).toEqual([]);
@@ -84,7 +84,7 @@ describe('upgrade', () => {
 
   test('an empty version 1 database upgrades without complaint', () => {
     expect(upgrade(v1Database([]))).toEqual({
-      version: 4,
+      version: 5,
       items: [],
       goals: [],
       courses: [],
@@ -112,7 +112,7 @@ describe('AC-28.7 upgrading past version 3', () => {
   test('a version 1 database arrives at the current version with everything filled in', () => {
     const upgraded = upgrade(v1Database());
 
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
     expect(upgraded.items[0]).toMatchObject({
       title: 'CSE 100 project',
       goalId: null,
@@ -132,7 +132,7 @@ describe('AC-28.7 upgrading past version 3', () => {
 
     const upgraded = upgrade(v2 as never);
 
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
     expect(upgraded.items[0]?.repeat).toBe('none');
     // The links it already had survive the second hop.
     expect(upgraded.items[0]?.goalId).toBe('g1');
@@ -177,7 +177,7 @@ describe('version 4', () => {
       reflections: [],
     });
 
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
     expect(upgraded.lastBackupAt).toBeNull();
     expect(upgraded.items[0]?.repeatDay).toBeNull();
     expect(upgraded.items[0]?.repeat).toBe('monthly');
@@ -186,11 +186,37 @@ describe('version 4', () => {
   test('AC-40.7 a version 1 file still reaches the current version whole', () => {
     const upgraded = upgrade(v1Database());
 
-    expect(upgraded.version).toBe(4);
+    expect(upgraded.version).toBe(5);
     expect(upgraded.items[0]).toMatchObject({
       repeat: 'none',
       repeatDay: null,
+      parentId: null,
       goalId: null,
     });
+  });
+});
+
+describe('version 5', () => {
+  test('AC-45.5 a version 4 database gains no steps, and keeps everything else', () => {
+    const upgraded = upgrade({
+      version: 4,
+      items: [
+        v1Item({
+          goalId: null,
+          courseId: null,
+          repeat: 'monthly',
+          repeatDay: 31,
+        }),
+      ],
+      goals: [],
+      courses: [],
+      reflections: [],
+      lastBackupAt: '2026-09-20T17:00:00.000Z',
+    });
+
+    expect(upgraded.version).toBe(5);
+    expect(upgraded.items[0]?.parentId).toBeNull();
+    expect(upgraded.items[0]?.repeatDay).toBe(31);
+    expect(upgraded.lastBackupAt).toBe('2026-09-20T17:00:00.000Z');
   });
 });

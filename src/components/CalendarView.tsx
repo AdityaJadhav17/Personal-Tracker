@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { monthGrid } from '../domain/calendar';
+import { HEAVY_WEEK, monthGrid, weekLoad } from '../domain/calendar';
 import type { DayCell } from '../domain/calendar';
 import {
   dayLabel,
@@ -131,6 +131,11 @@ export default function CalendarView({
                 <span className="visually-hidden">{weekday}</span>
               </th>
             ))}
+            {/* AC-45.6. How much lands in each week, seen a month ahead. */}
+            <th className="calendar__weekday" scope="col">
+              <span aria-hidden="true">Load</span>
+              <span className="visually-hidden">Deadlines that week</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -155,6 +160,7 @@ export default function CalendarView({
                   />
                 ),
               )}
+              <LoadCell count={weekLoad(week)} />
             </tr>
           ))}
         </tbody>
@@ -187,6 +193,18 @@ export default function CalendarView({
         </section>
       )}
     </section>
+  );
+}
+
+/**
+ * AC-45.6. A week's count, in words, so "heavy" never rests on colour alone.
+ */
+function LoadCell({ count }: { count: number }) {
+  const heavy = count >= HEAVY_WEEK;
+  return (
+    <td className={`calendar__load ${heavy ? 'calendar__load--heavy' : ''}`}>
+      {count} due{heavy && ', heavy'}
+    </td>
   );
 }
 

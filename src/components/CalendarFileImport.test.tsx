@@ -29,6 +29,7 @@ const HELD: Item = {
   courseId: null,
   repeat: 'none',
   repeatDay: null,
+  parentId: null,
 };
 
 function ics(): File {

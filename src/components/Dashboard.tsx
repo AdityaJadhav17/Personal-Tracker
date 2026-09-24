@@ -1,6 +1,7 @@
 import { groupOf } from '../domain/dates';
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
+import { stepsOf } from '../domain/steps';
 import type { Course, Goal, Item, Repeat } from '../domain/types';
 import ItemRow from './ItemRow';
 
@@ -24,6 +25,12 @@ interface DashboardProps {
   onGoalChange: (id: string, goalId: string | null) => void;
   onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
+  /**
+   * US-45. Every item, not only the filtered ones shown, so a step's parent
+   * and a parent's steps are found even when a filter hides one of them.
+   */
+  allItems: Item[];
+  onAddStep: (parentId: string, title: string, dueAt: string) => void;
 }
 
 export default function Dashboard({
@@ -37,6 +44,8 @@ export default function Dashboard({
   onGoalChange,
   onEdit,
   onDelete,
+  allItems,
+  onAddStep,
 }: DashboardProps) {
   const open = items.filter((item) => item.status === 'open');
 
@@ -82,6 +91,12 @@ export default function Dashboard({
                   onGoalChange={onGoalChange}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  steps={stepsOf(item.id, allItems)}
+                  parentTitle={
+                    allItems.find((one) => one.id === item.parentId)?.title ??
+                    null
+                  }
+                  onAddStep={onAddStep}
                 />
               ))}
             </ul>

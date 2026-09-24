@@ -39,12 +39,13 @@ Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
 for why.
 
-The database is at version 4: items, goals, courses and reflections, with a
-`repeat` and a `repeatDay` on every item and a `lastBackupAt` on the whole.
+The database is at version 5: items, goals, courses and reflections, with a
+`repeat`, a `repeatDay` and a `parentId` on every item and a `lastBackupAt`
+on the whole.
 Both `load` and `parseImport` route through
 `upgrade` in `src/domain/migrate.ts`, which applies one hop per version, so an
 export taken before goals existed still opens. Neither module branches on the
-version itself; adding version 5 means adding one hop there and nowhere else.
+version itself; adding version 6 means adding one hop there and nowhere else.
 
 ## How we work
 

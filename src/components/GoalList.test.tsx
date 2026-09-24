@@ -30,6 +30,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     goalId,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
   };
 }

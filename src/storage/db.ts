@@ -5,7 +5,7 @@ export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
   return {
-    version: 4,
+    version: 5,
     items: [],
     goals: [],
     courses: [],

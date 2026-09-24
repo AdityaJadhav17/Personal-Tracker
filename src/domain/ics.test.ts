@@ -21,6 +21,7 @@ function anItem(rest: Partial<Item> = {}): Item {
     goalId: null,
     courseId: null,
     repeatDay: null,
+    parentId: null,
     repeat: 'none',
     ...rest,
   };

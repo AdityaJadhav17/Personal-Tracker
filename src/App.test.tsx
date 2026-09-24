@@ -405,7 +405,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(4);
+  expect(parsed.version).toBe(5);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -447,7 +447,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 4,
+    version: 5,
     items: [],
     goals: [],
     courses: [],
@@ -1624,4 +1624,146 @@ test('AC-40.6 a monthly item on the 31st comes back on the 31st after February',
   expect(open).toHaveLength(1);
   const due = new Date(open[0]!.dueAt);
   expect([due.getMonth() + 1, due.getDate()]).toEqual([3, 31]);
+});
+
+/** A project due 30 November under CSE 123, nothing else. */
+function seedProject() {
+  localStorage.setItem(
+    'personal-tracker/v1',
+    JSON.stringify({
+      version: 5,
+      lastBackupAt: null,
+      goals: [],
+      reflections: [],
+      courses: [
+        {
+          id: 'cse123',
+          name: 'CSE 123',
+          meetingLocation: '',
+          professorEmail: '',
+          officeHours: '',
+          createdAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      items: [
+        {
+          id: 'project',
+          title: 'Project 2b',
+          dueAt: new Date(2026, 10, 30, 23, 59).toISOString(),
+          category: 'academic',
+          priority: 'high',
+          status: 'open',
+          note: '',
+          createdAt: '2026-09-01T00:00:00.000Z',
+          completedAt: null,
+          goalId: null,
+          courseId: 'cse123',
+          repeat: 'none',
+          repeatDay: null,
+          parentId: null,
+        },
+      ],
+    }),
+  );
+}
+
+async function addStep(title: string, date: string) {
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText('New step for Project 2b'), title);
+  fireEvent.change(screen.getByLabelText('Step date for Project 2b'), {
+    target: { value: date },
+  });
+  await user.click(
+    screen.getByRole('button', { name: 'Add step to Project 2b' }),
+  );
+}
+
+function storedItems5() {
+  return (
+    JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+      items: {
+        id: string;
+        title: string;
+        parentId: string | null;
+        courseId: string | null;
+        priority: string;
+      }[];
+    }
+  ).items;
+}
+
+test('AC-45.1 a step is added from the item\u2019s panel and saved as its own deadline', async () => {
+  const user = userEvent.setup();
+  seedProject();
+  render(<App />);
+  await openItem(user, 'Project 2b');
+
+  await addStep('Design doc', '2026-11-20');
+
+  const step = storedItems5().find((i) => i.title === 'Design doc');
+  expect(step?.parentId).toBe('project');
+  expect(screen.getByRole('button', { name: 'Design doc' })).toBeVisible();
+});
+
+test('AC-45.2 a step says what it belongs to and takes the item\u2019s course', async () => {
+  const user = userEvent.setup();
+  seedProject();
+  render(<App />);
+  await openItem(user, 'Project 2b');
+  await addStep('Design doc', '2026-11-20');
+
+  const row = screen.getByRole('button', { name: 'Design doc' }).closest('li')!;
+  expect(within(row).getByText('Step of Project 2b')).toBeVisible();
+  const step = storedItems5().find((i) => i.title === 'Design doc');
+  expect(step?.courseId).toBe('cse123');
+  expect(step?.priority).toBe('normal');
+});
+
+test('AC-45.3 the item says how many of its steps are done', async () => {
+  const user = userEvent.setup();
+  seedProject();
+  render(<App />);
+  await openItem(user, 'Project 2b');
+  await addStep('Design doc', '2026-11-20');
+  await addStep('Write-up', '2026-11-28');
+
+  const project = () =>
+    screen.getByRole('button', { name: 'Project 2b' }).closest('li')!;
+  expect(within(project()).getByText('0 of 2 steps done')).toBeVisible();
+
+  await user.click(
+    screen.getByRole('button', { name: 'Mark Design doc done' }),
+  );
+
+  expect(within(project()).getByText('1 of 2 steps done')).toBeVisible();
+});
+
+test('AC-45.4 deleting an item takes its steps with it, and says so first', async () => {
+  const user = userEvent.setup();
+  seedProject();
+  render(<App />);
+  await openItem(user, 'Project 2b');
+  await addStep('Design doc', '2026-11-20');
+
+  await user.click(screen.getByRole('button', { name: 'Delete Project 2b' }));
+  expect(
+    screen.getByText(
+      'Delete Project 2b and its 1 step? They are gone for good.',
+    ),
+  ).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
+
+  expect(storedItems5()).toEqual([]);
+});
+
+test('AC-45.1 a step cannot have steps of its own', async () => {
+  const user = userEvent.setup();
+  seedProject();
+  render(<App />);
+  await openItem(user, 'Project 2b');
+  await addStep('Design doc', '2026-11-20');
+
+  await openItem(user, 'Design doc');
+
+  expect(screen.queryByLabelText('New step for Design doc')).toBeNull();
 });

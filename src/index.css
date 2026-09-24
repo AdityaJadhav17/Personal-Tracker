@@ -1239,6 +1239,42 @@ button {
   color: var(--text-muted);
 }
 
+/* AC-45.6. The week's count, narrow and quiet unless the week is heavy. */
+.calendar__load {
+  width: 56px;
+  padding: var(--space-1);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-align: center;
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+
+.calendar__load--heavy {
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* US-45. Steps inside an item's open panel. */
+.item__steps {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.item__step-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 13px;
+}
+
+.item__step-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* US-39. Items can be dragged to another day. */
 .calendar__item[draggable='true'] {
   cursor: grab;
