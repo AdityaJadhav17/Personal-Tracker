@@ -6,6 +6,7 @@ import {
   monthCells,
   monthLabel,
   monthValue,
+  moveToDay,
   nextOccurrence,
   shiftMinutes,
   shiftMonth,
@@ -447,5 +448,31 @@ describe('nextOccurrence', () => {
 
     expect(next.month).toBe(10);
     expect(next.day).toBe(7);
+  });
+});
+
+describe('moveToDay', () => {
+  test('AC-39.1 the deadline lands on the new day at the same time', () => {
+    const moved = local(
+      moveToDay(toDueAt('2026-10-07', '23:59')!, '2026-10-08'),
+    );
+    expect(moved).toEqual({
+      year: 2026,
+      month: 10,
+      day: 8,
+      hours: 23,
+      minutes: 59,
+    });
+  });
+
+  test('AC-39.5 an 8am exam moved past the daylight saving change is still 8am', () => {
+    // 1 November 2026 is when US daylight saving ends, so the same wall-clock
+    // time is an hour further from UTC on the 2nd than on the 27th.
+    const moved = local(
+      moveToDay(toDueAt('2026-10-27', '08:00')!, '2026-11-02'),
+    );
+    expect(moved.day).toBe(2);
+    expect(moved.hours).toBe(8);
+    expect(moved.minutes).toBe(0);
   });
 });

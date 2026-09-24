@@ -1313,3 +1313,59 @@ item, reloaded, found it, and saw zero off-origin requests.
 The Startup shortcut is not created by the repo. The agent's sandbox refused
 to write it, correctly, as persistence, and the README gives the one command to
 run.
+
+# US-39, moving a deadline by dragging it
+
+Asked for and built 24 September 2026, the day after the Fall 2026 syllabi
+went in. The calendar showed a quarter but could not change one.
+
+```
+US-39  As someone whose deadlines move,
+       I want to drag an item to another day on the calendar,
+       so that rescheduling takes one gesture instead of opening the item.
+
+Priority: Should, built
+Acceptance criteria:
+  AC-39.1  Given an open item on the calendar,
+           when I drop it on another day,
+           then its deadline is that day at the same time it had.
+  AC-39.2  Given I have moved an item,
+           when I reload,
+           then it is on the new day.
+  AC-39.3  Given I drop an item on another day,
+           then a line above the calendar says what moved and to which day.
+  AC-39.4  Given I drop an item back on its own day,
+           then nothing changes and nothing is said.
+  AC-39.5  Given an 8am item moved across the November clock change,
+           then it is still due at 8am.
+```
+
+## Decisions
+
+**Reschedule, not swap or plan.** Three readings were on the table: move the
+deadline, swap two items' dates, or keep the deadline and drag a separate "work
+on it" day. Aditya chose the first. The third would need a new field and a
+version 4, and building the first in its place would have been the dangerous
+mistake: dragging homework to the day you plan to do it would move the real
+deadline, and the phone alarm with it.
+
+**No undo, so the move is said out loud.** A line in a `role="status"` region
+names what moved and where, which catches a drop on the wrong day and is read
+by screen readers. Dragging it back is the undo.
+
+**The browser's own drag and drop, no dependency.**
+
+**The same wall-clock time, not the same number of hours.** `moveToDay` is
+`toDueAt` fed the item's local time, so it inherits AC-19.3's handling of the
+clock change.
+
+**A repeating item moves only this occurrence.** Its next one counts from the
+new date, because `nextOccurrence` reads whatever `dueAt` holds.
+
+## Limits, stated rather than built
+
+- Mouse only. The way to move a deadline without dragging is still the date in
+  the item's panel, from US-25, which is in the list rather than the calendar.
+- Only the two items a day shows can be dragged. The ones behind "2 more"
+  cannot.
+- The phone does not follow. Export the calendar again after moving things.

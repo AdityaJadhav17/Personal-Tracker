@@ -139,7 +139,13 @@ export default function App() {
   return (
     <Shell view={view} onNavigate={setView}>
       {view === 'calendar' ? (
-        <CalendarView items={db.items} now={current} />
+        <CalendarView
+          items={db.items}
+          now={current}
+          onMove={(item, dueAt) =>
+            actions.editItem(item.id, item.title, dueAt, item.repeat)
+          }
+        />
       ) : view === 'trends' ? (
         <TrendsView series={dailySeries(db.items, db.reflections)} />
       ) : view === 'reflections' ? (

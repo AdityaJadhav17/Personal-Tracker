@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CalendarView from './CalendarView';
 import type { Item } from '../domain/types';
@@ -39,7 +39,11 @@ function cell(day: string) {
 
 test('AC-21.1 an item shows in the cell for the day it is due', () => {
   render(
-    <CalendarView items={[dueOn('2026-09-16', 'CSE 110 midterm')]} now={NOW} />,
+    <CalendarView
+      items={[dueOn('2026-09-16', 'CSE 110 midterm')]}
+      now={NOW}
+      onMove={() => {}}
+    />,
   );
 
   expect(
@@ -48,20 +52,26 @@ test('AC-21.1 an item shows in the cell for the day it is due', () => {
 });
 
 test('AC-21.1 an item due another day is not in this day', () => {
-  render(<CalendarView items={[dueOn('2026-09-16', 'Midterm')]} now={NOW} />);
+  render(
+    <CalendarView
+      items={[dueOn('2026-09-16', 'Midterm')]}
+      now={NOW}
+      onMove={() => {}}
+    />,
+  );
 
   expect(within(cell('September 17')).queryByText('Midterm')).toBeNull();
 });
 
 test('AC-21.2 today is marked as today', () => {
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   expect(cell('September 15')).toHaveAttribute('aria-current', 'date');
   expect(cell('September 16')).not.toHaveAttribute('aria-current');
 });
 
 test('AC-21.3 the calendar opens on the current month', () => {
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
 });
@@ -72,6 +82,7 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
     <CalendarView
       items={[dueOn('2026-09-16', 'Midterm'), dueOn('2026-10-01', 'Rent')]}
       now={NOW}
+      onMove={() => {}}
     />,
   );
 
@@ -84,7 +95,7 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
 
 test('AC-21.3 moving back returns to the month you came from', async () => {
   const user = userEvent.setup();
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   await user.click(screen.getByRole('button', { name: /next month/i }));
   await user.click(screen.getByRole('button', { name: /previous month/i }));
@@ -94,7 +105,7 @@ test('AC-21.3 moving back returns to the month you came from', async () => {
 
 test('AC-21.2 today is only marked in the month it falls in', async () => {
   const user = userEvent.setup();
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   await user.click(screen.getByRole('button', { name: /next month/i }));
 
@@ -111,6 +122,7 @@ test('AC-21.4 a day with more items than fit says how many more', () => {
         dueOn('2026-09-16', 'Fourth'),
       ]}
       now={NOW}
+      onMove={() => {}}
     />,
   );
 
@@ -122,6 +134,7 @@ test('AC-21.4 a day that fits says nothing about more', () => {
     <CalendarView
       items={[dueOn('2026-09-16', 'First'), dueOn('2026-09-16', 'Second')]}
       now={NOW}
+      onMove={() => {}}
     />,
   );
 
@@ -129,7 +142,7 @@ test('AC-21.4 a day that fits says nothing about more', () => {
 });
 
 test('AC-21.5 a month with nothing in it still draws the grid', () => {
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   expect(screen.getAllByRole('cell')).toHaveLength(30);
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
@@ -145,6 +158,7 @@ test('AC-21.6 a done item is not on the calendar', () => {
         }),
       ]}
       now={NOW}
+      onMove={() => {}}
     />,
   );
 
@@ -152,8 +166,65 @@ test('AC-21.6 a done item is not on the calendar', () => {
 });
 
 test('the weekday headings name the columns', () => {
-  render(<CalendarView items={[]} now={NOW} />);
+  render(<CalendarView items={[]} now={NOW} onMove={() => {}} />);
 
   expect(screen.getByRole('columnheader', { name: 'Sunday' })).toBeVisible();
   expect(screen.getByRole('columnheader', { name: 'Saturday' })).toBeVisible();
+});
+
+/** Drag an item's title onto a day, the way a browser hands data across. */
+function drag(title: string, day: string) {
+  const data = new Map<string, string>();
+  const dataTransfer = {
+    setData: (type: string, value: string) => data.set(type, value),
+    getData: (type: string) => data.get(type) ?? '',
+  };
+  fireEvent.dragStart(screen.getByText(title), { dataTransfer });
+  fireEvent.dragOver(cell(day), { dataTransfer });
+  fireEvent.drop(cell(day), { dataTransfer });
+}
+
+test('AC-39.1 dropping an item on another day moves it there at the same time', () => {
+  const onMove = vi.fn();
+  const homework = dueOn('2026-09-16', 'CSE 123 HW 1');
+  render(<CalendarView items={[homework]} now={NOW} onMove={onMove} />);
+
+  drag('CSE 123 HW 1', 'September 18, 2026');
+
+  expect(onMove).toHaveBeenCalledWith(
+    homework,
+    new Date(2026, 8, 18, 12).toISOString(),
+  );
+});
+
+test('AC-39.3 a line says what moved and where it went', () => {
+  render(
+    <CalendarView
+      items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
+      now={NOW}
+      onMove={() => {}}
+    />,
+  );
+
+  drag('CSE 123 HW 1', 'September 18, 2026');
+
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'CSE 123 HW 1 moved to September 18, 2026',
+  );
+});
+
+test('AC-39.4 dropping an item back on its own day changes nothing', () => {
+  const onMove = vi.fn();
+  render(
+    <CalendarView
+      items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
+      now={NOW}
+      onMove={onMove}
+    />,
+  );
+
+  drag('CSE 123 HW 1', 'September 16, 2026');
+
+  expect(onMove).not.toHaveBeenCalled();
+  expect(screen.getByRole('status')).toBeEmptyDOMElement();
 });

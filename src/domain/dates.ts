@@ -207,6 +207,17 @@ export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();
 }
 
+/**
+ * US-39. The same wall-clock time on another local day, as an instant.
+ *
+ * Built from the local time rather than by adding days to the instant, so an
+ * 8am exam dragged across the November clock change still reads 8am.
+ * `day` comes from a calendar cell, so it is always a real day.
+ */
+export function moveToDay(iso: string, day: string): string {
+  return toDueAt(day, toTimeValue(new Date(iso)))!;
+}
+
 /** The local time of an instant, as `<input type="time">` wants it, "17:00". */
 export function toTimeValue(at: Date): string {
   const hours = String(at.getHours()).padStart(2, '0');
