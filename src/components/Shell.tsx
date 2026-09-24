@@ -54,6 +54,12 @@ interface ShellProps {
 export default function Shell({ view, onNavigate, children }: ShellProps) {
   return (
     <div className="shell">
+      {/* AC-42.2. Six sidebar buttons stand between a keyboard and the work
+          on every view; this is the way past them. Hidden until focused. */}
+      <a className="skip" href="#main">
+        Skip to content
+      </a>
+
       <div className="sidebar">
         <h1 className="sidebar__title">Personal Tracker</h1>
 
@@ -93,7 +99,10 @@ export default function Shell({ view, onNavigate, children }: ShellProps) {
         </nav>
       </div>
 
-      <main className="shell__main">{children}</main>
+      {/* tabIndex lets the skip link move focus here, not only scroll. */}
+      <main className="shell__main" id="main" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }

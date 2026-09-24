@@ -74,6 +74,8 @@ test('AC-13.3 Tab reaches every sidebar item, in the order displayed', async () 
     </Shell>,
   );
 
+  // AC-42.2 put the skip link first, so the sidebar starts one Tab later.
+  await user.tab();
   for (const { label } of VIEWS) {
     await user.tab();
     expect(document.activeElement).toHaveAccessibleName(label);
@@ -89,6 +91,7 @@ test('AC-13.3 the sidebar comes before the content in the tab order', async () =
     </Shell>,
   );
 
+  await user.tab(); // the skip link, AC-42.2
   await user.tab();
   expect(document.activeElement).toHaveAccessibleName(VIEWS[0]!.label);
 });
@@ -129,4 +132,20 @@ test('the icons are decorative and stay out of the accessible name', () => {
   expect(screen.getByRole('button', { name: 'Home' })).toHaveAccessibleName(
     'Home',
   );
+});
+
+test('AC-42.2 the first thing Tab reaches is a link that skips the sidebar', async () => {
+  const user = userEvent.setup();
+  render(
+    <Shell view="home" onNavigate={noop}>
+      <p>content</p>
+    </Shell>,
+  );
+
+  await user.tab();
+
+  const skip = screen.getByRole('link', { name: 'Skip to content' });
+  expect(skip).toHaveFocus();
+  expect(skip).toHaveAttribute('href', '#main');
+  expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
 });

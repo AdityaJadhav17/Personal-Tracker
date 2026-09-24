@@ -40,6 +40,8 @@ test('AC-13.3 Tab reaches every sidebar item, in the order displayed', async ({
   page,
 }) => {
   await page.goto('/');
+  // AC-42.2 put the skip link first, so the sidebar starts one Tab later.
+  await page.keyboard.press('Tab');
 
   for (const { label } of VIEWS) {
     await page.keyboard.press('Tab');
@@ -57,7 +59,8 @@ test('AC-13.3 a view can be opened from the keyboard alone', async ({
   // Tab to Courses by identity, not by position, so adding a view later does
   // not silently change which one this test opens.
   const courses = VIEWS.findIndex((v) => v.id === 'courses');
-  for (let i = 0; i <= courses; i += 1) await page.keyboard.press('Tab');
+  // One more than its position: the skip link comes first, AC-42.2.
+  for (let i = 0; i <= courses + 1; i += 1) await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
 
   await expect(page.getByText('No courses yet.')).toBeVisible();
