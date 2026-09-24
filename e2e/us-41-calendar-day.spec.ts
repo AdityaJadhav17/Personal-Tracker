@@ -78,7 +78,7 @@ test('AC-41.1 and AC-41.2 a goal shows on its day, and "more" opens everything d
   await expect(cell).toContainText('Goal: AWS certification');
 
   await cell.getByRole('button', { name: '1 more' }).click();
-  const opened = page.getByRole('region', { name: named(day) });
+  const opened = page.getByRole('dialog', { name: named(day) });
   await expect(opened.getByRole('listitem')).toHaveCount(3);
   await expect(opened).toContainText('Third');
 });
@@ -92,7 +92,7 @@ test('AC-41.3 an item opened from the calendar can be moved by its date field, n
   await seed(page, ['CSE 123 HW 1'], day);
 
   await page.getByRole('button', { name: 'CSE 123 HW 1', exact: true }).click();
-  const opened = page.getByRole('region', { name: named(day) });
+  const opened = page.getByRole('dialog', { name: named(day) });
   await opened
     .getByRole('button', { name: 'CSE 123 HW 1', exact: true })
     .click();

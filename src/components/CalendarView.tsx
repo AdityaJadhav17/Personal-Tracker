@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { HEAVY_WEEK, monthGrid, weekLoad } from '../domain/calendar';
 import type { DayCell } from '../domain/calendar';
@@ -10,7 +10,8 @@ import {
   shiftMonth,
   toDateValue,
 } from '../domain/dates';
-import type { Goal, Item } from '../domain/types';
+import type { Goal, Item, ItemDraft } from '../domain/types';
+import AddItemForm from './AddItemForm';
 
 /** Sunday first, matching the date control the add form already uses. */
 const WEEKDAYS = [
@@ -44,6 +45,8 @@ interface CalendarViewProps {
    * everything a row can do, including changing its date, works from here.
    */
   renderDay: (items: Item[]) => ReactNode;
+  /** US-53. Adds to the open day. False when storage refused it. */
+  onAdd: (draft: ItemDraft) => boolean;
 }
 
 /**
@@ -64,14 +67,17 @@ export default function CalendarView({
   onMove,
   goals,
   renderDay,
+  onAdd,
 }: CalendarViewProps) {
   const [month, setMonth] = useState(() => monthValue(now));
   // AC-39.3. There is no undo, so a drop that lands on the wrong day has to
   // at least be said out loud, to eyes and to screen readers alike.
   const [moved, setMoved] = useState('');
-  // US-41. The day opened below the grid, if any. Kept when the month turns,
-  // so looking ahead does not lose what you were reading.
+  // US-41. The open day, if any. US-53 made it a popover beside its cell, so
+  // it closes when the month turns: its cell is no longer on screen.
   const [opened, setOpened] = useState<string | null>(null);
+  const pop = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
   // AC-48.1. The day a dragged item would land on, lit while it is over it.
   // apple-design: feedback during a gesture, not only at its end.
   const [target, setTarget] = useState<string | null>(null);
@@ -87,11 +93,42 @@ export default function CalendarView({
 
   const today = toDateValue(now);
   const cells = monthGrid(month, items, goals);
-  const openCell = opened
-    ? monthGrid(opened.slice(0, 7), items, goals).find(
-        (cell) => cell?.day === opened,
-      )
-    : undefined;
+  const openCell = cells.find((cell) => cell?.day === opened);
+
+  function turn(by: number) {
+    setOpened(null);
+    setMonth(shiftMonth(month, by));
+  }
+
+  // AC-53.1. Native popover: the top layer, Escape and a click outside for
+  // free, and CSS anchor positioning keeps it by its cell. React 18 does not
+  // know the attribute, so it is set here. Focus goes to the title, so "click
+  // a day, type, Enter" is the whole gesture, and comes back to what opened
+  // it when the popover closes with nothing else chosen.
+  useLayoutEffect(() => {
+    const el = pop.current;
+    if (!el) return;
+    const opener = document.activeElement;
+    el.setAttribute('popover', 'auto');
+    el.showPopover();
+    titleRef.current?.focus();
+
+    const closed = (event: Event) => {
+      if ((event as ToggleEvent).newState === 'closed') setOpened(null);
+    };
+    el.addEventListener('toggle', closed);
+    return () => {
+      el.removeEventListener('toggle', closed);
+      const lost = document.activeElement;
+      if (
+        opener instanceof HTMLElement &&
+        opener.isConnected &&
+        (lost === document.body || el.contains(lost))
+      ) {
+        opener.focus();
+      }
+    };
+  }, [opened]);
 
   function drop(id: string, day: string) {
     clearTarget();
@@ -113,18 +150,18 @@ export default function CalendarView({
           <button
             className="calendar__move"
             type="button"
-            onClick={() => setMonth(shiftMonth(month, -1))}
+            onClick={() => turn(-1)}
             // AC-39.6. Hovering here mid-drag turns the page, so an item can
             // be dropped in a month that was not on screen when it was picked up.
-            onDragEnter={() => setMonth(shiftMonth(month, -1))}
+            onDragEnter={() => turn(-1)}
           >
             Previous month
           </button>
           <button
             className="calendar__move"
             type="button"
-            onClick={() => setMonth(shiftMonth(month, 1))}
-            onDragEnter={() => setMonth(shiftMonth(month, 1))}
+            onClick={() => turn(1)}
+            onDragEnter={() => turn(1)}
           >
             Next month
           </button>
@@ -183,6 +220,7 @@ export default function CalendarView({
                     cell={cell}
                     key={cell.day}
                     isToday={cell.day === today}
+                    isOpen={cell.day === opened}
                     onDrop={drop}
                     onOpen={setOpened}
                     isTarget={cell.day === target}
@@ -198,7 +236,15 @@ export default function CalendarView({
       </table>
 
       {openCell && (
-        <section className="calendar__day" aria-labelledby="calendar-day">
+        <section
+          className="calendar__day"
+          ref={pop}
+          role="dialog"
+          aria-labelledby="calendar-day"
+          // A new day is a new popover: its entrance runs again and the form
+          // starts empty.
+          key={openCell.day}
+        >
           <div className="calendar__day-bar">
             <h3 className="calendar__day-title" id="calendar-day">
               {dayLabel(openCell.day)}
@@ -227,6 +273,7 @@ export default function CalendarView({
           {openCell.items.length + openCell.repeats.length === 0 && (
             <p className="calendar__day-empty">Nothing due this day.</p>
           )}
+          <AddItemForm onAdd={onAdd} titleRef={titleRef} day={openCell.day} />
         </section>
       )}
     </section>
@@ -257,6 +304,7 @@ function weeks(cells: (DayCell | null)[]): (DayCell | null)[][] {
 function Cell({
   cell,
   isToday,
+  isOpen,
   onDrop,
   onOpen,
   isTarget,
@@ -265,6 +313,7 @@ function Cell({
 }: {
   cell: DayCell;
   isToday: boolean;
+  isOpen: boolean;
   onDrop: (id: string, day: string) => void;
   onOpen: (day: string) => void;
   isTarget: boolean;
@@ -279,8 +328,12 @@ function Cell({
     <td
       className={`calendar__cell ${isToday ? 'calendar__cell--today' : ''} ${
         isTarget ? 'calendar__cell--target' : ''
-      }`}
+      } ${isOpen ? 'calendar__cell--open' : ''}`}
       aria-current={isToday ? 'date' : undefined}
+      // AC-53.1. Anywhere in the day opens it, the empty part included. The
+      // date, items and "more" are buttons inside it, so a keyboard reaches
+      // the same place and their clicks arrive here.
+      onClick={() => onOpen(cell.day)}
       // A cell only accepts a drop if dragover is cancelled. It fires
       // continuously, and setting the same day again renders nothing.
       onDragOver={(event) => {
@@ -298,11 +351,7 @@ function Cell({
       {/* The full date is read, the bare number is seen. Without it a screen
           reader announces "16" with nothing saying which month. US-41 made it
           the way into the day, including one with nothing due yet. */}
-      <button
-        className="calendar__date"
-        type="button"
-        onClick={() => onOpen(cell.day)}
-      >
+      <button className="calendar__date" type="button">
         <time dateTime={cell.day}>
           <span className="visually-hidden">Open {dayLabel(cell.day)}</span>
           <span aria-hidden="true">{cell.date}</span>
@@ -326,7 +375,6 @@ function Cell({
           }
           // A drag cancelled with Escape, or dropped outside the grid.
           onDragEnd={onDragEnd}
-          onClick={() => onOpen(cell.day)}
         >
           {item.title}
         </button>
@@ -341,7 +389,6 @@ function Cell({
           type="button"
           // Starts with the visible title, so voice control still finds it.
           aria-label={`${item.title}, repeats ${item.repeat}`}
-          onClick={() => onOpen(cell.day)}
         >
           {item.title}
         </button>
@@ -349,11 +396,7 @@ function Cell({
 
       {/* AC-41.2. A count you cannot open is a dead end. */}
       {extra > 0 && (
-        <button
-          className="calendar__more"
-          type="button"
-          onClick={() => onOpen(cell.day)}
-        >
+        <button className="calendar__more" type="button">
           {extra} more
         </button>
       )}

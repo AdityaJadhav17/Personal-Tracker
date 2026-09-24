@@ -71,9 +71,10 @@ marks six or more as heavy. Goals show on their target day, outlined so they
 never read as one more deadline. Today is marked, and finished items drop off,
 matching Home.
 
-Press a date, an item or "2 more" and that day opens below the grid with every
-row in full, so anything a row can do on Home works from the calendar too,
-including changing its date from the keyboard. Drag an item to another day to
+Press anywhere in a day and it opens beside it with every row in full, so
+anything a row can do on Home works from the calendar too, including changing
+its date from the keyboard. The title field is ready at the bottom: type and
+press Enter to add something to that day. Escape closes it. Drag an item to another day to
 move its deadline, keeping its time; hold it over Next month or Previous month
 to carry it further.
 

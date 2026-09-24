@@ -4,8 +4,9 @@ Proposed 24 September 2026. **Phases 1 to 4 are built** as
 [US-47](../product/stories/US-47.md), [US-48](../product/stories/US-48.md),
 [US-49](../product/stories/US-49.md) and [US-50](../product/stories/US-50.md),
 with a light and dark toggle added alongside as
-[US-51](../product/stories/US-51.md). Phase 5 and the phone fixes are not
-started.
+[US-51](../product/stories/US-51.md). Phase 5 was prototyped and Aditya picked
+the popover, built as [US-53](../product/stories/US-53.md). The phone fixes
+are not started.
 
 The skills are six of the thirteen in
 [emilkowalski/skills](https://github.com/emilkowalski/skills), chosen against
@@ -143,7 +144,7 @@ each variant is judged in context. The production build only builds
 | 2     | US-48             | Feedback where it is missing: the drop-target highlight, rows and the day opening without teleporting, status lines fading in | Small; one piece of state for the hovered cell                               |
 | 3     | US-49             | Type and contrast: `rem` sizes, `prefers-contrast: more`, tracking by size                                                    | Medium, mechanical; checked by building before and after, like the CSS split |
 | 4     | US-50             | Installed-app polish: `theme-color` for light and dark                                                                        | Tiny                                                                         |
-| 5     | Prototype         | The day-opening question, three variants, you pick                                                                            | Throwaway, then a story for the winner                                       |
+| 5     | US-53             | The day-opening question, three variants, you pick. Picked: the popover                                                       | Throwaway, then a story for the winner                                       |
 | Later | With v3 phase two | The phone fixes from mobile-native                                                                                            | Tested on the iPhone                                                         |
 
 **How it will be tested.** Motion is mostly invisible to unit tests, so the

@@ -10,11 +10,20 @@ interface AddItemFormProps {
   onAdd: (draft: ItemDraft) => boolean;
   /** Lets the empty state hand focus to the first field. */
   titleRef: React.RefObject<HTMLInputElement>;
+  /**
+   * US-53. The calendar day this adds to. The date is already chosen, so the
+   * Due field is left out rather than shown pre-filled.
+   */
+  day?: string;
 }
 
-export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
+export default function AddItemForm({
+  onAdd,
+  titleRef,
+  day,
+}: AddItemFormProps) {
   const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(day ?? '');
   const [dueTime, setDueTime] = useState('');
   const [category, setCategory] = useState<Category>('academic');
   const [priority, setPriority] = useState<Priority>('normal');
@@ -37,7 +46,7 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.
     setTitle('');
-    setDueDate('');
+    setDueDate(day ?? '');
     setDueTime('');
     setCategory('academic');
     setRepeat('none');
@@ -65,24 +74,26 @@ export default function AddItemForm({ onAdd, titleRef }: AddItemFormProps) {
         )}
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="due">
-          Due
-        </label>
-        <input
-          className="form__input"
-          id="due"
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          aria-describedby={dueError ? 'due-error' : undefined}
-        />
-        {dueError && (
-          <p className="form__error" id="due-error">
-            {dueError}
-          </p>
-        )}
-      </div>
+      {day === undefined && (
+        <div className="form__field">
+          <label className="form__label" htmlFor="due">
+            Due
+          </label>
+          <input
+            className="form__input"
+            id="due"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            aria-describedby={dueError ? 'due-error' : undefined}
+          />
+          {dueError && (
+            <p className="form__error" id="due-error">
+              {dueError}
+            </p>
+          )}
+        </div>
+      )}
 
       {/*
         Optional, because most deadlines are a day rather than a moment. Left

@@ -10,5 +10,6 @@
   :root {
     --press-scale: 1;
     --rise: 0px;
+    --pop-scale: 1;
   }
 }

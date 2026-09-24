@@ -46,6 +46,8 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --press-scale: 0.97;
   --rise: 4px;
+  /* US-53. Where a popover grows from. */
+  --pop-scale: 0.96;
 }
 
 /*

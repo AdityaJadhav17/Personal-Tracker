@@ -162,7 +162,7 @@ test('AC-42.3 a deadline can be moved from the calendar with the keyboard alone'
   // Reach the calendar item by keyboard focus and open its day with Enter.
   await page.getByRole('button', { name: 'Rent', exact: true }).focus();
   await page.keyboard.press('Enter');
-  const row = page.getByRole('region').getByRole('listitem');
+  const row = page.getByRole('dialog').getByRole('listitem');
   await row.getByRole('button', { name: 'Rent', exact: true }).focus();
   await page.keyboard.press('Enter');
 

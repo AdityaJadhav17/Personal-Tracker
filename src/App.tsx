@@ -159,6 +159,7 @@ export default function App() {
             actions.editItem(item.id, item.title, dueAt, item.repeat)
           }
           goals={db.goals}
+          onAdd={actions.addItem}
           renderDay={(dayItems) => (
             <ul className="group__list">
               {dayItems.map((item) => (

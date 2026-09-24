@@ -86,6 +86,18 @@
   vertical-align: top;
 }
 
+/* AC-53.1. Anywhere in a day opens it. */
+.calendar__cell:not(.calendar__cell--outside) {
+  cursor: pointer;
+}
+
+/* The day that is open, ringed so the popover's source is plain, and named
+   as the anchor the popover positions itself against. */
+.calendar__cell--open {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  anchor-name: --calendar-day;
+}
+
 /* Padding days belong to another month. Nothing to read, nothing to click. */
 .calendar__cell--outside {
   border-color: transparent;
@@ -175,13 +187,40 @@
   color: var(--text);
 }
 
-/* US-41. The open day, below the grid. */
+/*
+ * US-53. The open day, a popover beside its cell: to the right and running
+ * down, flipped left or upwards when the cell is near an edge. Its width fits
+ * the add form's fields two or three to a row.
+ */
 .calendar__day {
-  margin-top: var(--space-4);
+  position-anchor: --calendar-day;
+  position-area: right span-bottom;
+  position-try-fallbacks:
+    flip-inline,
+    flip-block,
+    flip-block flip-inline;
+  inset: auto;
+  width: min(380px, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100vh - 2 * var(--space-4));
+  margin: 0 var(--space-2);
   padding: var(--space-4);
+  overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 0.18),
+    0 2px 6px rgb(0 0 0 / 0.1);
+}
+
+/* The add form sits inside the popover's own card, so it drops its own. */
+.calendar__day .form {
+  margin-top: var(--space-3);
+  padding: var(--space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
 }
 
 .calendar__day-bar {
@@ -245,18 +284,20 @@
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
-/* AC-48.2. The open day arrives rather than appearing: a fade and a short
-   rise, 200ms. Height does not animate; that would be layout. */
+/* AC-48.2, changed by US-53. The open day grows out of its cell: a fade and
+   a scale from 96%, 200ms, from the side nearest the cell. apple-design:
+   something opens from where you reached for it. */
 .calendar__day {
+  transform-origin: left top;
   transition:
     opacity 200ms var(--ease-out),
-    translate 200ms var(--ease-out);
+    scale 200ms var(--ease-out);
 }
 
 @starting-style {
   .calendar__day {
     opacity: 0;
-    translate: 0 var(--rise);
+    scale: var(--pop-scale);
   }
 }
 
