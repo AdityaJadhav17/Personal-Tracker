@@ -52,6 +52,7 @@ describe('monthGrid', () => {
       date: 17,
       items: [],
       goals: [],
+      repeats: [],
     });
   });
 
@@ -152,7 +153,78 @@ describe('goals on the calendar', () => {
   });
 });
 
+describe('repeats', () => {
+  /** Local day and time of an instant, so the tests read in wall-clock terms. */
+  function local(iso: string) {
+    const at = new Date(iso);
+    return [at.getMonth() + 1, at.getDate(), at.getHours()];
+  }
+
+  test('AC-52.1 an open monthly item shows in the months after it, same day and time', () => {
+    const rent = dueOn('2026-10-01', { title: 'Rent', repeat: 'monthly' });
+
+    const november = cellFor('2026-11', '2026-11-01', [rent]);
+    const december = cellFor('2026-12', '2026-12-01', [rent]);
+
+    expect(november?.repeats.map((one) => one.title)).toEqual(['Rent']);
+    expect(local(november!.repeats[0]!.dueAt)).toEqual([11, 1, 12]);
+    expect(local(december!.repeats[0]!.dueAt)).toEqual([12, 1, 12]);
+    expect(november?.items).toEqual([]);
+  });
+
+  test('AC-52.2 a weekly item shows on every week of a later month', () => {
+    const standup = dueOn('2026-10-05', { repeat: 'weekly' });
+
+    const days = monthGrid('2026-11', [standup])
+      .filter((cell) => cell !== null && cell.repeats.length > 0)
+      .map((cell) => cell!.day);
+
+    expect(days).toEqual([
+      '2026-11-02',
+      '2026-11-09',
+      '2026-11-16',
+      '2026-11-23',
+      '2026-11-30',
+    ]);
+  });
+
+  test('AC-52.3 the real item shows once, and a done or one-off item projects nothing', () => {
+    const rent = dueOn('2026-10-01', { repeat: 'monthly' });
+    const paid = dueOn('2026-10-02', { repeat: 'monthly', status: 'done' });
+    const once = dueOn('2026-10-03');
+
+    const october = monthGrid('2026-10', [rent, paid, once]);
+    const november = monthGrid('2026-11', [rent, paid, once]);
+
+    expect(october.flatMap((cell) => cell?.repeats ?? [])).toEqual([]);
+    expect(november.flatMap((cell) => cell?.repeats ?? [])).toHaveLength(1);
+  });
+
+  test('AC-52.4 a monthly item aimed at the 31st clamps in February and returns in March', () => {
+    const end = dueOn('2027-01-31', { repeat: 'monthly' });
+
+    expect(cellFor('2027-02', '2027-02-28', [end])?.repeats).toHaveLength(1);
+    expect(cellFor('2027-03', '2027-03-31', [end])?.repeats).toHaveLength(1);
+  });
+
+  test('AC-52.4 a month before the item shows none of it', () => {
+    const rent = dueOn('2026-10-01', { repeat: 'monthly' });
+
+    expect(
+      monthGrid('2026-09', [rent]).flatMap((cell) => cell?.repeats ?? []),
+    ).toEqual([]);
+  });
+});
+
 describe('weekLoad', () => {
+  test('AC-52.5 a week counts the repeats that land in it', () => {
+    const rent = dueOn('2026-10-01', { repeat: 'monthly' });
+    const grid = monthGrid('2026-11', [rent, dueOn('2026-11-03')]);
+
+    // November 2026 starts on a Sunday, so the first row is the 1st to 7th.
+    expect(weekLoad(grid.slice(0, 7))).toBe(2);
+  });
+
   test('AC-45.6 counts the open deadlines in one row of the grid', () => {
     const items = [
       dueOn('2026-09-14'),

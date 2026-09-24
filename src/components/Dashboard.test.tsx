@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Dashboard from './Dashboard';
 import type { Item } from '../domain/types';
@@ -1321,4 +1321,82 @@ test('AC-44.3 Drop asks first, then deletes; Keep leaves it', async () => {
   await user.click(screen.getByRole('button', { name: 'Drop Missed lab' }));
   await user.click(screen.getByRole('button', { name: 'Yes, drop it' }));
   expect(onDelete).toHaveBeenCalledWith(lab.id);
+});
+
+describe('US-54 ten upcoming at a time', () => {
+  function renderItems(items: Item[]) {
+    render(
+      <Dashboard
+        now={NOW}
+        onDone={noop}
+        onNoteChange={noop}
+        courses={[]}
+        onCourseChange={noop}
+        goals={[]}
+        onGoalChange={noop}
+        onEdit={noop}
+        onDelete={noop}
+        allItems={items}
+        onAddStep={noop}
+        items={items}
+      />,
+    );
+  }
+
+  /** Twelve upcoming items, one a day from today, "Day 0" to "Day 11". */
+  const twelve = () =>
+    Array.from({ length: 12 }, (_, day) => anItem(`Day ${day}`, day));
+
+  test('AC-54.1 with more than ten upcoming, the first ten in order are shown and the rest counted', () => {
+    renderItems(twelve());
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.getByText('Day 9')).toBeVisible();
+    expect(screen.queryByText('Day 10')).toBeNull();
+    expect(screen.getByText('Showing 10 of 12 upcoming.')).toBeVisible();
+  });
+
+  test('AC-54.2 overdue items are all shown and do not use up the ten', () => {
+    renderItems([
+      anItem('Missed 1', -1),
+      anItem('Missed 2', -2),
+      anItem('Missed 3', -3),
+      ...twelve(),
+    ]);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(13);
+    expect(screen.getByText('Missed 3')).toBeVisible();
+  });
+
+  test('AC-54.3 Show more reveals the rest, and Show fewer goes back to ten', async () => {
+    const user = userEvent.setup();
+    renderItems(twelve());
+
+    await user.click(screen.getByRole('button', { name: 'Show 2 more' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(12);
+    expect(screen.getByText('Day 11')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Show fewer' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+  });
+
+  test('AC-54.4 ten or fewer upcoming shows everything and no count', () => {
+    renderItems(twelve().slice(0, 10));
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(screen.queryByText(/upcoming\./)).toBeNull();
+    expect(screen.queryByRole('button', { name: /more|fewer/ })).toBeNull();
+  });
+
+  test('AC-54.5 a group cut short still counts everything in it', () => {
+    renderItems(twelve());
+
+    // Today holds Day 0, This week Days 1 to 7, Later Days 8 to 11, of which
+    // the ten leave room for two.
+    const later = screen
+      .getByRole('heading', { name: 'Later' })
+      .closest('section')!;
+    expect(within(later).getByText('4')).toBeVisible();
+    expect(within(later).getAllByRole('listitem')).toHaveLength(2);
+  });
 });

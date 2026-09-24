@@ -1,4 +1,4 @@
-import { monthCells, toDateValue } from './dates';
+import { dayOfMonth, monthCells, nextOccurrence, toDateValue } from './dates';
 import type { Goal, Item } from './types';
 
 export interface DayCell {
@@ -10,6 +10,12 @@ export interface DayCell {
   items: Item[];
   /** Goals whose target falls that day. AC-41.1. */
   goals: Goal[];
+  /**
+   * AC-52.1. Later rounds of a repeating item, each a copy with the date it
+   * would fall due. Worked out for display and never stored: the real one only
+   * appears when the one before it is finished (US-28).
+   */
+  repeats: Item[];
 }
 
 /**
@@ -42,6 +48,29 @@ export function monthGrid(
     goalsByDay.set(day, [...(goalsByDay.get(day) ?? []), goal]);
   }
 
+  const repeatsByDay = new Map<string, Item[]>();
+  for (const item of items) {
+    if (item.status !== 'open' || item.repeat === 'none') continue;
+    // Same arguments markDone uses, so the preview is where the real one lands.
+    const aim =
+      item.repeat === 'monthly'
+        ? (item.repeatDay ?? dayOfMonth(item.dueAt))
+        : undefined;
+    let dueAt = nextOccurrence(item.dueAt, item.repeat, aim);
+    let day = toDateValue(new Date(dueAt));
+    // Day strings sort as dates, so this stops at the end of the month shown.
+    while (day.slice(0, 7) <= month) {
+      if (day.startsWith(month)) {
+        repeatsByDay.set(day, [
+          ...(repeatsByDay.get(day) ?? []),
+          { ...item, dueAt },
+        ]);
+      }
+      dueAt = nextOccurrence(dueAt, item.repeat, aim);
+      day = toDateValue(new Date(dueAt));
+    }
+  }
+
   for (const list of byDay.values()) {
     list.sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   }
@@ -54,6 +83,7 @@ export function monthGrid(
           date: Number(day.slice(-2)),
           items: byDay.get(day) ?? [],
           goals: goalsByDay.get(day) ?? [],
+          repeats: repeatsByDay.get(day) ?? [],
         },
   );
 }
@@ -68,5 +98,10 @@ export const HEAVY_WEEK = 6;
  * and a heavy week is heavy because of how many things land in it.
  */
 export function weekLoad(week: (DayCell | null)[]): number {
-  return week.reduce((total, cell) => total + (cell?.items.length ?? 0), 0);
+  // AC-52.5. Rent is due that week whether or not last month's is ticked off.
+  return week.reduce(
+    (total, cell) =>
+      total + (cell ? cell.items.length + cell.repeats.length : 0),
+    0,
+  );
 }

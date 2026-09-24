@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { groupOf } from '../domain/dates';
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
@@ -12,6 +13,12 @@ const GROUPS: { key: Group; heading: string }[] = [
   { key: 'week', heading: 'This week' },
   { key: 'later', heading: 'Later' },
 ];
+
+/**
+ * AC-54.1. How many upcoming items Home shows before it starts counting. The
+ * whole term at once was overwhelming; ten is about two weeks of a busy one.
+ */
+const UPCOMING = 10;
 
 interface DashboardProps {
   items: Item[];
@@ -48,14 +55,33 @@ export default function Dashboard({
   onAddStep,
 }: DashboardProps) {
   const open = items.filter((item) => item.status === 'open');
+  // AC-54.3. Not remembered, like the filters: a reload shows ten again.
+  const [showAll, setShowAll] = useState(false);
+
+  const grouped = GROUPS.map((group) => ({
+    ...group,
+    ordered: sortWithinGroup(
+      open.filter((item) => groupOf(item.dueAt, now) === group.key),
+    ),
+  }));
+  const upcoming = grouped
+    .filter(({ key }) => key !== 'overdue')
+    .reduce((total, { ordered }) => total + ordered.length, 0);
+
+  // AC-54.2. Overdue is always whole and uses none of the ten: a missed
+  // deadline hidden behind "more" is the pile US-44 exists to empty.
+  let room = showAll ? upcoming : UPCOMING;
+  const shown = grouped.map((group) => {
+    if (group.key === 'overdue') return { ...group, rows: group.ordered };
+    const rows = group.ordered.slice(0, room);
+    room -= rows.length;
+    return { ...group, rows };
+  });
 
   return (
     <>
-      {GROUPS.map(({ key, heading }) => {
-        const inGroup = open.filter((item) => groupOf(item.dueAt, now) === key);
-        if (inGroup.length === 0) return null;
-
-        const ordered = sortWithinGroup(inGroup);
+      {shown.map(({ key, heading, ordered, rows }) => {
+        if (rows.length === 0) return null;
 
         return (
           <section className={`group group--${key}`} key={key}>
@@ -78,7 +104,7 @@ export default function Dashboard({
               </p>
             )}
             <ul className="group__list">
-              {ordered.map((item) => (
+              {rows.map((item) => (
                 <ItemRow
                   key={item.id}
                   item={item}
@@ -103,6 +129,21 @@ export default function Dashboard({
           </section>
         );
       })}
+
+      {upcoming > UPCOMING && (
+        <p className="group__more">
+          {showAll
+            ? `Showing all ${upcoming} upcoming.`
+            : `Showing ${UPCOMING} of ${upcoming} upcoming.`}{' '}
+          <button
+            className="prompt__button prompt__button--quiet"
+            type="button"
+            onClick={() => setShowAll(!showAll)}
+          >
+            {showAll ? 'Show fewer' : `Show ${upcoming - UPCOMING} more`}
+          </button>
+        </p>
+      )}
     </>
   );
 }

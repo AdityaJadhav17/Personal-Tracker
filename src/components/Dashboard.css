@@ -36,6 +36,17 @@
   color: var(--danger);
 }
 
+/* AC-54.1. Under the last group: how many are hidden, and the way to them. */
+.group__more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* US-44. Under the Overdue heading, naming what its rows offer. */
 .group__hint {
   margin: 0 0 var(--space-2);

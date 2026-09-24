@@ -446,3 +446,30 @@ test('AC-45.6 a week with six or more is marked heavy, in words', () => {
 
   expect(screen.getByRole('cell', { name: '6 due, heavy' })).toBeVisible();
 });
+
+test('AC-52.6 a later round of a repeating item shows as a repeat, and cannot be dragged', () => {
+  renderWith([dueOn('2026-08-01', 'Rent', { repeat: 'monthly' })]);
+
+  const repeat = within(cell('September 1,')).getByRole('button', {
+    name: 'Rent, repeats monthly',
+  });
+  expect(repeat).not.toHaveAttribute('draggable', 'true');
+  expect(screen.getAllByRole('cell', { name: '1 due' })).toHaveLength(1);
+});
+
+test('AC-52.7 opening its day says when it joins the list', async () => {
+  const user = userEvent.setup();
+  renderWith([dueOn('2026-08-01', 'Rent', { repeat: 'monthly' })]);
+
+  await user.click(
+    screen.getByRole('button', { name: 'Rent, repeats monthly' }),
+  );
+
+  const day = screen.getByRole('region', { name: 'September 1, 2026' });
+  expect(
+    within(day).getByText(
+      'Rent repeats monthly. It joins your list when you finish the one before it.',
+    ),
+  ).toBeVisible();
+  expect(within(day).queryByText('Nothing due this day.')).toBeNull();
+});

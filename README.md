@@ -23,6 +23,9 @@ left today and what you finished yesterday, then the list sorts itself.
   The pile empties instead of growing.
 - **Today**, **This week** and **Later** follow. A group with nothing in it does
   not render at all.
+- Only the next ten upcoming show, so a whole term never buries this week.
+  Overdue items all show and do not count towards the ten. **Show more**
+  reveals the rest until you reload.
 - Inside each group, high priority comes first, then whatever is due soonest.
 - Anything due in the next three days carries a **Soon** marker, whatever its
   priority.
@@ -37,7 +40,8 @@ Set something to repeat weekly or monthly and finishing it creates the next one,
 so rent is recorded once instead of twelve times a year. The next one only
 appears when you finish the last, which means a repeating item you ignore stops
 repeating. Open an item to start or stop it repeating later, so
-moving out means switching rent off rather than deleting it.
+moving out means switching rent off rather than deleting it. The calendar
+shows the months ahead anyway, with each repeat drawn dashed until it is real.
 
 Pick a date, and a time if it needs one. With no time, a deadline means 23:59
 that day. Dates are stored as fixed moments, so a deadline set at 5pm still

@@ -144,6 +144,14 @@
   background: var(--danger-soft);
 }
 
+/* AC-52.6. A repeat that does not exist yet: the same bar, dashed, with no
+   fill, so it reads as expected rather than due. */
+.calendar__item--repeat {
+  border-left-style: dashed;
+  background: none;
+  color: var(--text-muted);
+}
+
 .calendar__more {
   font-size: 11px;
   color: var(--text-muted);
@@ -187,6 +195,7 @@
 }
 
 .calendar__day-goal,
+.calendar__day-repeat,
 .calendar__day-empty {
   margin: 0 0 var(--space-2);
   color: var(--text-muted);

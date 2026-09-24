@@ -216,9 +216,15 @@ export default function CalendarView({
               Goal: {goal.name}
             </p>
           ))}
-          {openCell.items.length > 0 ? (
-            renderDay(openCell.items)
-          ) : (
+          {openCell.items.length > 0 && renderDay(openCell.items)}
+          {/* AC-52.7. A preview says why it cannot be ticked off yet. */}
+          {openCell.repeats.map((item) => (
+            <p className="calendar__day-repeat" key={item.id}>
+              {item.title} repeats {item.repeat}. It joins your list when you
+              finish the one before it.
+            </p>
+          ))}
+          {openCell.items.length + openCell.repeats.length === 0 && (
             <p className="calendar__day-empty">Nothing due this day.</p>
           )}
         </section>
@@ -265,7 +271,9 @@ function Cell({
   onTarget: (day: string) => void;
   onDragEnd: () => void;
 }) {
-  const extra = cell.items.length - SHOWN;
+  const shown = cell.items.slice(0, SHOWN);
+  const repeats = cell.repeats.slice(0, SHOWN - shown.length);
+  const extra = cell.items.length + cell.repeats.length - SHOWN;
 
   return (
     <td
@@ -307,7 +315,7 @@ function Cell({
         </span>
       ))}
 
-      {cell.items.slice(0, SHOWN).map((item) => (
+      {shown.map((item) => (
         <button
           className={`calendar__item calendar__item--${item.priority}`}
           key={item.id}
@@ -318,6 +326,21 @@ function Cell({
           }
           // A drag cancelled with Escape, or dropped outside the grid.
           onDragEnd={onDragEnd}
+          onClick={() => onOpen(cell.day)}
+        >
+          {item.title}
+        </button>
+      ))}
+
+      {/* AC-52.6. Not draggable: moving a preview would move nothing. Move the
+          real one and its repeats follow. */}
+      {repeats.map((item) => (
+        <button
+          className={`calendar__item calendar__item--${item.priority} calendar__item--repeat`}
+          key={item.id}
+          type="button"
+          // Starts with the visible title, so voice control still finds it.
+          aria-label={`${item.title}, repeats ${item.repeat}`}
           onClick={() => onOpen(cell.day)}
         >
           {item.title}
