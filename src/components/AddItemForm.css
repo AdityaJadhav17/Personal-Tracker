@@ -47,9 +47,11 @@
   transition: border-color var(--speed) ease;
 }
 
-.form__input:hover,
-.form__select:hover {
-  border-color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .form__input:hover,
+  .form__select:hover {
+    border-color: var(--accent);
+  }
 }
 
 .form__error {
@@ -65,9 +67,18 @@
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   font-weight: 500;
-  transition: opacity var(--speed) ease;
+  transition:
+    opacity var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.form__submit:hover {
-  opacity: 0.88;
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.form__submit:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .form__submit:hover {
+    opacity: 0.88;
+  }
 }

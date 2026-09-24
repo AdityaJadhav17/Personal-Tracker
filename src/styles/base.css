@@ -36,6 +36,16 @@
   --space-5: 24px;
   --radius: 6px;
   --speed: 150ms;
+
+  /*
+   * US-47. Motion, from review-animations' standards: a strong ease-out for
+   * anything pressed, entering or leaving, and how far those move. Hover and
+   * colour changes keep plain ease. Reduced motion zeroes the distances in
+   * styles/motion.css and leaves the colour changes alone.
+   */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --press-scale: 0.97;
+  --rise: 4px;
 }
 
 /* US-51. A choice made with the toggle overrides the system's. */

@@ -25,12 +25,20 @@
   font-size: 12px;
   cursor: pointer;
   transition:
-    border-color var(--speed),
-    color var(--speed);
+    border-color var(--speed) ease,
+    color var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.filter__option:hover {
-  border-color: var(--accent);
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.filter__option:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filter__option:hover {
+    border-color: var(--accent);
+  }
 }
 
 /* The one in force reads as chosen without relying on colour alone: it is the
@@ -53,8 +61,10 @@
   cursor: pointer;
 }
 
-.filter__select:hover {
-  border-color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .filter__select:hover {
+    border-color: var(--accent);
+  }
 }
 
 /* A thing that comes back, said where you read the row. */

@@ -44,11 +44,20 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-  transition: border-color var(--speed);
+  transition:
+    border-color var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.calendar__move:hover {
-  border-color: var(--accent);
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.calendar__move:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .calendar__move:hover {
+    border-color: var(--accent);
+  }
 }
 
 .calendar__grid {

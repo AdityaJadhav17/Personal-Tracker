@@ -62,12 +62,20 @@
   border-radius: var(--radius);
   transition:
     color var(--speed) ease,
-    background var(--speed) ease;
+    background var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.sidebar__item:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.sidebar__item:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sidebar__item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .sidebar__item--current {

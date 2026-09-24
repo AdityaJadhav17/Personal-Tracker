@@ -48,12 +48,22 @@
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   font-weight: 500;
-  transition: opacity var(--speed) ease;
+  transition:
+    opacity var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.empty__action:hover,
-.prompt__button:hover {
-  opacity: 0.88;
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.empty__action:active,
+.prompt__button:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .empty__action:hover,
+  .prompt__button:hover {
+    opacity: 0.88;
+  }
 }
 
 .prompt__button--quiet {

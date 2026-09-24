@@ -1,8 +1,14 @@
-/* ---------- Motion off when asked ---------- */
+/* ---------- Reduced motion ---------- */
 
+/*
+ * US-47. Reduce, don't eliminate: nothing moves, but colour and opacity still
+ * change over their usual time, because a change you can see arrive is easier
+ * to follow than one that snaps. The distances are tokens, so zeroing them here
+ * stills every press and entrance at once.
+ */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+  :root {
+    --press-scale: 1;
+    --rise: 0px;
   }
 }

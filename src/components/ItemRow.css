@@ -20,8 +20,10 @@
   border-bottom: none;
 }
 
-.item:hover {
-  background: var(--bg);
+@media (hover: hover) and (pointer: fine) {
+  .item:hover {
+    background: var(--bg);
+  }
 }
 
 .item--high {
@@ -43,12 +45,20 @@
   border-radius: 4px;
   transition:
     border-color var(--speed) ease,
-    background var(--speed) ease;
+    background var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.item__done:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.item__done:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .item__done:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
 }
 
 /*
@@ -67,8 +77,10 @@
   cursor: pointer;
 }
 
-.item__title:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .item__title:hover {
+    text-decoration: underline;
+  }
 }
 
 /* Small, quiet, and only there when the link exists. */

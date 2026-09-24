@@ -27,11 +27,20 @@
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: border-color var(--speed) ease;
+  transition:
+    border-color var(--speed) ease,
+    scale 160ms var(--ease-out);
 }
 
-.data__button:hover {
-  border-color: var(--accent);
+/* US-47. Press feedback, the one motion allowed even on frequent actions. */
+.data__button:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .data__button:hover {
+    border-color: var(--accent);
+  }
 }
 
 .data__import {
