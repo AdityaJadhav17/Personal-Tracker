@@ -11,8 +11,11 @@ What is being built, for whom, and why.
   Every test ID in the codebase traces back to this file.
 - [product/mvp.md](product/mvp.md) — what version 1 shipped, what it left out,
   and the security posture.
-- [product/v2-plan.md](product/v2-plan.md) — the current scope: goals, courses,
-  reflections and trends, derived from the dashboard screenshots.
+- [product/v2-plan.md](product/v2-plan.md) — version 2: goals, courses,
+  reflections and trends, derived from the dashboard screenshots, and an index
+  of every story since.
+- [product/stories/](product/stories/) — one file per story from US-21 on, each
+  with its acceptance criteria, decisions and what building it took.
 - [product/review-and-roadmap.md](product/review-and-roadmap.md) — a snapshot
   of the product, five problems from research worth solving, a review of six
   qualities, and the plan in order. Proposed, not approved.

@@ -1,6 +1,7 @@
 # Where the product stands, and what comes next
 
-Written 24 September 2026, the day Fall quarter started. Aditya asked for four
+Written 24 September 2026, the day Fall quarter started. **Built the same
+day: every step below is done, and each links to its story file.** Aditya asked for four
 things: a snapshot of the product as it is, the five best problems from how
 people struggle with personal trackers, a review of six qualities, and a plan
 in order. Nothing here is approved yet. Each step becomes a story with its own
