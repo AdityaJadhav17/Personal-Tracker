@@ -1,4 +1,10 @@
-import { shiftMinutes, toDateValue, toIcsStamp } from './dates';
+import {
+  eveningBefore,
+  minutesBetween,
+  shiftMinutes,
+  toDateValue,
+  toIcsStamp,
+} from './dates';
 import type { Item } from './types';
 
 /**
@@ -22,9 +28,6 @@ const LINE_LIMIT = 75;
  * event would lose it.
  */
 const MINUTES = 30;
-
-/** Long enough to act on, early enough not to be noise. */
-const ALARM = '-PT1H';
 
 /** The horizontal tab is the only control character a TEXT value may carry. */
 const TAB = 9;
@@ -118,16 +121,37 @@ function event(item: Item, stamp: string): string[] {
 
   if (item.note !== '') lines.push(property('DESCRIPTION', item.note));
 
-  lines.push(
-    'BEGIN:VALARM',
-    `TRIGGER:${ALARM}`,
-    'ACTION:DISPLAY',
-    property('DESCRIPTION', item.title),
-    'END:VALARM',
-    'END:VEVENT',
-  );
+  const start = shiftMinutes(item.dueAt, -MINUTES);
+  for (const at of alarmsFor(item)) {
+    lines.push(
+      'BEGIN:VALARM',
+      // Minutes before DTSTART, the default a trigger is measured from and
+      // the one every calendar app reads.
+      `TRIGGER:-PT${minutesBetween(at, start)}M`,
+      'ACTION:DISPLAY',
+      property('DESCRIPTION', item.title),
+      'END:VALARM',
+    );
+  }
+  lines.push('END:VEVENT');
 
   return lines;
+}
+
+/**
+ * US-46. When the phone should speak up, by priority.
+ *
+ * The same alarm on every deadline teaches you to swipe them all away, so
+ * each tier gets a different amount of noise: an exam gets a day's warning and
+ * an hour's, ordinary work one nudge the evening before at a time you are
+ * likely to act on it, and low priority items none at all.
+ */
+function alarmsFor(item: Item): string[] {
+  if (item.priority === 'high') {
+    return [shiftMinutes(item.dueAt, -24 * 60), shiftMinutes(item.dueAt, -60)];
+  }
+  if (item.priority === 'normal') return [eveningBefore(item.dueAt)];
+  return [];
 }
 
 /**

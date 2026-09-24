@@ -77,8 +77,10 @@ purpose: it reports a line it cannot read rather than guessing at it.
 Export everything to a JSON file you keep, and import it back on another
 machine. Files written by the first version still import.
 
-Export calendar writes an `.ics` file of every open deadline, each with a
-reminder an hour before. Import it into the calendar on your phone and the phone
+Export calendar writes an `.ics` file of every open deadline, with reminders
+set by priority: a high priority item warns a day before and an hour before, a
+normal one at 8pm the evening before, and a low one not at all. Import it into
+the calendar on your phone and the phone
 does the reminding, which is the only way this app reaches you while it is
 closed. Re-importing updates the events rather than duplicating them.
 

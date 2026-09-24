@@ -202,6 +202,27 @@ export function toIcsStamp(iso: string): string {
   return iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
+/**
+ * US-46. 8pm local on the day before `iso`, as an instant. Built from the
+ * local date rather than by subtracting hours, so the clock change on the
+ * evening in question does not move it to 7pm or 9pm.
+ */
+export function eveningBefore(iso: string): string {
+  const at = new Date(iso);
+  return new Date(
+    at.getFullYear(),
+    at.getMonth(),
+    at.getDate() - 1,
+    20,
+    0,
+  ).toISOString();
+}
+
+/** Whole minutes from one instant to a later one. */
+export function minutesBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 60_000);
+}
+
 /** The same instant, moved by `minutes`, still as an ISO instant. */
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();

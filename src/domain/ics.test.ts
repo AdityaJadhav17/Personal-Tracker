@@ -272,12 +272,57 @@ describe('AC-24.7 the file is structurally valid', () => {
     );
   });
 
-  test('an alarm an hour before, so the file actually reminds you', () => {
+  test('a normal item has an alarm, so the file actually reminds you', () => {
     const ics = toCalendar([anItem()], NOW);
 
     expect(ics).toContain('BEGIN:VALARM');
-    expect(ics).toContain('TRIGGER:-PT1H');
     expect(ics).toContain('ACTION:DISPLAY');
+  });
+});
+
+/**
+ * When each alarm in a one-event file goes off, as local clock readings.
+ * Triggers are minutes before DTSTART, which is how every one is written.
+ */
+function alarmsAt(ics: string): string[] {
+  const start = /DTSTART:(\d{8}T\d{6}Z)/.exec(ics)![1]!;
+  const iso = `${start.slice(0, 4)}-${start.slice(4, 6)}-${start.slice(6, 8)}T${start.slice(9, 11)}:${start.slice(11, 13)}:00Z`;
+  return [...ics.matchAll(/TRIGGER:-PT(\d+)M/g)].map((match) => {
+    const at = new Date(Date.parse(iso) - Number(match[1]) * 60_000);
+    return `${at.getMonth() + 1}/${at.getDate()} ${at.getHours()}:${String(at.getMinutes()).padStart(2, '0')}`;
+  });
+}
+
+describe('US-46 alarms by priority', () => {
+  // Due 8am on Tuesday 27 October, local.
+  const exam = new Date(2026, 9, 27, 8, 0).toISOString();
+
+  test('AC-46.1 a high priority item warns a day before and an hour before', () => {
+    const ics = toCalendar([anItem({ priority: 'high', dueAt: exam })], NOW);
+
+    expect(alarmsAt(ics)).toEqual(['10/26 8:00', '10/27 7:00']);
+  });
+
+  test('AC-46.2 a normal item warns once, at 8pm the evening before', () => {
+    const ics = toCalendar([anItem({ priority: 'normal', dueAt: exam })], NOW);
+
+    expect(alarmsAt(ics)).toEqual(['10/26 20:00']);
+  });
+
+  test('AC-46.2 the evening before stays 8pm across the November clock change', () => {
+    // Due Monday 2 November; the evening before is Sunday 1st, the day the
+    // clocks go back, so the gap is 25 hours of real time, not 24.
+    const monday = new Date(2026, 10, 2, 17, 0).toISOString();
+    const ics = toCalendar([anItem({ dueAt: monday })], NOW);
+
+    expect(alarmsAt(ics)).toEqual(['11/1 20:00']);
+  });
+
+  test('AC-46.3 a low priority item has no alarm at all', () => {
+    const ics = toCalendar([anItem({ priority: 'low', dueAt: exam })], NOW);
+
+    expect(ics).toContain('BEGIN:VEVENT');
+    expect(ics).not.toContain('BEGIN:VALARM');
   });
 });
 

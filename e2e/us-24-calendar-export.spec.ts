@@ -142,7 +142,8 @@ test('AC-24.7 the file is CRLF throughout and carries an alarm', async ({
   const { text, name } = await exported(page);
 
   expect(text.replace(/\r\n/g, '')).not.toContain('\n');
-  expect(text).toContain('TRIGGER:-PT1H');
+  // US-46 made the timing depend on priority; there is still an alarm.
+  expect(text).toMatch(/TRIGGER:-PT\d+M/);
   expect(text.trimEnd().endsWith('END:VCALENDAR')).toBe(true);
   expect(name).toMatch(/^personal-tracker-\d{4}-\d{2}-\d{2}\.ics$/);
 });
