@@ -226,10 +226,14 @@ export default function App() {
 
           <AddItemForm onAdd={actions.addItem} titleRef={titleRef} />
 
+          {/* The region stays put so it is announced; the message inside is
+              re-inserted per item so it enters (AC-48.2). */}
           <p className="status" role="status">
-            {undoableTitle
-              ? `Marked ${undoableTitle} done. Press u to undo.`
-              : ''}
+            {undoableTitle && (
+              <span className="status__message" key={undoableTitle}>
+                Marked {undoableTitle} done. Press u to undo.
+              </span>
+            )}
           </p>
 
           {hiddenByFilter ? (

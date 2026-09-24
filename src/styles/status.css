@@ -1,5 +1,21 @@
 /* ---------- Status line, always present so nothing jumps ---------- */
 
+/* AC-48.2. A new message fades up 2px. Never a pure fade: review-animations
+   flags an entrance with no initial transform. */
+.status__message {
+  display: inline-block;
+  transition:
+    opacity 150ms var(--ease-out),
+    translate 150ms var(--ease-out);
+}
+
+@starting-style {
+  .status__message {
+    opacity: 0;
+    translate: 0 calc(var(--rise) / 2);
+  }
+}
+
 .status {
   min-height: 20px;
   margin: var(--space-3) 0;

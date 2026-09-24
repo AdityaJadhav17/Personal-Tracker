@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { HEAVY_WEEK, monthGrid, weekLoad } from '../domain/calendar';
 import type { DayCell } from '../domain/calendar';
@@ -72,6 +72,18 @@ export default function CalendarView({
   // US-41. The day opened below the grid, if any. Kept when the month turns,
   // so looking ahead does not lose what you were reading.
   const [opened, setOpened] = useState<string | null>(null);
+  // AC-48.1. The day a dragged item would land on, lit while it is over it.
+  // apple-design: feedback during a gesture, not only at its end.
+  const [target, setTarget] = useState<string | null>(null);
+  // Drag events fire on every child a pointer crosses, and Chrome leaves
+  // relatedTarget empty on them, so leaving the grid is counted instead:
+  // every enter is matched by a leave, and zero means the pointer is out.
+  const inside = useRef(0);
+
+  function clearTarget() {
+    inside.current = 0;
+    setTarget(null);
+  }
 
   const today = toDateValue(now);
   const cells = monthGrid(month, items, goals);
@@ -82,6 +94,7 @@ export default function CalendarView({
     : undefined;
 
   function drop(id: string, day: string) {
+    clearTarget();
     const item = items.find((one) => one.id === id);
     if (!item) return;
     const dueAt = moveToDay(item.dueAt, day);
@@ -118,11 +131,26 @@ export default function CalendarView({
         </div>
       </div>
 
+      {/* The region stays put so it is announced; the message inside is
+          re-inserted per move so it enters (AC-48.2). */}
       <p className="calendar__moved" role="status">
-        {moved}
+        {moved && (
+          <span className="status__message" key={moved}>
+            {moved}
+          </span>
+        )}
       </p>
 
-      <table className="calendar__grid">
+      <table
+        className="calendar__grid"
+        onDragEnter={() => {
+          inside.current += 1;
+        }}
+        onDragLeave={() => {
+          inside.current -= 1;
+          if (inside.current <= 0) clearTarget();
+        }}
+      >
         <thead>
           <tr>
             {WEEKDAYS.map((weekday) => (
@@ -157,6 +185,9 @@ export default function CalendarView({
                     isToday={cell.day === today}
                     onDrop={drop}
                     onOpen={setOpened}
+                    isTarget={cell.day === target}
+                    onTarget={setTarget}
+                    onDragEnd={clearTarget}
                   />
                 ),
               )}
@@ -222,20 +253,35 @@ function Cell({
   isToday,
   onDrop,
   onOpen,
+  isTarget,
+  onTarget,
+  onDragEnd,
 }: {
   cell: DayCell;
   isToday: boolean;
   onDrop: (id: string, day: string) => void;
   onOpen: (day: string) => void;
+  isTarget: boolean;
+  onTarget: (day: string) => void;
+  onDragEnd: () => void;
 }) {
   const extra = cell.items.length - SHOWN;
 
   return (
     <td
-      className={`calendar__cell ${isToday ? 'calendar__cell--today' : ''}`}
+      className={`calendar__cell ${isToday ? 'calendar__cell--today' : ''} ${
+        isTarget ? 'calendar__cell--target' : ''
+      }`}
       aria-current={isToday ? 'date' : undefined}
-      // A cell only accepts a drop if dragover is cancelled.
-      onDragOver={(event) => event.preventDefault()}
+      // A cell only accepts a drop if dragover is cancelled. It fires
+      // continuously, and setting the same day again renders nothing.
+      onDragOver={(event) => {
+        event.preventDefault();
+        onTarget(cell.day);
+      }}
+      // Entering fires before the first dragover, so the day lights up the
+      // moment the pointer arrives, not on its next movement.
+      onDragEnter={() => onTarget(cell.day)}
       onDrop={(event) => {
         event.preventDefault();
         onDrop(event.dataTransfer.getData('text/plain'), cell.day);
@@ -270,6 +316,8 @@ function Cell({
           onDragStart={(event) =>
             event.dataTransfer.setData('text/plain', item.id)
           }
+          // A drag cancelled with Escape, or dropped outside the grid.
+          onDragEnd={onDragEnd}
           onClick={() => onOpen(cell.day)}
         >
           {item.title}
