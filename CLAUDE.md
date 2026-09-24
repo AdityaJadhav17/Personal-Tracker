@@ -82,6 +82,12 @@ Layering:
   ARIA roles. Never query a CSS class, a test ID, or component internals.
 - Each story gets one thin Playwright spec covering its happy path and the one
   failure that would actually happen.
+- Playwright matches names by substring. Use `exact: true` in `getByRole` and
+  `getByLabel` unless a partial match is the point, and before naming a new
+  control, check no existing name contains it or is contained by it.
+
+Adding a field or a view touches several files; follow
+[docs/engineering/extending.md](docs/engineering/extending.md).
 
 Before showing Aditya a feature, run it in Playwright and fix what that
 surfaces. Green unit tests are not the bar. Component tests render with props
