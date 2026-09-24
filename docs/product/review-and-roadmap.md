@@ -339,32 +339,32 @@ steps 4 to 7.
 **Step 1. Protect the data.** Small, and first because the rest is worth
 nothing if the data is lost.
 
-- US-40: persistent storage, and the "last backup" reminder.
+- [US-40](stories/US-40.md): persistent storage, and the "last backup" reminder.
 - The bug fixes: keep the form when a save fails, and the monthly repeat
   drift.
 - `deploy` checks itself.
 
-**Step 2. What the first two days showed (US-41).**
+**Step 2. What the first two days showed ([US-41](stories/US-41.md)).**
 
 - Goal targets on the calendar.
 - A day that opens to show everything.
 - Calendar items open their panel when clicked.
 
-**Step 3. Accessibility (US-42).**
+**Step 3. Accessibility ([US-42](stories/US-42.md)).**
 
 - A keyboard way to move an item, through the panel from step 2.
 - A skip link.
 - The automated scan in Playwright, if you approve the dev dependency.
 
-**Step 4. Alarms that mean something (US-46).** Alarms by priority in the
+**Step 4. Alarms that mean something ([US-46](stories/US-46.md)).** Alarms by priority in the
 `.ics`. Small, and it changes your phone this month.
 
-**Step 5. Import a calendar file (US-43).** Next quarter's syllabus goes in
+**Step 5. Import a calendar file ([US-43](stories/US-43.md)).** Next quarter's syllabus goes in
 as one download and one confirm.
 
-**Step 6. Overdue triage (US-44).**
+**Step 6. Overdue triage ([US-44](stories/US-44.md)).**
 
-**Step 7. Milestones and the week's load (US-45).** The largest step. It
+**Step 7. Milestones and the week's load ([US-45](stories/US-45.md)).** The largest step. It
 needs database version 4 and gets its own plan document.
 
 **Alongside, as their own tasks:** the maintainability items (shared test
