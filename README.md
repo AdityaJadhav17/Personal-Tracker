@@ -157,6 +157,29 @@ browser: each keeps its own copy of the data.
 `npm run deploy` checks its own output and fails, naming the files, if the
 deployed `index.html` and its assets do not match.
 
+### Updates by themselves
+
+Once this is set up, pushing to `main` is enough: four to eight minutes later,
+once CI has passed, the app has the change and a reload shows it. A commit
+whose CI failed is never deployed.
+
+Run this once from the repo folder. It makes its own clone in
+`%LOCALAPPDATA%\PersonalTracker-src` and deploys `main`:
+
+```powershell
+node scripts/update.mjs
+```
+
+Then register the task that runs it every five minutes, with no window:
+
+```powershell
+$node = (Get-Command node).Source; $script = "$env:LOCALAPPDATA\PersonalTracker-src\scripts\update.mjs"; $action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$node`" `"$script`""; $every = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5); $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'Personal Tracker update' -Action $action -Trigger $every -Settings $settings
+```
+
+To skip the wait after a push, run `Start-ScheduledTask 'Personal Tracker update'`.
+What it did is in `%LOCALAPPDATA%\PersonalTracker-update.log`. To stop it,
+`Unregister-ScheduledTask 'Personal Tracker update'`.
+
 **Your data does not move by itself.** The browser keeps storage per address,
 so 4180 starts empty. Export from 5173 once, Import it at 4180, and from then
 on 4180 holds your real deadlines and 5173 is only for development.

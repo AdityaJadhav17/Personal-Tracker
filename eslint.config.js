@@ -40,7 +40,15 @@ export default tseslint.config(
   {
     // Build tooling that runs in Node, never in the browser.
     files: ['scripts/**/*.mjs'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        // US-56. The updater asks GitHub whether CI passed, and waits between.
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
   },
   prettier,
 );

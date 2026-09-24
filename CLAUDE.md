@@ -20,12 +20,15 @@ npm run e2e          # playwright, starts the dev server itself
 npm run build        # typecheck then vite build
 npm run deploy       # build into %LOCALAPPDATA%\PersonalTracker, then check it (US-38, US-40)
 npm run live         # serve that copy on http://localhost:4180
+node scripts/update.mjs  # deploy main once CI passed (US-56); a task runs it
 ```
 
 Aditya's real data lives at `localhost:4180`, not 5173. Never open, seed or
 clear storage at 4180; develop and test against 5173, which Playwright uses.
 Never run `npm run deploy` while developing: it replaces the app he is using.
-Test deploy tooling against a scratch folder.
+The same goes for `scripts/update.mjs`, which his scheduled task runs every
+five minutes: run it only with `PT_SRC`, `PT_TARGET` and `PT_LOG` pointing at
+scratch folders. Test deploy tooling against a scratch folder.
 
 New stories go in `docs/product/stories/US-NN.md`, one file each.
 

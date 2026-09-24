@@ -162,3 +162,24 @@ Also checked and found safe in the batch:
   writes nothing.
 - **`@axe-core/playwright`**, the one new dependency, is development only and is
   never bundled, so it cannot read anyone's deadlines.
+
+## Addendum, 24 September 2026: the updater (US-56)
+
+US-56 adds the first thing on the laptop, outside the app, that talks to the
+network: `scripts/update.mjs`, run by a scheduled task every five minutes.
+
+- **Outbound only.** It runs `git fetch` and asks GitHub's public API about
+  one commit's check runs. Nothing listens for a connection, so nothing from
+  outside can reach it.
+- **No credential on the laptop.** The repository is public, so both requests
+  need none, and there is no token to steal.
+- **Only code CI passed.** It deploys `main`, and only once every check run
+  for that exact commit has passed. It never builds the working folder.
+- **Chosen over a self-hosted runner**, which on a public repository would run
+  a fork's pull request workflow on this laptop.
+- **The new risk is the account.** Whoever can push to `main` can now put code
+  on this laptop within minutes, not at the next manual pull. Two-factor
+  authentication on the GitHub account is on, which Aditya confirmed on
+  24 September 2026. `npm ci` running dependency install scripts is the same
+  exposure a manual deploy already had.
+- **The app is unchanged.** It still makes no network request after load.
