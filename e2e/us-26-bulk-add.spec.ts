@@ -79,9 +79,15 @@ test('AC-26.5 a line with no time is due at the end of that day', async ({
 }) => {
   await page.goto('/');
   await paste(page, `${isoDate(1)} Read chapter 4`);
+  // The preview says so before anything is saved.
+  await expect(page.getByText(/11:59 PM/)).toBeVisible();
   await page.getByRole('button', { name: 'Add 1 item' }).click();
 
-  await expect(page.getByText(/11:59 PM/)).toBeVisible();
+  // AC-57.5. The row leaves 11:59pm unsaid; the item holds it.
+  await page
+    .getByRole('button', { name: 'Read chapter 4', exact: true })
+    .click();
+  await expect(page.getByLabel('Time for Read chapter 4')).toHaveValue('23:59');
 });
 
 test('AC-26.3 an unreadable line is listed and the rest still go', async ({

@@ -1,18 +1,26 @@
 import { useState } from 'react';
-import { groupOf } from '../domain/dates';
+import {
+  dayLabel,
+  groupOf,
+  localDay,
+  monthLabel,
+  monthValue,
+  toDateValue,
+  tomorrowOf,
+  weekdayOf,
+} from '../domain/dates';
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
 import { stepsOf } from '../domain/steps';
 import type { Course, Goal, Item, Repeat } from '../domain/types';
 import ItemRow from './ItemRow';
 
-/** Render order. Overdue sits above everything, which is AC-03.1. */
-const GROUPS: { key: Group; heading: string }[] = [
-  { key: 'overdue', heading: 'Overdue' },
-  { key: 'today', heading: 'Today' },
-  { key: 'week', heading: 'This week' },
-  { key: 'later', heading: 'Later' },
-];
+/**
+ * Overdue first, which is AC-03.1, then the rest in time order. US-57 took
+ * the headings off Today, This week and Later, but the buckets still decide
+ * what is overdue and where the ten stop.
+ */
+const GROUPS: Group[] = ['overdue', 'today', 'week', 'later'];
 
 /**
  * AC-54.1. How many upcoming items Home shows before it starts counting. The
@@ -40,6 +48,11 @@ interface DashboardProps {
   onAddStep: (parentId: string, title: string, dueAt: string) => void;
 }
 
+/**
+ * Home as a timeline, US-57: what needs a decision, then each day with what
+ * is due on it, like a calendar's agenda. The date is a column on the left,
+ * so "what is on Sunday" reads straight down instead of along every row.
+ */
 export default function Dashboard({
   items,
   now,
@@ -58,89 +71,104 @@ export default function Dashboard({
   // AC-54.3. Not remembered, like the filters: a reload shows ten again.
   const [showAll, setShowAll] = useState(false);
 
-  const grouped = GROUPS.map((group) => ({
-    ...group,
-    ordered: sortWithinGroup(
-      open.filter((item) => groupOf(item.dueAt, now) === group.key),
-    ),
-  }));
-  const upcoming = grouped
-    .filter(({ key }) => key !== 'overdue')
-    .reduce((total, { ordered }) => total + ordered.length, 0);
-
+  const [overdue, ...ahead] = GROUPS.map((group) =>
+    sortWithinGroup(open.filter((item) => groupOf(item.dueAt, now) === group)),
+  );
+  const coming = ahead.flat();
   // AC-54.2. Overdue is always whole and uses none of the ten: a missed
   // deadline hidden behind "more" is the pile US-44 exists to empty.
-  let room = showAll ? upcoming : UPCOMING;
-  const shown = grouped.map((group) => {
-    if (group.key === 'overdue') return { ...group, rows: group.ordered };
-    const rows = group.ordered.slice(0, room);
-    room -= rows.length;
-    return { ...group, rows };
-  });
+  const shown = showAll ? coming : coming.slice(0, UPCOMING);
+
+  const days = new Map<string, Item[]>();
+  for (const item of shown) {
+    const day = localDay(item.dueAt);
+    days.set(day, [...(days.get(day) ?? []), item]);
+  }
+
+  const today = toDateValue(now);
+  const tomorrow = tomorrowOf(now);
+
+  const row = (item: Item) => (
+    <ItemRow
+      key={item.id}
+      item={item}
+      now={now}
+      onDone={onDone}
+      onNoteChange={onNoteChange}
+      courses={courses}
+      onCourseChange={onCourseChange}
+      goals={goals}
+      onGoalChange={onGoalChange}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      steps={stepsOf(item.id, allItems)}
+      parentTitle={
+        allItems.find((one) => one.id === item.parentId)?.title ?? null
+      }
+      onAddStep={onAddStep}
+    />
+  );
 
   return (
     <>
-      {shown.map(({ key, heading, ordered, rows }) => {
-        if (rows.length === 0) return null;
+      {overdue!.length > 0 && (
+        <section className="overdue" aria-labelledby="overdue-title">
+          <h2 className="overdue__title" id="overdue-title">
+            Overdue
+          </h2>
+          <ul className="overdue__list">{overdue!.map(row)}</ul>
+        </section>
+      )}
 
-        return (
-          <section className={`group group--${key}`} key={key}>
-            <div className="group__head">
-              <h2 className="group__title">{heading}</h2>
-              {/*
-                The count sits beside the heading rather than inside it, so the
-                heading's accessible name and text stay exactly "Overdue".
-                Hidden from assistive tech because a screen reader can count
-                the list itself.
-              */}
-              <span className="group__count" aria-hidden="true">
-                {ordered.length}
-              </span>
-            </div>
-            {/* US-44. Each overdue row carries the choices; this names them. */}
-            {key === 'overdue' && (
-              <p className="group__hint">
-                Decide each one: done, tomorrow, a new date, or drop it.
-              </p>
-            )}
-            <ul className="group__list">
-              {rows.map((item) => (
-                <ItemRow
-                  key={item.id}
-                  item={item}
-                  now={now}
-                  onDone={onDone}
-                  onNoteChange={onNoteChange}
-                  courses={courses}
-                  onCourseChange={onCourseChange}
-                  goals={goals}
-                  onGoalChange={onGoalChange}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  steps={stepsOf(item.id, allItems)}
-                  parentTitle={
-                    allItems.find((one) => one.id === item.parentId)?.title ??
-                    null
-                  }
-                  onAddStep={onAddStep}
-                />
-              ))}
-            </ul>
-          </section>
-        );
-      })}
+      {days.size > 0 && (
+        <ol className="days">
+          {[...days].map(([day, rows], index, all) => {
+            // AC-57.4. The month is named where it changes, including before
+            // the first day when that is already next month.
+            const month = day.slice(0, 7);
+            const before =
+              index === 0 ? monthValue(now) : all[index - 1]![0].slice(0, 7);
+            return (
+              <li className="day" key={day}>
+                {month !== before && (
+                  <p className="day__month" aria-hidden="true">
+                    {monthLabel(month)}
+                  </p>
+                )}
+                <div className="day__row">
+                  {/* Read in full, seen as a number and a weekday. */}
+                  <h2 className="day__label">
+                    <span className="visually-hidden">{dayLabel(day)}</span>
+                    <span className="day__number" aria-hidden="true">
+                      {Number(day.slice(-2))}
+                    </span>
+                    <span className="day__weekday" aria-hidden="true">
+                      {day === today
+                        ? 'Today'
+                        : day === tomorrow
+                          ? 'Tomorrow'
+                          : weekdayOf(day)}
+                    </span>
+                  </h2>
+                  <ul className="day__items">{rows.map(row)}</ul>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
 
-      {upcoming > UPCOMING && (
+      {coming.length > UPCOMING && (
         <p className="group__more">
           {showAll
-            ? `Showing all ${upcoming} upcoming.`
-            : `Showing ${UPCOMING} of ${upcoming} upcoming.`}{' '}
+            ? `Showing all ${coming.length} upcoming.`
+            : `Showing ${UPCOMING} of ${coming.length} upcoming.`}{' '}
           <button
             className="prompt__button prompt__button--quiet"
             type="button"
             onClick={() => setShowAll(!showAll)}
           >
-            {showAll ? 'Show fewer' : `Show ${upcoming - UPCOMING} more`}
+            {showAll ? 'Show fewer' : `Show ${coming.length - UPCOMING} more`}
           </button>
         </p>
       )}

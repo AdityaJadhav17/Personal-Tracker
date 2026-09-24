@@ -225,7 +225,11 @@ export default function App() {
             />
           </div>
 
-          <AddItemForm onAdd={actions.addItem} titleRef={titleRef} />
+          <AddItemForm
+            onAdd={actions.addItem}
+            titleRef={titleRef}
+            quickFrom={toDateValue(current)}
+          />
 
           {/* The region stays put so it is announced; the message inside is
               re-inserted per item so it enters (AC-48.2). */}

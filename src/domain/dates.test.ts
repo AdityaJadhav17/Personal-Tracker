@@ -1,9 +1,10 @@
 import {
+  dayHeading,
   dayLabel,
   daysBetween,
   formatDue,
   groupOf,
-  isUpcoming,
+  lateBy,
   monthCells,
   monthLabel,
   monthValue,
@@ -11,9 +12,11 @@ import {
   nextOccurrence,
   shiftMinutes,
   shiftMonth,
+  timeOf,
   toIcsStamp,
   toTimeValue,
   toDueAt,
+  weekdayOf,
 } from './dates';
 
 /** Tuesday 15 September 2026, 10:00 local. Every test pins the clock here. */
@@ -95,43 +98,6 @@ describe('groupOf', () => {
     const night = new Date(2026, 8, 15, 22, 0, 0, 0);
     expect(groupOf(at(3), morning)).toBe(groupOf(at(3), night));
     expect(groupOf(at(-2), morning)).toBe(groupOf(at(-2), night));
-  });
-});
-
-describe('isUpcoming', () => {
-  function at(days: number, hours = 12): string {
-    return new Date(2026, 8, 15 + days, hours, 0, 0, 0).toISOString();
-  }
-
-  test('AC-12.1 an item due in two days is upcoming', () => {
-    expect(isUpcoming(at(2), NOW)).toBe(true);
-  });
-
-  test('AC-12.2 an item due in nine days is not upcoming', () => {
-    expect(isUpcoming(at(9), NOW)).toBe(false);
-  });
-
-  test('AC-12.1 tomorrow and three days out are both upcoming', () => {
-    expect(isUpcoming(at(1), NOW)).toBe(true);
-    expect(isUpcoming(at(3), NOW)).toBe(true);
-  });
-
-  test('AC-12.2 four days out is past the window', () => {
-    expect(isUpcoming(at(4), NOW)).toBe(false);
-  });
-
-  test('AC-12.2 today is not marked, the Today heading already says so', () => {
-    expect(isUpcoming(at(0), NOW)).toBe(false);
-  });
-
-  test('AC-12.2 something overdue is not upcoming, it is late', () => {
-    expect(isUpcoming(at(-1), NOW)).toBe(false);
-  });
-
-  test('AC-12.1 the window does not shift with the hour of day', () => {
-    const morning = new Date(2026, 8, 15, 6, 0, 0, 0);
-    const night = new Date(2026, 8, 15, 22, 0, 0, 0);
-    expect(isUpcoming(at(2), morning)).toBe(isUpcoming(at(2), night));
   });
 });
 
@@ -510,5 +476,28 @@ describe('daysBetween', () => {
   test('AC-40.3 a week is seven, across the November clock change too', () => {
     const before = new Date(2026, 9, 29, 12, 0).toISOString();
     expect(daysBetween(before, new Date(2026, 10, 5, 12, 0))).toBe(7);
+  });
+});
+
+describe('US-57 the words the timeline uses', () => {
+  test('AC-57.1 the heading names the day in full', () => {
+    expect(dayHeading(NOW)).toBe('Tuesday, September 15');
+  });
+
+  test('AC-57.4 a day is labelled with its short weekday', () => {
+    expect(weekdayOf('2026-09-20')).toBe('Sun');
+  });
+
+  test('AC-57.5 a time is shown only when it is not 11:59pm', () => {
+    expect(timeOf(new Date(2026, 8, 20, 17, 0).toISOString())).toBe('5:00 PM');
+    expect(timeOf(new Date(2026, 8, 20, 23, 59).toISOString())).toBeNull();
+  });
+
+  test('AC-57.3 an overdue item says how late it is, in days', () => {
+    const at = (days: number) =>
+      new Date(2026, 8, 15 + days, 23, 59).toISOString();
+
+    expect(lateBy(at(-1), NOW)).toBe('Yesterday');
+    expect(lateBy(at(-3), NOW)).toBe('3 days ago');
   });
 });

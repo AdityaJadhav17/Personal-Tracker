@@ -110,26 +110,6 @@ export function groupOf(dueAt: string, now: Date): Group {
   return 'later';
 }
 
-/** How many days ahead still counts as coming up. */
-const UPCOMING_DAYS = 3;
-
-/**
- * Whether an item is close enough to warrant a nudge.
- *
- * Deliberately excludes today and anything overdue. Both already sit under a
- * heading that says so more loudly than a badge would, and calling something
- * already late "upcoming" reads wrong. So the window is tomorrow through three
- * days out.
- *
- * Priority is not consulted. A low-priority thing still gets the warning,
- * which is AC-12.3 and matches what Aditya asked for: priority ordering does
- * not mean low-priority items stop being reminders.
- */
-export function isUpcoming(dueAt: string, now: Date): boolean {
-  const days = localDaysBetween(now, new Date(dueAt));
-  return days >= 1 && days <= UPCOMING_DAYS;
-}
-
 /** The local year and month of an instant, "2026-09". */
 export function monthValue(at: Date): string {
   return `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}`;
@@ -184,6 +164,39 @@ export function monthCells(month: string): (string | null)[] {
   while (cells.length % WEEK !== 0) cells.push(null);
 
   return cells;
+}
+
+/** US-57. Home's heading, "Thursday, September 24". */
+export function dayHeading(at: Date): string {
+  return at.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/** US-57. A local calendar day's short weekday, "Sun". */
+export function weekdayOf(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year!, month! - 1, date!).toLocaleString('en-US', {
+    weekday: 'short',
+  });
+}
+
+/**
+ * US-57. The time an item is due, "5:00 PM", or null for 11:59pm. A date
+ * with no time means 11:59pm (AC-19.2), so saying it on every row is noise.
+ */
+export function timeOf(iso: string): string | null {
+  const at = new Date(iso);
+  if (at.getHours() === 23 && at.getMinutes() === 59) return null;
+  return at.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+/** US-57. How late an overdue item is, "Yesterday" or "3 days ago". */
+export function lateBy(iso: string, now: Date): string {
+  const days = daysBetween(iso, now);
+  return days === 1 ? 'Yesterday' : `${days} days ago`;
 }
 
 /** A local calendar day named in full, "September 16, 2026". */

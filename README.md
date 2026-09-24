@@ -14,22 +14,23 @@ Six views, in a sidebar, and a button at its foot that switches between light
 and dark. With no choice made, the app follows your system.
 
 **Home** holds anything with a date and a consequence: a midterm, rent, a
-dentist appointment, a friend's birthday. Two numbers at the top say what is
-left today and what you finished yesterday, then the list sorts itself.
+dentist appointment, a friend's birthday. It opens on today's date and one line
+that says how the day stands: "1 due today · 1 overdue · 3 this week · 1
+finished yesterday".
 
-- **Overdue** sits above everything, so you never scroll past something you
-  have already missed. Each overdue row asks for one decision: done,
-  **Tomorrow** (same time, next day), a new date, or **Drop**, which asks first.
-  The pile empties instead of growing.
-- **Today**, **This week** and **Later** follow. A group with nothing in it does
-  not render at all.
+- **Add a deadline…** is one line until you use it. Click it and the rest opens
+  under it, the date already on today; press Enter and it folds away again.
+- **Overdue** sits above everything, in its own box, so you never scroll past
+  something you have already missed. Each row says how late it is and asks for
+  one decision: done, **Tomorrow** (same time, next day), a new date, or
+  **Drop**, which asks first. The pile empties instead of growing.
+- Then the days, like a calendar's agenda: the date down the left, "Today" and
+  "Tomorrow" for the nearest, the month named where it changes. A day with
+  nothing due is not there at all.
 - Only the next ten upcoming show, so a whole term never buries this week.
   Overdue items all show and do not count towards the ten. **Show more**
   reveals the rest until you reload.
-- Inside each group, whatever is due soonest comes first. On the same day, high
-  priority leads.
-- Anything due in the next three days carries a **Soon** marker, whatever its
-  priority.
+- Within a day, high priority leads, and reads in bold.
 
 Show All, Academic or Personal to narrow the list to one kind of thing, and pick
 a course to narrow it to one class. The two combine, so you can ask for academic
@@ -51,8 +52,10 @@ reads as 5pm on the other side of a daylight saving change.
 Mark something done from the keyboard, and press `u` to undo if you hit the
 wrong row.
 
-A row shows what a thing is rather than how to change it: its title, when it is
-due, the course and goal it belongs to, and anything you wrote about it. Click
+A row shows what a thing is rather than how to change it: its title, the time if
+it is not the 11:59pm a bare date means, and underneath, the course with its
+colour, the goal, whether it repeats, and anything you wrote about it. Each
+course keeps one colour everywhere, in the order you added them. Click
 the title to open the controls that change those. Done stays outside, so
 finishing something never means opening it first.
 

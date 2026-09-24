@@ -2,9 +2,10 @@ import { useState } from 'react';
 import {
   formatDue,
   groupOf,
-  isUpcoming,
+  lateBy,
   moveToDay,
   toDateValue,
+  timeOf,
   toDueAt,
   toTimeValue,
   tomorrowOf,
@@ -100,6 +101,40 @@ export default function ItemRow({
 
   const course = courses.find((one) => one.id === item.courseId);
   const goal = goals.find((one) => one.id === item.goalId);
+  const time = timeOf(item.dueAt);
+
+  // AC-57.6. What the item belongs to and anything written about it, on one
+  // quiet line under the title. A link it does not have costs nothing.
+  const meta = [
+    course && (
+      <span className="item__course-tag" key="course">
+        {/* AC-57.8. Colour by the order courses were added, never cycled
+            mid-list: the first course is always the first colour. */}
+        <span
+          className={`item__dot item__dot--${(courses.indexOf(course) % 4) + 1}`}
+          aria-hidden="true"
+        />
+        {course.name}
+      </span>
+    ),
+    goal && <span key="goal">{goal.name}</span>,
+    // AC-28.6. A thing that comes back should say so where you read it.
+    item.repeat !== 'none' && <span key="repeat">Repeats {item.repeat}</span>,
+    // AC-45.2 and AC-45.3: where a step belongs, how a project is going.
+    parentTitle && <span key="parent">Step of {parentTitle}</span>,
+    steps.length > 0 && (
+      <span key="steps">
+        {stepsDone} of {steps.length} steps done
+      </span>
+    ),
+    // The note stays visible when the row is closed. Hiding something you
+    // wrote behind a click would trade one problem for a worse one.
+    !open && item.note !== '' && (
+      <span className="item__written" key="note">
+        {item.note}
+      </span>
+    ),
+  ].filter((part) => part !== false && part !== null && part !== undefined);
 
   function handleSave() {
     const trimmed = title.trim();
@@ -114,8 +149,8 @@ export default function ItemRow({
   }
 
   return (
-    // The priority modifier drives a coloured bar on the left edge. Position
-    // in the sorted list is the primary signal; the bar only confirms it.
+    // AC-57.7. The priority modifier makes a high item's title bold. Position
+    // in the sorted list is the primary signal; the weight only confirms it.
     <li className={`item item--${item.priority}`}>
       {/*
         The done control comes first so Tab walks the list in the order it is
@@ -142,31 +177,33 @@ export default function ItemRow({
       >
         {item.title}
       </button>{' '}
-      <span className="item__due">{formatDue(item.dueAt)}</span>
-      {isUpcoming(item.dueAt, now) && <span className="item__soon"> Soon</span>}
-      <span className="item__tag">{item.category}</span>
-      {/* A link it does not have costs no width and no tab stop. */}
-      {course && <span className="item__chip">{course.name}</span>}
-      {goal && <span className="item__chip item__chip--goal">{goal.name}</span>}
-      {/* AC-28.6. A thing that comes back should say so where you read it. */}
-      {item.repeat !== 'none' && (
-        <span className="item__chip item__chip--repeat">
-          {item.repeat === 'weekly' ? 'Weekly' : 'Monthly'}
-        </span>
-      )}
-      {/* AC-45.2 and AC-45.3: where a step belongs, how a project is going. */}
-      {parentTitle && <span className="item__chip">Step of {parentTitle}</span>}
-      {steps.length > 0 && (
-        <span className="item__chip">
-          {stepsDone} of {steps.length} steps done
-        </span>
-      )}
       {/*
-        The note stays visible when the row is closed. Hiding something you
-        wrote behind a click would trade one problem for a worse one.
+        AC-57.3 and AC-57.5. The day is the heading above, so a row says only
+        what the day does not: how late it is, and a time unless it is the
+        11:59pm a bare date means. No category tag and no Soon marker (US-12):
+        the day column already says how close it is.
       */}
-      {!open && item.note !== '' && (
-        <span className="item__written">{item.note}</span>
+      {(overdue || time) && (
+        <span className="item__due">
+          {overdue && (
+            <span className="item__late">{lateBy(item.dueAt, now)}</span>
+          )}
+          {time && <span>{time}</span>}
+        </span>
+      )}
+      {meta.length > 0 && (
+        <span className="item__meta">
+          {meta.flatMap((part, index) =>
+            index === 0
+              ? [part]
+              : [
+                  <span className="item__sep" aria-hidden="true" key={index}>
+                    ·
+                  </span>,
+                  part,
+                ],
+          )}
+        </span>
       )}
       {/*
         US-44. An overdue item gets a decision, not a guilt trip: finish it,

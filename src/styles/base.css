@@ -23,6 +23,16 @@
   --accent-soft: light-dark(#e6f4f2, #163a37);
   --danger: light-dark(#b91c1c, #f87171);
   --danger-soft: light-dark(#fef2f2, #3a1c1c);
+  /*
+   * US-57. One colour per course, assigned in the order courses were added and
+   * never cycled mid-list. Each is at least 4.7:1 against the page and a card
+   * in its scheme; a course's name always sits beside its dot, so colour is
+   * never the only way to tell them apart.
+   */
+  --course-1: light-dark(#2563eb, #60a5fa);
+  --course-2: light-dark(#b45309, #fbbf24);
+  --course-3: light-dark(#7c3aed, #a78bfa);
+  --course-4: light-dark(#be185d, #f472b6);
 
   /* The sidebar stays dark in both schemes, as in the reference screenshots. */
   --sidebar-bg: #172033;

@@ -14,6 +14,8 @@ async function pressedScale(page: Page, name: string) {
 
 test('AC-47.1 a button dips when pressed, and comes back', async ({ page }) => {
   await page.goto('/');
+  // US-57. Add shows once the one-line form is opened.
+  await page.getByLabel('Title', { exact: true }).click();
 
   expect(await pressedScale(page, 'Add')).toBe('0.97');
   await expect
@@ -52,6 +54,7 @@ test.describe('with reduced motion asked for', () => {
     page,
   }) => {
     await page.goto('/');
+    await page.getByLabel('Title', { exact: true }).click();
 
     expect(await pressedScale(page, 'Add')).toBe('1');
     const duration = await page

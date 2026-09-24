@@ -43,3 +43,30 @@ export async function add(
 export async function open(page: Page, title: string) {
   await page.getByRole('button', { name: title, exact: true }).click();
 }
+
+/**
+ * US-57. One per item: its done control. Home's days are list items too, so
+ * counting list items no longer counts items.
+ */
+export function doneControls(page: Page) {
+  return page.getByRole('button', { name: /^Mark .+ done$/ });
+}
+
+/** US-57. An item's own row, not the day it sits under. */
+export function row(page: Page, title: string) {
+  return page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('button', { name: title, exact: true }) })
+    .last();
+}
+
+/** US-57. A day's heading on Home, named in full: "September 29, 2026". */
+export function dayName(daysFromToday: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromToday);
+  return d.toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

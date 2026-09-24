@@ -1,3 +1,5 @@
+import { dayHeading, groupOf } from '../domain/dates';
+import type { Group } from '../domain/dates';
 import { completedYesterday, remainingToday } from '../domain/stats';
 import type { Item } from '../domain/types';
 
@@ -8,22 +10,37 @@ interface StatRowProps {
 }
 
 /**
- * The two numbers that answer "is today going badly" before you read a list.
+ * Home's header: what day it is, and how it stands, in one sentence.
  *
- * Both always render, even at zero. Hiding a stat when it is zero means the
- * absence of a row has to be interpreted, which is slower than reading a 0.
+ * US-57 replaced US-16's two big numbers, which read as a dashboard template,
+ * with words. Today always leads, even at zero: "Nothing due today" says the
+ * same as a 0 without making you interpret an absence. The other counts appear
+ * only when there is something to count.
  */
 export default function StatRow({ items, now }: StatRowProps) {
+  const today = remainingToday(items, now);
+  const count = (group: Group) =>
+    items.filter(
+      (item) => item.status === 'open' && groupOf(item.dueAt, now) === group,
+    ).length;
+
+  const parts = [
+    today > 0 ? `${today} due today` : 'Nothing due today',
+    ...(
+      [
+        [count('overdue'), 'overdue'],
+        [count('week'), 'this week'],
+        [completedYesterday(items, now), 'finished yesterday'],
+      ] as const
+    )
+      .filter(([n]) => n > 0)
+      .map(([n, words]) => `${n} ${words}`),
+  ];
+
   return (
-    <div className="stats">
-      <p className="stat">
-        <span className="stat__value">{remainingToday(items, now)}</span>
-        <span className="stat__label">remaining today</span>
-      </p>
-      <p className="stat">
-        <span className="stat__value">{completedYesterday(items, now)}</span>
-        <span className="stat__label">completed yesterday</span>
-      </p>
-    </div>
+    <header className="today">
+      <h1 className="today__date">{dayHeading(now)}</h1>
+      <p className="today__summary">{parts.join(' · ')}</p>
+    </header>
   );
 }

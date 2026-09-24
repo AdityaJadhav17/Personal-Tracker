@@ -14,12 +14,14 @@ beforeEach(() => {
 
 async function addItem(title: string, due: string, time = '') {
   const user = userEvent.setup();
+  // US-57. Home's form is one line until used, so it is opened first.
+  await user.click(screen.getByLabelText('Title'));
   // user-event rejects an empty string, so an omitted field is just not typed.
   if (title) await user.type(screen.getByLabelText('Title'), title);
-  // Date and time inputs take a value rather than keystrokes.
-  if (due) {
-    fireEvent.change(screen.getByLabelText('Due'), { target: { value: due } });
-  }
+  // Date and time inputs take a value rather than keystrokes. The date starts
+  // on today (AC-57.2), so an empty one is set too: that is how a test asks
+  // for no date at all.
+  fireEvent.change(screen.getByLabelText('Due'), { target: { value: due } });
   if (time) {
     fireEvent.change(screen.getByLabelText('Time'), {
       target: { value: time },
@@ -40,7 +42,10 @@ test('AC-01.1 an added item appears in the list', async () => {
   await addItem('CSE 100 project', '2026-10-03');
 
   expect(screen.getByText('CSE 100 project')).toBeVisible();
-  expect(screen.getByText('Oct 3, 11:59 PM')).toBeVisible();
+  // AC-57.4. The date is the day it sits under.
+  expect(
+    screen.getByRole('heading', { name: 'October 3, 2026' }),
+  ).toBeVisible();
 });
 
 test('AC-01.1 school and life items sit in the same list', async () => {
@@ -48,8 +53,7 @@ test('AC-01.1 school and life items sit in the same list', async () => {
   await addItem('CSE 100 project', '2026-10-03');
   await addItem('Rent', '2026-10-01');
 
-  const items = screen.getAllByRole('listitem');
-  expect(items).toHaveLength(2);
+  expect(doneControls()).toHaveLength(2);
 });
 
 test('AC-01.1 an added item is still there after a reload', async () => {
@@ -150,6 +154,18 @@ test('AC-11.1 the app name is still shown in both empty and error states', () =>
 });
 
 /** Today at 23:59, so it lands in the Today group whenever the suite runs. */
+/** One per item: the done control, named for its item. */
+function doneControls() {
+  return screen.getAllByRole('button', { name: /^Mark .+ done$/ });
+}
+
+/** US-57. The only item's row, not the day around it. */
+function onlyRow() {
+  const [done] = doneControls();
+  expect(doneControls()).toHaveLength(1);
+  return done!.closest('li')!;
+}
+
 function todayIso() {
   const d = new Date();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -209,10 +225,9 @@ test('AC-05.2 the restored item goes back to the group it came from', async () =
 
   await user.keyboard('u');
 
-  expect(
-    screen.getByText('Rent').closest('section')?.querySelector('h2')
-      ?.textContent,
-  ).toBe('Today');
+  // US-57. Back under today, which is where it was due.
+  const day = screen.getByText('Rent').closest<HTMLElement>('ol > li')!;
+  expect(within(day).getByText('Today')).toBeVisible();
 });
 
 test('AC-05.2 undo only reaches back one step', async () => {
@@ -223,7 +238,7 @@ test('AC-05.2 undo only reaches back one step', async () => {
   await user.keyboard('u');
   await user.keyboard('u');
 
-  expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  expect(doneControls()).toHaveLength(1);
 });
 
 test('AC-05.2 pressing u with nothing recently done changes nothing', async () => {
@@ -279,6 +294,8 @@ test('AC-05.3 Tab reaches each item control in display order', async () => {
   await addItem('aa first', todayIso());
   await addItem('bb second', todayIso());
 
+  // US-57. The form folds after adding; opening it brings Add back.
+  await user.click(screen.getByLabelText('Title'));
   screen.getByRole('button', { name: 'Add' }).focus();
 
   // Each item contributes its done control then its title, and the items
@@ -803,9 +820,7 @@ test('AC-07.2 an item can be given a course, and keeps it across a reload', asyn
   render(<App />);
   // Closed, the row names the course. Open, the control still holds it.
   // Scoped to the row, because US-27 put the course name in a filter too.
-  expect(
-    within(screen.getByRole('listitem')).getByText('CSE 100'),
-  ).toBeVisible();
+  expect(within(onlyRow()).getByText('CSE 100')).toBeVisible();
 
   await openItem(user, 'Project');
   expect(screen.getByLabelText('Course for Project')).toHaveDisplayValue(
@@ -996,17 +1011,18 @@ test('AC-08.1 filtering to a category hides the others', async () => {
   expect(screen.queryByRole('button', { name: 'Dentist' })).toBeNull();
 });
 
-test('AC-08.1 the group headings still apply to what is left', async () => {
+test('AC-08.1 the day headings still apply to what is left', async () => {
   render(<App />);
   await addIn('CSE 110 midterm', isoDaysFromToday(1), 'academic');
   await addIn('Dentist', todayIso(), 'personal');
 
   await show('Academic');
 
-  // The academic item is due tomorrow, so This week survives and Today does
-  // not: the filter narrows the list, it does not flatten it.
-  expect(screen.getByRole('heading', { name: 'This week' })).toBeVisible();
-  expect(screen.queryByRole('heading', { name: 'Today' })).toBeNull();
+  // The academic item is due tomorrow, so tomorrow survives and today does
+  // not: the filter narrows the list, it does not flatten it. US-57 made the
+  // headings days.
+  expect(screen.getByText('Tomorrow')).toBeVisible();
+  expect(screen.queryByText('Today')).toBeNull();
 });
 
 test('AC-08.1 filtering the other way hides the first', async () => {
@@ -1071,7 +1087,7 @@ test('AC-08.3 with no items at all the first-run empty state still shows', async
   expect(screen.getByText(/Nothing due yet/)).toBeVisible();
 });
 
-test('AC-08.1 the stat row counts the whole day, not the filtered view', async () => {
+test('AC-08.1 the header counts the whole day, not the filtered view', async () => {
   render(<App />);
   await addIn('CSE 110 midterm', todayIso(), 'academic');
   await addIn('Dentist', todayIso(), 'personal');
@@ -1080,7 +1096,7 @@ test('AC-08.1 the stat row counts the whole day, not the filtered view', async (
 
   // Two remain due today. The filter narrows the list you read, not the day
   // you are having.
-  expect(screen.getByText('2')).toBeVisible();
+  expect(screen.getByText('2 due today')).toBeVisible();
 });
 
 /** Click a button by its accessible name. */
@@ -1363,18 +1379,15 @@ test('AC-28.6 a repeating item says so in the list', async () => {
   await addRepeating('Rent', '2026-10-01', 'monthly');
 
   // Scoped to the row: "Monthly" is also an option in the Repeat select.
-  expect(
-    within(screen.getByRole('listitem')).getByText('Monthly'),
-  ).toBeVisible();
+  expect(within(onlyRow()).getByText('Repeats monthly')).toBeVisible();
 });
 
 test('AC-28.6 an item that does not repeat says nothing', async () => {
   render(<App />);
   await addRepeating('Midterm', '2026-10-01', 'none');
 
-  const row = within(screen.getByRole('listitem'));
-  expect(row.queryByText('Monthly')).toBeNull();
-  expect(row.queryByText('Weekly')).toBeNull();
+  const row = within(onlyRow());
+  expect(row.queryByText(/Repeats/)).toBeNull();
 });
 
 test('AC-25.5 deleting an item through the real app removes it from storage', async () => {
@@ -1503,15 +1516,11 @@ test('AC-29.2 a plain item can be made to repeat, and it sticks', async () => {
 
   await setRepeat('Rent', 'monthly');
 
-  expect(
-    within(screen.getByRole('listitem')).getByText('Monthly'),
-  ).toBeVisible();
+  expect(within(onlyRow()).getByText('Repeats monthly')).toBeVisible();
 
   first.unmount();
   render(<App />);
-  expect(
-    within(screen.getByRole('listitem')).getByText('Monthly'),
-  ).toBeVisible();
+  expect(within(onlyRow()).getByText('Repeats monthly')).toBeVisible();
 });
 
 test('AC-29.3 a repeating item can be stopped', async () => {
@@ -1520,8 +1529,8 @@ test('AC-29.3 a repeating item can be stopped', async () => {
 
   await setRepeat('Rent', 'none');
 
-  const row = within(screen.getByRole('listitem'));
-  expect(row.queryByText('Monthly')).toBeNull();
+  const row = within(onlyRow());
+  expect(row.queryByText(/Repeats/)).toBeNull();
 });
 
 test('AC-29.4 a stopped item creates nothing when it is finished', async () => {

@@ -37,7 +37,8 @@ function anItem(title: string, daysFromNow: number, rest: Partial<Item> = {}) {
   return item;
 }
 
-test('AC-02.1 items land in Overdue, Today, This week, and Later', () => {
+// US-57 replaced the Today, This week and Later headings with days.
+test('AC-57.4 (was AC-02.1) items land in Overdue, or under the day they are due', () => {
   render(
     <Dashboard
       now={NOW}
@@ -60,21 +61,13 @@ test('AC-02.1 items land in Overdue, Today, This week, and Later', () => {
     />,
   );
 
-  for (const heading of ['Overdue', 'Today', 'This week', 'Later']) {
-    expect(screen.getByRole('heading', { name: heading })).toBeVisible();
-  }
-
-  const groupFor = (title: string) =>
-    screen.getByText(title).closest('section')?.querySelector('h2')
-      ?.textContent;
-
-  expect(groupFor('Missed lab')).toBe('Overdue');
-  expect(groupFor('Quiz')).toBe('Today');
-  expect(groupFor('Project')).toBe('This week');
-  expect(groupFor('Finals')).toBe('Later');
+  expect(headingOver('Missed lab')).toHaveAccessibleName('Overdue');
+  expect(headingOver('Quiz')).toHaveAccessibleName('September 15, 2026');
+  expect(headingOver('Project')).toHaveAccessibleName('September 18, 2026');
+  expect(headingOver('Finals')).toHaveAccessibleName('October 6, 2026');
 });
 
-test('AC-02.2 a group with no items renders no heading', () => {
+test('AC-57.4 (was AC-02.2) only days with something due get a heading', () => {
   render(
     <Dashboard
       now={NOW}
@@ -92,16 +85,9 @@ test('AC-02.2 a group with no items renders no heading', () => {
     />,
   );
 
-  expect(screen.getByRole('heading', { name: 'Today' })).toBeVisible();
-  expect(
-    screen.queryByRole('heading', { name: 'Overdue' }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole('heading', { name: 'This week' }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole('heading', { name: 'Later' }),
-  ).not.toBeInTheDocument();
+  const headings = screen.getAllByRole('heading', { level: 2 });
+  expect(headings).toHaveLength(1);
+  expect(headings[0]).toHaveAccessibleName('September 15, 2026');
 });
 
 test('AC-02.3 an item marked done is not shown in its group', () => {
@@ -132,7 +118,7 @@ test('AC-02.3 an item marked done is not shown in its group', () => {
   expect(screen.queryByText('Already handed in')).not.toBeInTheDocument();
 });
 
-test('AC-02.3 a group whose only item is done renders no heading', () => {
+test('AC-02.3 a day whose only item is done gets no heading', () => {
   render(
     <Dashboard
       now={NOW}
@@ -150,12 +136,10 @@ test('AC-02.3 a group whose only item is done renders no heading', () => {
     />,
   );
 
-  expect(
-    screen.queryByRole('heading', { name: 'Today' }),
-  ).not.toBeInTheDocument();
+  expect(screen.queryAllByRole('heading')).toHaveLength(0);
 });
 
-test('AC-02.1 Overdue is rendered above Today', () => {
+test('AC-02.1 Overdue is rendered above today', () => {
   render(
     <Dashboard
       now={NOW}
@@ -173,13 +157,12 @@ test('AC-02.1 Overdue is rendered above Today', () => {
     />,
   );
 
-  const headings = screen
-    .getAllByRole('heading', { level: 2 })
-    .map((h) => h.textContent);
-  expect(headings).toEqual(['Overdue', 'Today']);
+  const headings = screen.getAllByRole('heading', { level: 2 });
+  expect(headings[0]).toHaveAccessibleName('Overdue');
+  expect(headings[1]).toHaveAccessibleName('September 15, 2026');
 });
 
-test('each item shows its due date', () => {
+test('AC-57.5 each item shows its time, the day being its heading', () => {
   render(
     <Dashboard
       now={NOW}
@@ -196,10 +179,10 @@ test('each item shows its due date', () => {
       items={[anItem('Quiz', 0)]}
     />,
   );
-  expect(screen.getByText('Sep 15, 12:00 PM')).toBeVisible();
+  expect(screen.getByText('12:00 PM')).toBeVisible();
 });
 
-test('AC-03.1 an overdue open item appears in Overdue, above Today', () => {
+test('AC-03.1 an overdue open item appears in Overdue, above today', () => {
   render(
     <Dashboard
       now={NOW}
@@ -217,12 +200,10 @@ test('AC-03.1 an overdue open item appears in Overdue, above Today', () => {
     />,
   );
 
-  const sections = screen.getAllByRole('heading', { level: 2 });
-  expect(sections.map((h) => h.textContent)).toEqual(['Overdue', 'Today']);
-  expect(
-    screen.getByText('Missed lab').closest('section')?.querySelector('h2')
-      ?.textContent,
-  ).toBe('Overdue');
+  const headings = screen.getAllByRole('heading', { level: 2 });
+  expect(headings[0]).toHaveAccessibleName('Overdue');
+  expect(headings[1]).toHaveAccessibleName('September 15, 2026');
+  expect(headingOver('Missed lab')).toHaveAccessibleName('Overdue');
 });
 
 test('AC-03.2 with nothing overdue the Overdue group is not rendered', () => {
@@ -315,6 +296,19 @@ function renderedTitles() {
     .map((button) => button.textContent ?? '');
 }
 
+/** US-57. The heading an item sits under: Overdue, or its day. */
+function headingOver(title: string) {
+  const holder = screen
+    .getByText(title)
+    .closest<HTMLElement>('section, ol > li')!;
+  return within(holder).getAllByRole('heading', { level: 2 })[0];
+}
+
+/** One per item: the done control, named for its item. */
+function doneControls() {
+  return screen.getAllByRole('button', { name: /^Mark .+ done$/ });
+}
+
 test('AC-04.1 inside a group, high comes before normal before low', () => {
   render(
     <Dashboard
@@ -385,11 +379,11 @@ test('AC-04.3 two items due at the same minute are both rendered', () => {
     />,
   );
 
-  expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  expect(doneControls()).toHaveLength(2);
   expect(renderedTitles()).toEqual(['aa first', 'bb second']);
 });
 
-test('AC-04.4 grouping wins over priority', () => {
+test('AC-04.4 the day wins over priority', () => {
   render(
     <Dashboard
       now={NOW}
@@ -410,12 +404,9 @@ test('AC-04.4 grouping wins over priority', () => {
     />,
   );
 
-  const groupFor = (title: string) =>
-    screen.getByText(title).closest('section')?.querySelector('h2')
-      ?.textContent;
-
-  expect(groupFor('Laundry')).toBe('Today');
-  expect(groupFor('Midterm')).toBe('This week');
+  expect(headingOver('Laundry')).toHaveAccessibleName('September 15, 2026');
+  expect(headingOver('Midterm')).toHaveAccessibleName('September 21, 2026');
+  expect(renderedTitles()).toEqual(['Laundry', 'Midterm']);
 });
 
 // US-55 supersedes this for items on different days: the most overdue leads.
@@ -616,97 +607,6 @@ test('AC-06.1 the note is reported on blur, not on every keystroke', async () =>
   await user.tab();
   expect(onNoteChange).toHaveBeenCalledTimes(1);
   expect(onNoteChange).toHaveBeenCalledWith(rent.id, 'Zelle');
-});
-
-test('AC-12.1 an item due in two days carries the upcoming marker', () => {
-  render(
-    <Dashboard
-      now={NOW}
-      onDone={noop}
-      onNoteChange={noop}
-      courses={[]}
-      onCourseChange={noop}
-      goals={[]}
-      onGoalChange={noop}
-      onEdit={noop}
-      onDelete={noop}
-      allItems={[]}
-      onAddStep={noop}
-      items={[anItem('Midterm', 2)]}
-    />,
-  );
-
-  expect(screen.getByText('Soon')).toBeVisible();
-});
-
-test('AC-12.2 an item due in nine days carries no marker', () => {
-  render(
-    <Dashboard
-      now={NOW}
-      onDone={noop}
-      onNoteChange={noop}
-      courses={[]}
-      onCourseChange={noop}
-      goals={[]}
-      onGoalChange={noop}
-      onEdit={noop}
-      onDelete={noop}
-      allItems={[]}
-      onAddStep={noop}
-      items={[anItem('Finals', 9)]}
-    />,
-  );
-
-  expect(screen.queryByText('Soon')).not.toBeInTheDocument();
-});
-
-test('AC-12.3 priority does not suppress the marker', () => {
-  render(
-    <Dashboard
-      now={NOW}
-      onDone={noop}
-      onNoteChange={noop}
-      courses={[]}
-      onCourseChange={noop}
-      goals={[]}
-      onGoalChange={noop}
-      onEdit={noop}
-      onDelete={noop}
-      allItems={[]}
-      onAddStep={noop}
-      items={[anItem('Laundry', 2, { priority: 'low' })]}
-    />,
-  );
-
-  expect(screen.getByText('Soon')).toBeVisible();
-});
-
-test('AC-12.1 only the items inside the window are marked', () => {
-  render(
-    <Dashboard
-      now={NOW}
-      onDone={noop}
-      onNoteChange={noop}
-      courses={[]}
-      onCourseChange={noop}
-      goals={[]}
-      onGoalChange={noop}
-      onEdit={noop}
-      onDelete={noop}
-      allItems={[]}
-      onAddStep={noop}
-      items={[
-        anItem('Late thing', -2),
-        anItem('Today thing', 0),
-        anItem('Soon thing', 2),
-        anItem('Far thing', 20),
-      ]}
-    />,
-  );
-
-  const markers = screen.getAllByText('Soon');
-  expect(markers).toHaveLength(1);
-  expect(markers[0]?.closest('li')).toHaveTextContent('Soon thing');
 });
 
 const CSE100 = {
@@ -1280,16 +1180,6 @@ test('AC-44.1 an overdue row offers Tomorrow and Drop, and a current one does no
   expect(screen.queryByRole('button', { name: 'Drop Quiz' })).toBeNull();
 });
 
-test('AC-44.1 the overdue group says what to do with each one', () => {
-  renderTriage([anItem('Missed lab', -2)]);
-
-  expect(
-    screen.getByText(
-      'Decide each one: done, tomorrow, a new date, or drop it.',
-    ),
-  ).toBeVisible();
-});
-
 test('AC-44.2 Tomorrow moves the deadline to tomorrow at the time it had', async () => {
   const user = userEvent.setup();
   const onEdit = vi.fn();
@@ -1351,7 +1241,7 @@ describe('US-54 ten upcoming at a time', () => {
   test('AC-54.1 with more than ten upcoming, the first ten in order are shown and the rest counted', () => {
     renderItems(twelve());
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(doneControls()).toHaveLength(10);
     expect(screen.getByText('Day 9')).toBeVisible();
     expect(screen.queryByText('Day 10')).toBeNull();
     expect(screen.getByText('Showing 10 of 12 upcoming.')).toBeVisible();
@@ -1365,7 +1255,7 @@ describe('US-54 ten upcoming at a time', () => {
       ...twelve(),
     ]);
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(13);
+    expect(doneControls()).toHaveLength(13);
     expect(screen.getByText('Missed 3')).toBeVisible();
   });
 
@@ -1374,11 +1264,11 @@ describe('US-54 ten upcoming at a time', () => {
     renderItems(twelve());
 
     await user.click(screen.getByRole('button', { name: 'Show 2 more' }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(12);
+    expect(doneControls()).toHaveLength(12);
     expect(screen.getByText('Day 11')).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Show fewer' }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(doneControls()).toHaveLength(10);
   });
 
   test('AC-55.4 the ten shown are the ten soonest, even with a high one due later', () => {
@@ -1394,20 +1284,125 @@ describe('US-54 ten upcoming at a time', () => {
   test('AC-54.4 ten or fewer upcoming shows everything and no count', () => {
     renderItems(twelve().slice(0, 10));
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    expect(doneControls()).toHaveLength(10);
     expect(screen.queryByText(/upcoming\./)).toBeNull();
     expect(screen.queryByRole('button', { name: /more|fewer/ })).toBeNull();
   });
+});
 
-  test('AC-54.5 a group cut short still counts everything in it', () => {
-    renderItems(twelve());
+describe('US-57 Home as a timeline', () => {
+  const COURSES = [
+    {
+      id: 'c123',
+      name: 'CSE 123',
+      meetingLocation: '',
+      professorEmail: '',
+      officeHours: '',
+      createdAt: NOW.toISOString(),
+    },
+  ];
+  const GOALS = [
+    {
+      id: 'aws',
+      name: 'AWS cert',
+      description: '',
+      targetAt: NOW.toISOString(),
+      createdAt: NOW.toISOString(),
+    },
+  ];
 
-    // Today holds Day 0, This week Days 1 to 7, Later Days 8 to 11, of which
-    // the ten leave room for two.
-    const later = screen
-      .getByRole('heading', { name: 'Later' })
+  function show(items: Item[]) {
+    render(
+      <Dashboard
+        now={NOW}
+        onDone={noop}
+        onNoteChange={noop}
+        courses={COURSES}
+        onCourseChange={noop}
+        goals={GOALS}
+        onGoalChange={noop}
+        onEdit={noop}
+        onDelete={noop}
+        allItems={items}
+        onAddStep={noop}
+        items={items}
+      />,
+    );
+  }
+
+  const day = (name: string) =>
+    screen.getByRole('heading', { level: 2, name }).closest('li')!;
+
+  test('AC-57.4 each upcoming item sits under its day, named in full', () => {
+    show([anItem('Quiz', 0), anItem('Lab', 1), anItem('Essay', 5)]);
+
+    expect(within(day('September 15, 2026')).getByText('Quiz')).toBeVisible();
+    expect(within(day('September 16, 2026')).getByText('Lab')).toBeVisible();
+    expect(within(day('September 20, 2026')).getByText('Essay')).toBeVisible();
+  });
+
+  test('AC-57.4 the nearest days say Today and Tomorrow, the rest their weekday', () => {
+    show([anItem('Quiz', 0), anItem('Lab', 1), anItem('Essay', 5)]);
+
+    expect(within(day('September 15, 2026')).getByText('Today')).toBeVisible();
+    expect(
+      within(day('September 16, 2026')).getByText('Tomorrow'),
+    ).toBeVisible();
+    expect(within(day('September 20, 2026')).getByText('Sun')).toBeVisible();
+  });
+
+  test('AC-57.4 the month is named where it changes, and the old headings are gone', () => {
+    show([anItem('Essay', 5), anItem('Midterm', 20)]);
+
+    expect(screen.getByText('October 2026')).toBeVisible();
+    for (const old of ['Today', 'This week', 'Later']) {
+      expect(screen.queryByRole('heading', { name: old })).toBeNull();
+    }
+  });
+
+  test('AC-57.3 overdue items keep their own group and say how late they are', () => {
+    show([anItem('Reading quiz', -1), anItem('Old lab', -3)]);
+
+    const overdue = screen
+      .getByRole('heading', { name: 'Overdue' })
       .closest('section')!;
-    expect(within(later).getByText('4')).toBeVisible();
-    expect(within(later).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(overdue).getByText('Yesterday')).toBeVisible();
+    expect(within(overdue).getByText('3 days ago')).toBeVisible();
+  });
+
+  test('AC-57.5 a row shows its time only when it is not 11:59pm, and no tag or Soon marker', () => {
+    show([
+      anItem('Dentist', 2, { category: 'personal', dueAt: hoursOn(2, 8) }),
+      anItem('Essay', 2, {
+        dueAt: new Date(2026, 8, 17, 23, 59).toISOString(),
+      }),
+    ]);
+
+    expect(screen.getByText('8:00 AM')).toBeVisible();
+    expect(screen.queryByText(/11:59/)).toBeNull();
+    expect(screen.queryByText(/^personal$/i)).toBeNull();
+    expect(screen.queryByText(/^academic$/i)).toBeNull();
+    expect(screen.queryByText('Soon')).toBeNull();
+  });
+
+  test('AC-57.6 under the title: course, goal, repeat and note', () => {
+    show([
+      anItem('HW 1', 3, {
+        courseId: 'c123',
+        goalId: 'aws',
+        repeat: 'weekly',
+        note: 'Submit on Gradescope',
+      }),
+    ]);
+
+    const row = screen.getByText('HW 1').closest('li')!;
+    for (const words of [
+      'CSE 123',
+      'AWS cert',
+      'Repeats weekly',
+      'Submit on Gradescope',
+    ]) {
+      expect(within(row).getByText(words)).toBeVisible();
+    }
   });
 });

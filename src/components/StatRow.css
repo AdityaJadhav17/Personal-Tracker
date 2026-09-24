@@ -1,29 +1,19 @@
-/* ---------- Stat row ---------- */
+/* ---------- Home's header (US-57) ---------- */
 
-.stats {
-  display: flex;
-  gap: var(--space-5);
-  margin-bottom: var(--space-4);
+.today {
+  margin: var(--space-2) 0 var(--space-4);
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
+.today__date {
   margin: 0;
-}
-
-.stat__value {
   font-size: 1.625rem;
+  font-weight: 650;
+  line-height: 1.15;
   /* US-49. apple-design: large text reads loose; tighten it as it grows. */
   letter-spacing: -0.02em;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
 }
 
-.stat__label {
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.today__summary {
+  margin: 6px 0 0;
   color: var(--text-muted);
 }

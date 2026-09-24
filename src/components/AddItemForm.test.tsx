@@ -252,3 +252,65 @@ test('AC-28.1 the repeat choice resets with the rest of the form', async () => {
 
   expect(screen.getByLabelText('Repeat')).toHaveValue('none');
 });
+
+describe("US-57 Home's one-line form", () => {
+  function quick() {
+    const onAdd = vi.fn<(draft: ItemDraft) => boolean>(() => true);
+    render(
+      <AddItemForm
+        onAdd={onAdd}
+        titleRef={createRef<HTMLInputElement>()}
+        quickFrom="2026-09-24"
+      />,
+    );
+    return { onAdd, user: userEvent.setup() };
+  }
+
+  test('AC-57.2 until it is used, it is one titled line', () => {
+    quick();
+
+    expect(screen.getByLabelText('Title')).toHaveAttribute(
+      'placeholder',
+      'Add a deadline…',
+    );
+    expect(screen.queryByLabelText('Due')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+  });
+
+  test('AC-57.2 using it opens the rest, with the date starting on today', async () => {
+    const { user } = quick();
+
+    await user.click(screen.getByLabelText('Title'));
+
+    expect(screen.getByLabelText('Due')).toHaveValue('2026-09-24');
+    for (const field of ['Time', 'Category', 'Priority', 'Repeat']) {
+      expect(screen.getByLabelText(field)).toBeVisible();
+    }
+  });
+
+  test('AC-57.2 a title and Enter adds it for today, at the end of the day, and folds', async () => {
+    const { onAdd, user } = quick();
+
+    await user.click(screen.getByLabelText('Title'));
+    await user.keyboard('Pay rent{Enter}');
+
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Pay rent',
+        dueAt: new Date(2026, 8, 24, 23, 59).toISOString(),
+      }),
+    );
+    // Folded back, so it stops covering the list, and empty for the next.
+    expect(screen.queryByLabelText('Due')).toBeNull();
+    expect(screen.getByLabelText('Title')).toHaveValue('');
+  });
+
+  test('AC-57.2 Escape folds it back to one line', async () => {
+    const { user } = quick();
+
+    await user.click(screen.getByLabelText('Title'));
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByLabelText('Due')).toBeNull();
+  });
+});

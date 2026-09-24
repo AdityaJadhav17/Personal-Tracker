@@ -42,18 +42,19 @@ test('AC-08.1 filtering to academic hides personal, and back again', async ({
   ).toBeVisible();
 });
 
-test('AC-08.1 the group headings still apply to what is left', async ({
+test('AC-08.1 the day headings still apply to what is left', async ({
   page,
 }) => {
   await page.goto('/');
-  // Personal today, academic next month: filtering should leave one heading.
+  // Personal today, academic next month: filtering should leave one day.
   await addItem(page, 'Dentist', 'personal', 0);
   await addItem(page, 'Finals', 'academic', 30);
 
   await show(page, 'Academic').click();
 
-  await expect(page.getByRole('heading', { name: 'Later' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Today' })).toHaveCount(0);
+  // US-57. The headings are days now.
+  await expect(page.getByRole('heading', { level: 2 })).toHaveCount(1);
+  await expect(page.getByText('Today', { exact: true })).toHaveCount(0);
 });
 
 test('AC-08.2 a reload clears the filter', async ({ page }) => {
@@ -101,7 +102,7 @@ test('AC-08.1 the filter narrows the list, not the day', async ({ page }) => {
   // Two things are still due today, whatever the list is showing. Read off the
   // paragraph that holds both the number and the words, so this cannot pass on
   // a stray 2 somewhere else on the page.
-  await expect(page.getByText(/^2\s*remaining today$/i)).toBeVisible();
+  await expect(page.getByText('2 due today', { exact: true })).toBeVisible();
 });
 
 test('AC-08.1 marking something done still works while filtered', async ({

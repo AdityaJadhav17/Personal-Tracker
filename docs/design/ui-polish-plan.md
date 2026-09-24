@@ -6,7 +6,8 @@ Proposed 24 September 2026. **Phases 1 to 4 are built** as
 with a light and dark toggle added alongside as
 [US-51](../product/stories/US-51.md). Phase 5 was prototyped and Aditya picked
 the popover, built as [US-53](../product/stories/US-53.md). The phone fixes
-are not started.
+are not started. The UI audit that followed rebuilt Home as a timeline,
+[US-57](../product/stories/US-57.md).
 
 The skills are six of the thirteen in
 [emilkowalski/skills](https://github.com/emilkowalski/skills), chosen against

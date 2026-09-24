@@ -135,9 +135,8 @@ test('AC-17.4 with nothing recorded it says so', async ({ page }) => {
   await expect(page.getByText('Nothing recorded yet.')).toBeVisible();
 });
 
-test('AC-16.1 and AC-16.2 Home shows what is left and what was finished', async ({
-  page,
-}) => {
+// US-57 turned US-16's two numbers into the header's sentence.
+test('AC-16.1 and AC-57.1 Home says what is left today', async ({ page }) => {
   await page.goto('/');
 
   for (const title of ['Pset 1', 'Pset 2', 'Pset 3']) {
@@ -146,26 +145,18 @@ test('AC-16.1 and AC-16.2 Home shows what is left and what was finished', async 
     await page.getByRole('button', { name: 'Add', exact: true }).click();
   }
 
-  await expect(page.getByText('remaining today')).toBeVisible();
-  await expect(
-    page.locator('.stat', { hasText: 'remaining today' }),
-  ).toContainText('3');
+  await expect(page.getByText('3 due today', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Mark Pset 1 done' }).click();
-  await expect(
-    page.locator('.stat', { hasText: 'remaining today' }),
-  ).toContainText('2');
+  await expect(page.getByText('2 due today', { exact: true })).toBeVisible();
 });
 
-test('AC-16.3 an empty day still shows both numbers as zero', async ({
+test('AC-16.3 and AC-57.1 an empty day says so rather than hiding', async ({
   page,
 }) => {
   await page.goto('/');
 
   await expect(
-    page.locator('.stat', { hasText: 'remaining today' }),
-  ).toContainText('0');
-  await expect(
-    page.locator('.stat', { hasText: 'completed yesterday' }),
-  ).toContainText('0');
+    page.getByText('Nothing due today', { exact: true }),
+  ).toBeVisible();
 });

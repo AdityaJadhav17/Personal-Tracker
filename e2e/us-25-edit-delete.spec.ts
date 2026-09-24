@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate, open } from './helpers';
+import { dayName, isoDate, open } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 1) {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -40,20 +40,26 @@ test('AC-25.3 clearing the title saves nothing and says why', async ({
   await expect(page.getByText('Midterm', { exact: true })).toBeVisible();
 });
 
-test('AC-25.2 moving the date moves the item between groups', async ({
+test('AC-25.2 moving the date moves the item to its new day', async ({
   page,
 }) => {
   await page.goto('/');
-  // Due tomorrow, so it starts in This week.
+  // Due tomorrow, so it starts under tomorrow (US-57: headings are days).
   await addItem(page, 'Midterm', 1);
-  await expect(page.getByRole('heading', { name: 'This week' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: dayName(1), exact: true }),
+  ).toBeVisible();
 
   await open(page, 'Midterm');
   await page.getByLabel('Due for Midterm').fill(isoDate(30));
   await page.getByRole('button', { name: 'Save Midterm' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Later' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'This week' })).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: dayName(30), exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: dayName(1), exact: true }),
+  ).toHaveCount(0);
 });
 
 test('AC-25.2 a moved deadline survives a reload', async ({ page }) => {
@@ -156,9 +162,9 @@ test('AC-25.7 deleting is not finishing: nothing counts as completed', async ({
   page,
 }) => {
   await page.goto('/');
-  // Due today, so it shows in the remaining count.
+  // Due today, so it shows in the header's count.
   await addItem(page, 'Midterm', 0);
-  await expect(page.getByText('1', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('1 due today', { exact: true })).toBeVisible();
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();

@@ -36,7 +36,7 @@ function contrast(foreground: string, background: string): number {
 
 const HEX = '#[0-9a-f]{6}';
 const TOKEN = new RegExp(
-  String.raw`--([a-z-]+):\s*(?:light-dark\(\s*(${HEX})\s*,\s*(${HEX})\s*\)|(${HEX}))\s*;`,
+  String.raw`--([a-z0-9-]+):\s*(?:light-dark\(\s*(${HEX})\s*,\s*(${HEX})\s*\)|(${HEX}))\s*;`,
   'gi',
 );
 
@@ -129,6 +129,22 @@ describe.each([
       contrast(normal['text-muted']!, normal.surface!),
     );
   });
+});
+
+describe.each([
+  ['light', light],
+  ['dark', dark],
+])('%s mode course colours', (_, tokens) => {
+  test.each(['course-1', 'course-2', 'course-3', 'course-4'])(
+    'AC-57.8 --%s reaches 3:1 against the page and a card',
+    (course) => {
+      for (const bg of ['bg', 'surface']) {
+        expect(
+          Number(contrast(tokens[course]!, tokens[bg]!).toFixed(2)),
+        ).toBeGreaterThanOrEqual(NON_TEXT);
+      }
+    },
+  );
 });
 
 describe('the two palettes', () => {

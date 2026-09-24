@@ -34,7 +34,8 @@ test('AC-05.2 pressing u restores the item to its group', async ({ page }) => {
   await page.keyboard.press('u');
 
   await expect(page.getByText('Rent', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
+  // US-57. Back under today, where it was due.
+  await expect(page.getByText('Today', { exact: true })).toBeVisible();
 });
 
 test('AC-05.2 an undone item is still gone-free after a reload', async ({

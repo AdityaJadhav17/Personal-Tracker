@@ -31,7 +31,18 @@ function anItem(overrides: Partial<Item> = {}): Item {
   };
 }
 
-test('AC-16.1 it says how many are left today', () => {
+// US-57 turned US-16's two numbers into the header's sentence. The facts are
+// the same; each test names the criterion it carries forward.
+
+test('AC-57.1 the heading is today, named in full', () => {
+  render(<StatRow now={NOW} items={[]} />);
+
+  expect(
+    screen.getByRole('heading', { level: 1, name: 'Tuesday, September 15' }),
+  ).toBeVisible();
+});
+
+test('AC-57.1 (was AC-16.1) it says how many are due today', () => {
   render(
     <StatRow
       now={NOW}
@@ -44,11 +55,10 @@ test('AC-16.1 it says how many are left today', () => {
     />,
   );
 
-  expect(screen.getByText('3')).toBeVisible();
-  expect(screen.getByText('remaining today')).toBeVisible();
+  expect(screen.getByText('3 due today')).toBeVisible();
 });
 
-test('AC-16.2 it says how many were finished yesterday', () => {
+test('AC-57.1 (was AC-16.2) it says how many were finished yesterday', () => {
   render(
     <StatRow
       now={NOW}
@@ -59,21 +69,26 @@ test('AC-16.2 it says how many were finished yesterday', () => {
     />,
   );
 
-  expect(screen.getByText('2')).toBeVisible();
-  expect(screen.getByText('completed yesterday')).toBeVisible();
+  expect(
+    screen.getByText('Nothing due today · 2 finished yesterday'),
+  ).toBeVisible();
 });
 
-test('AC-16.3 with nothing due today it shows zero rather than hiding', () => {
-  render(<StatRow now={NOW} items={[anItem({ dueAt: at(5) })]} />);
-
-  expect(screen.getByText('remaining today')).toBeVisible();
-  expect(screen.getAllByText('0').length).toBeGreaterThan(0);
-});
-
-test('AC-16.3 an empty database still renders both numbers', () => {
+test('AC-57.1 (was AC-16.3) with nothing due today it says so rather than hiding', () => {
   render(<StatRow now={NOW} items={[]} />);
 
-  expect(screen.getByText('remaining today')).toBeVisible();
-  expect(screen.getByText('completed yesterday')).toBeVisible();
-  expect(screen.getAllByText('0')).toHaveLength(2);
+  expect(screen.getByText('Nothing due today')).toBeVisible();
+});
+
+test('AC-57.1 overdue and this week are counted too, and zeros are left out', () => {
+  render(
+    <StatRow
+      now={NOW}
+      items={[anItem(), anItem({ dueAt: at(-2) }), anItem({ dueAt: at(3) })]}
+    />,
+  );
+
+  expect(
+    screen.getByText('1 due today · 1 overdue · 1 this week'),
+  ).toBeVisible();
 });

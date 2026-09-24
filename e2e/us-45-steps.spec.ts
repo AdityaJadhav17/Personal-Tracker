@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { row } from './helpers';
 
 /** A local date `days` from today, as the date input wants it. */
 function inDays(days: number): string {
@@ -23,14 +24,8 @@ test('AC-45.1 to AC-45.3 a step added from a project survives a reload and shows
 
   await page.reload();
 
-  const step = page.getByRole('listitem').filter({
-    has: page.getByRole('button', { name: 'Design doc', exact: true }),
-  });
-  await expect(step).toContainText('Step of Project 2b');
-  const project = page.getByRole('listitem').filter({
-    has: page.getByRole('button', { name: 'Project 2b', exact: true }),
-  });
-  await expect(project).toContainText('0 of 1 steps done');
+  await expect(row(page, 'Design doc')).toContainText('Step of Project 2b');
+  await expect(row(page, 'Project 2b')).toContainText('0 of 1 steps done');
 });
 
 test('AC-45.6 the calendar counts each week, and a heavy week says so', async ({

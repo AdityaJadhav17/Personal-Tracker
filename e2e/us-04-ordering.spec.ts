@@ -1,5 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { add } from './helpers';
+import { test, expect, type Page } from '@playwright/test';
+import { add, dayName, doneControls } from './helpers';
+
+/** Item titles in page order. Only a title reports whether it is open. */
+const titles = (page: Page) => page.getByRole('button', { expanded: false });
 
 test('AC-04.1 high, normal and low order inside one group', async ({
   page,
@@ -39,18 +42,12 @@ test('AC-04.3 two items due at the same minute both render, stably', async ({
   await add(page, 'first thing', 3, { time: '09:00' });
   await add(page, 'second thing', 3, { time: '09:00' });
 
-  await expect(page.getByRole('listitem')).toHaveCount(2);
-  await expect(page.getByRole('listitem')).toContainText([
-    'first thing',
-    'second thing',
-  ]);
+  await expect(doneControls(page)).toHaveCount(2);
+  await expect(titles(page)).toHaveText(['first thing', 'second thing']);
 
   await page.reload();
 
-  await expect(page.getByRole('listitem')).toContainText([
-    'first thing',
-    'second thing',
-  ]);
+  await expect(titles(page)).toHaveText(['first thing', 'second thing']);
 });
 
 test('AC-04.4 a low item due today still beats a high item due in six days', async ({
@@ -61,17 +58,15 @@ test('AC-04.4 a low item due today still beats a high item due in six days', asy
   await add(page, 'Laundry', 0, { priority: 'low' });
   await add(page, 'Midterm', 6, { priority: 'high' });
 
-  const section = (title: string) =>
+  // US-57. Each sits under its own day, whatever its priority.
+  const day = (title: string) =>
     page
-      .locator('section', { has: page.getByText(title, { exact: true }) })
-      .locator('h2');
+      .locator('ol > li', { has: page.getByText(title, { exact: true }) })
+      .getByRole('heading', { level: 2 });
 
-  await expect(section('Laundry')).toHaveText('Today');
-  await expect(section('Midterm')).toHaveText('This week');
+  await expect(day('Laundry')).toHaveAccessibleName(dayName(0));
+  await expect(day('Midterm')).toHaveAccessibleName(dayName(6));
 
-  // Grouping decides the page order, so Today is read before This week.
-  await expect(page.getByRole('listitem')).toContainText([
-    'Laundry',
-    'Midterm',
-  ]);
+  // The day decides the page order, so today is read first.
+  await expect(titles(page)).toHaveText(['Laundry', 'Midterm']);
 });

@@ -121,6 +121,8 @@ test('AC-22.8 done is still two tab stops from the add button', async ({
   await addItem(page, 'Midterm');
   await addItem(page, 'Rent', 2);
 
+  // US-57. The form folds after adding; opening it brings Add back.
+  await page.getByLabel('Title', { exact: true }).click();
   await page.getByRole('button', { name: 'Add', exact: true }).focus();
 
   // Each item contributes its done control then its title, in display order.

@@ -1,55 +1,79 @@
-/* ---------- Groups ---------- */
-
-.group {
-  margin-bottom: var(--space-5);
-}
-
-.group__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.group__title {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-}
+/* ---------- Home as a timeline (US-57) ---------- */
 
 /*
- * The count sits beside the heading rather than inside it, so the heading's
- * accessible name stays exactly "Overdue". Hidden from assistive tech because
- * a screen reader can count the list itself.
+ * Overdue needs a decision, not a date, so it keeps its own group above the
+ * days: tinted, so it reads as "deal with these" without shouting.
  */
-.group__count {
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
+.overdue {
+  margin-bottom: var(--space-5);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+  border-radius: 10px;
+  background: var(--danger-soft);
 }
 
-.group--overdue .group__title,
-.group--overdue .group__count {
+.overdue__title {
+  margin: var(--space-1) 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--danger);
 }
 
-/* AC-54.1. Under the last group: how many are hidden, and the way to them. */
+.overdue__list,
+.days,
+.day__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Where one month ends: named once, quietly, above its first day. */
+.day__month {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* The date column on the left, the day's items to its right. */
+.day__row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.day__label {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding-top: 6px;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1.1;
+}
+
+.day__number {
+  font-size: 1.375rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  /* US-49. Large text tightens as it grows. */
+  letter-spacing: -0.02em;
+}
+
+.day__weekday {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* AC-54.1. Under the last day: how many are hidden, and the way to them. */
 .group__more {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  margin: 0 0 var(--space-5);
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-/* US-44. Under the Overdue heading, naming what its rows offer. */
-.group__hint {
-  margin: 0 0 var(--space-2);
+  margin: var(--space-4) 0 var(--space-5);
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
@@ -60,6 +84,7 @@
   gap: var(--space-2);
 }
 
+/* The calendar's open day still lists its rows in a card. */
 .group__list {
   margin: 0;
   padding: 0;

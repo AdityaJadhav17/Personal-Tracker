@@ -67,8 +67,7 @@
     flex: 1 1 100%;
   }
 
-  .item__due,
-  .item__tag {
+  .item__due {
     font-size: 0.75rem;
   }
 }

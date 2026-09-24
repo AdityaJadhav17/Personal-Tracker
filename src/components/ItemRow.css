@@ -1,48 +1,51 @@
 /* ---------- Item row ---------- */
 
+/*
+ * US-57. A row is its title, the time if it has one, and a quiet line of what
+ * it belongs to. No boxes, bars or chips: the day it sits under and its
+ * position carry the rest.
+ */
 .item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 40px;
-  padding: var(--space-2) var(--space-3);
-  /*
-   * Priority bar. Width is constant so nothing shifts between priorities.
-   * Position in the list is the primary signal; this only confirms it.
-   */
-  border-left: 4px solid transparent;
-  border-bottom: 1px solid var(--border);
+  gap: 2px var(--space-3);
+  min-height: 36px;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius);
   transition: background var(--speed) ease;
-}
-
-.item:last-child {
-  border-bottom: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .item:hover {
-    background: var(--bg);
+    background: var(--surface);
   }
 }
 
-.item--high {
-  border-left-color: var(--accent);
+/* The calendar's open day keeps its rows in a card, one ruled line apart. */
+.group__list .item {
+  border-radius: 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.item--normal {
-  border-left-color: var(--border);
+.group__list .item:last-child {
+  border-bottom: none;
+}
+
+/* AC-57.7. High priority reads heavier, not louder. */
+.item--high .item__title {
+  font-weight: 650;
 }
 
 .item__done {
   flex: none;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   font-size: 0;
   background: transparent;
-  border: 1.5px solid var(--border);
-  border-radius: 4px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 50%;
   transition:
     border-color var(--speed) ease,
     background var(--speed) ease,
@@ -83,31 +86,60 @@
   }
 }
 
-/* Small, quiet, and only there when the link exists. */
-.item__chip {
-  flex: none;
-  padding: 1px var(--space-2);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  font-size: 0.6875rem;
-  color: var(--text);
-}
-
-.item__chip--goal {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-/* A note you wrote, readable without opening the row. */
-.item__written {
+/*
+ * AC-57.6. Under the title, lined up with it: course, goal, repeat, steps and
+ * the note, one line, dots between.
+ */
+.item__meta {
+  display: flex;
   flex: 1 1 100%;
   order: 1;
-  overflow: hidden;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-left: calc(18px + var(--space-3));
   font-size: 0.8125rem;
-  color: var(--text-muted);
-  text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.item__course-tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+/* AC-57.8. One colour per course, in the order the courses were added. */
+.item__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.item__dot--1 {
+  background: var(--course-1);
+}
+
+.item__dot--2 {
+  background: var(--course-2);
+}
+
+.item__dot--3 {
+  background: var(--course-3);
+}
+
+.item__dot--4 {
+  background: var(--course-4);
+}
+
+/* A note you wrote, readable without opening the row; the line ends in an
+   ellipsis rather than wrapping. */
+.item__written {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* The controls, once the row is open. */
@@ -124,30 +156,17 @@
 }
 
 .item__due {
+  display: inline-flex;
   flex: none;
+  gap: var(--space-2);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
 
-.item__soon {
-  flex: none;
-  padding: 1px var(--space-2);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-radius: 999px;
-}
-
-.item__tag {
-  flex: none;
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
+/* AC-57.3. How late, in the colour Overdue already uses. */
+.item__late {
+  color: var(--danger);
 }
 
 /*
