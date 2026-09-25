@@ -1406,3 +1406,50 @@ describe('US-57 Home as a timeline', () => {
     }
   });
 });
+
+describe('US-59 the opened row', () => {
+  test('AC-59.1 every field in the open row is named in visible text', async () => {
+    const user = userEvent.setup();
+    const item = anItem('HW 1', 3, { courseId: CSE100.id });
+    render(
+      <Dashboard
+        now={NOW}
+        onDone={noop}
+        onNoteChange={noop}
+        courses={[CSE100]}
+        onCourseChange={noop}
+        goals={[
+          {
+            id: 'g',
+            name: 'AWS cert',
+            description: '',
+            targetAt: NOW.toISOString(),
+            createdAt: NOW.toISOString(),
+          },
+        ]}
+        onGoalChange={noop}
+        onEdit={noop}
+        onDelete={noop}
+        allItems={[item]}
+        onAddStep={noop}
+        items={[item]}
+      />,
+    );
+
+    await openItem(user, 'HW 1');
+
+    const row = screen.getByRole('button', { name: 'HW 1' }).closest('li')!;
+    for (const words of [
+      'Title',
+      'Due',
+      'Time',
+      'Repeat',
+      'Course',
+      'Goal',
+      'Note',
+      'Steps',
+    ]) {
+      expect(within(row).getByText(words, { exact: true })).toBeVisible();
+    }
+  });
+});

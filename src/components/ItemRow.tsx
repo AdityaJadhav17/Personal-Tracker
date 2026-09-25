@@ -349,50 +349,66 @@ export default function ItemRow({
             Each select is only rendered once there is something to choose, so
             an empty one never joins the tab order.
           */}
+          {/* AC-59.1. Named on screen like the fields above, and sized like
+              them, where they were once two small unlabelled boxes. */}
           {courses.length > 0 && (
-            <select
-              className="item__course"
-              aria-label={`Course for ${item.title}`}
-              value={item.courseId ?? ''}
-              onChange={(event) =>
-                onCourseChange(item.id, event.target.value || null)
-              }
-            >
-              <option value="">No course</option>
-              {courses.map((one) => (
-                <option key={one.id} value={one.id}>
-                  {one.name}
-                </option>
-              ))}
-            </select>
+            <div className="form__field item__field--half">
+              <span className="form__label" aria-hidden="true">
+                Course
+              </span>
+              <select
+                className="form__input"
+                aria-label={`Course for ${item.title}`}
+                value={item.courseId ?? ''}
+                onChange={(event) =>
+                  onCourseChange(item.id, event.target.value || null)
+                }
+              >
+                <option value="">No course</option>
+                {courses.map((one) => (
+                  <option key={one.id} value={one.id}>
+                    {one.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           {goals.length > 0 && (
-            <select
-              className="item__course"
-              aria-label={`Goal for ${item.title}`}
-              value={item.goalId ?? ''}
-              onChange={(event) =>
-                onGoalChange(item.id, event.target.value || null)
-              }
-            >
-              <option value="">No goal</option>
-              {goals.map((one) => (
-                <option key={one.id} value={one.id}>
-                  {one.name}
-                </option>
-              ))}
-            </select>
+            <div className="form__field item__field--half">
+              <span className="form__label" aria-hidden="true">
+                Goal
+              </span>
+              <select
+                className="form__input"
+                aria-label={`Goal for ${item.title}`}
+                value={item.goalId ?? ''}
+                onChange={(event) =>
+                  onGoalChange(item.id, event.target.value || null)
+                }
+              >
+                <option value="">No goal</option>
+                {goals.map((one) => (
+                  <option key={one.id} value={one.id}>
+                    {one.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
-          <textarea
-            className="item__note"
-            aria-label={`Note for ${item.title}`}
-            placeholder="Note"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            onBlur={() => onNoteChange(item.id, note)}
-          />
+          <div className="form__field item__field--full">
+            <span className="form__label" aria-hidden="true">
+              Note
+            </span>
+            <textarea
+              className="form__input item__note"
+              aria-label={`Note for ${item.title}`}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              onBlur={() => onNoteChange(item.id, note)}
+            />
+          </div>
 
           {/*
             AC-45.1. Steps belong to a project, and only one level down: a

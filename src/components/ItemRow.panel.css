@@ -2,12 +2,10 @@
 
 .item__actions {
   display: flex;
-  flex: 1 1 100%;
-  order: 3;
   gap: var(--space-2);
-  margin-top: var(--space-2);
 }
 
+/* Drop's question sits on the closed row, under everything else on it. */
 .item__confirm {
   flex: 1 1 100%;
   order: 4;
@@ -26,9 +24,4 @@
     opacity: 0;
     translate: 0 var(--rise);
   }
-}
-
-/* The edit panel stacks its fields; the selects stay on one line. */
-.item__edit .form__field {
-  flex: 1 1 100%;
 }

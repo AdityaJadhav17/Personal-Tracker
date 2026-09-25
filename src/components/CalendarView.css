@@ -253,7 +253,6 @@
 /* US-45. Steps inside an item's open panel. */
 .item__steps {
   display: flex;
-  flex: 1 1 100%;
   flex-direction: column;
   gap: var(--space-1);
 }
@@ -265,9 +264,14 @@
 }
 
 .item__step-add {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--space-2);
+}
+
+/* US-59. The step's button stands as tall as the fields beside it. */
+.item__step-add .data__button {
+  height: 2.25rem;
 }
 
 /* AC-48.1. Where a dragged item would land. Instant: it tracks the pointer. */

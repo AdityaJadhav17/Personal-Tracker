@@ -39,15 +39,3 @@
   margin: 0 0 var(--space-2);
   overflow-wrap: anywhere;
 }
-
-.item__course {
-  flex: none;
-  max-width: 120px;
-  padding: 1px var(--space-1);
-  font: inherit;
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
