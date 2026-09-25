@@ -14,6 +14,16 @@ async function openedRow(page: Page) {
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   await add(page, 'HW 1', 3);
   await open(page, 'HW 1');
+  // The panel rises 4px as it opens (AC-48.2). Measured mid-rise, two fields
+  // on one row can be caught a frame apart, so wait for it to settle. Only
+  // animations on the clock count: US-73's header runs on the scroll
+  // position and is always "running".
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.timeline === document.timeline)
+      .every((a) => a.playState !== 'running'),
+  );
 }
 
 const box = async (page: Page, label: string) =>

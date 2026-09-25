@@ -386,3 +386,4 @@ passed 1,300 lines.
 - [US-71, leaving the list looks like one thing](stories/US-71.md)
 - [US-72, Windows contrast themes](stories/US-72.md)
 - [US-73, Home's header collapses as you scroll](stories/US-73.md)
+- [US-74, the app is just there](stories/US-74.md)

@@ -150,13 +150,17 @@ The copy lives outside the repo so that a build on a half-finished branch never
 changes the app you rely on. It only changes when you run `deploy` again, and
 the running server picks the new files up without a restart: reload the window.
 
-To start `live` at login, run this once in PowerShell from the repo folder. It
-puts a shortcut in your Startup folder that opens a minimized window; close the
-window to stop the server, delete the shortcut to stop it starting.
+`npm run live` is `scripts/serve.mjs` (US-74): a small server built on Node's
+own modules, listening on this laptop only. To have it always running, with
+no window and nothing to start, register it once as a task that starts at
+login, keeps going on battery, and restarts itself if it stops. It runs from
+the updater's clone (below), so set that up first.
 
 ```powershell
-$s = (New-Object -ComObject WScript.Shell).CreateShortcut("$([Environment]::GetFolderPath('Startup'))\Personal Tracker.lnk"); $s.TargetPath = $env:ComSpec; $s.Arguments = '/c npm run live'; $s.WorkingDirectory = (Get-Location).Path; $s.WindowStyle = 7; $s.Save()
+$node = (Get-Command node).Source; $script = "$env:LOCALAPPDATA\PersonalTracker-src\scripts\serve.mjs"; $action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$node`" `"$script`""; $atLogon = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"; $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'Personal Tracker server' -Action $action -Trigger $atLogon -Settings $settings; Start-ScheduledTask 'Personal Tracker server'
 ```
+
+To stop it for good, `Unregister-ScheduledTask 'Personal Tracker server'`.
 
 Then open http://localhost:4180 and install it as an app: in Chrome, the ⋮ menu,
 then **Cast, save, and share**, then **Install page as app**; in Edge, Apps,

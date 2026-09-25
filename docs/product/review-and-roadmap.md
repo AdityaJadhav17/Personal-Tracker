@@ -35,7 +35,7 @@ and no data leaves the machine.
 | Reflections | Rate the day from one to five and add a note.                                                                                                                                                                          |
 | Trends      | A chart of completions against reflections.                                                                                                                                                                            |
 | Data        | Export and import JSON (Replace or Merge). Export an `.ics` with a 30 minute alarm on every open deadline, for the phone's calendar.                                                                                   |
-| Running it  | `npm run deploy` then `npm run live` serves it at `localhost:4180`. A Startup shortcut runs it at login, and Chrome shows it as an installed app.                                                                      |
+| Running it  | A scheduled task serves it at `localhost:4180` from login onwards (US-74), and Chrome shows it as an installed app.                                                                                                    |
 
 **How it works:**
 
