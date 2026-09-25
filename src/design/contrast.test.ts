@@ -76,6 +76,8 @@ const PAIRS: [fg: string, bg: string, where: string][] = [
   ['accent', 'surface', 'accents on a card'],
   ['accent', 'accent-soft', 'the Soon marker'],
   ['on-accent', 'accent', 'the Add button label'],
+  ['on-accent', 'danger', 'the Yes, delete button label (AC-64.4)'],
+  ['bg', 'text', 'the undo toast, page colours swapped (AC-64.1)'],
   ['danger', 'bg', 'the Overdue heading'],
   ['danger', 'surface', 'form errors on a card'],
   ['danger', 'danger-soft', 'the import error box'],
@@ -84,6 +86,7 @@ const PAIRS: [fg: string, bg: string, where: string][] = [
   ['text-muted', 'accent-soft', "the more count in today's calendar cell"],
   ['sidebar-text', 'sidebar-bg', 'sidebar links'],
   ['sidebar-current', 'sidebar-bg', 'the sidebar item you are on'],
+  ['sidebar-current', 'sidebar-current-bg', 'its highlight (AC-62.1)'],
 ];
 
 describe.each([
@@ -160,5 +163,27 @@ describe('the two palettes', () => {
     // Black on white is the textbook 21:1, and a colour against itself is 1:1.
     expect(Number(contrast('#000000', '#ffffff').toFixed(0))).toBe(21);
     expect(contrast('#123456', '#123456')).toBe(1);
+  });
+});
+
+describe('US-62 one visual system', () => {
+  test('AC-62.1 the sidebar follows the theme', () => {
+    expect(light['sidebar-bg']).not.toBe(dark['sidebar-bg']);
+    // Light in light mode: brighter than its own text.
+    expect(luminance(light['sidebar-bg']!)).toBeGreaterThan(
+      luminance(light['sidebar-text']!),
+    );
+  });
+
+  test.each([
+    ['light', light],
+    ['dark', dark],
+  ])('AC-62.2 body text is neutral in %s mode, not tinted', (_, tokens) => {
+    const hex = tokens.text!.replace('#', '');
+    const channels = [0, 2, 4].map((at) => parseInt(hex.slice(at, at + 2), 16));
+    // A grey or a near-grey: no channel more than 32 away from another.
+    expect(Math.max(...channels) - Math.min(...channels)).toBeLessThanOrEqual(
+      32,
+    );
   });
 });

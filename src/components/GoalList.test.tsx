@@ -4,6 +4,7 @@ import GoalList from './GoalList';
 import type { Goal, GoalDraft, Item } from '../domain/types';
 
 const noop = () => {};
+const NOW = new Date(2026, 8, 24, 10);
 
 function aGoal(overrides: Partial<Goal> = {}): Goal {
   return {
@@ -40,7 +41,9 @@ function setDate(label: string, value: string) {
 }
 
 test('AC-14.1 the form offers a name, a description and a target date', () => {
-  render(<GoalList goals={[]} items={[]} onAdd={noop} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={noop} onDelete={noop} />,
+  );
 
   expect(screen.getByLabelText('Goal name')).toBeVisible();
   expect(screen.getByLabelText('Description')).toBeVisible();
@@ -50,7 +53,9 @@ test('AC-14.1 the form offers a name, a description and a target date', () => {
 test('AC-14.1 saving reports all three', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
-  render(<GoalList goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
   await user.type(screen.getByLabelText('Description'), 'No late work');
@@ -67,7 +72,9 @@ test('AC-14.1 saving reports all three', async () => {
 test('AC-14.1 the target date is the end of the day chosen, locally', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
-  render(<GoalList goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
   setDate('Target date', '2026-12-15');
@@ -81,7 +88,13 @@ test('AC-14.1 the target date is the end of the day chosen, locally', async () =
 
 test('AC-14.1 a saved goal shows its name, description and target', () => {
   render(
-    <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[aGoal()]}
+      items={[]}
+      onAdd={noop}
+      onDelete={noop}
+    />,
   );
 
   expect(
@@ -89,12 +102,16 @@ test('AC-14.1 a saved goal shows its name, description and target', () => {
   ).toBeVisible();
   expect(screen.getByText('No late submissions')).toBeVisible();
   expect(screen.getByText(/Dec 15/)).toBeVisible();
+  // AC-65.1. How long is left, and no time of day.
+  expect(screen.getByText('Dec 15 · 82 days left')).toBeVisible();
 });
 
 test('AC-14.2 a goal with no name is refused, with a message', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
-  render(<GoalList goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   setDate('Target date', '2026-12-15');
   await user.click(screen.getByRole('button', { name: 'Add goal' }));
@@ -108,7 +125,9 @@ test('AC-14.2 a goal with no name is refused, with a message', async () => {
 test('AC-14.2 a goal with no target date is refused', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
-  render(<GoalList goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
   await user.click(screen.getByRole('button', { name: 'Add goal' }));
@@ -120,7 +139,9 @@ test('AC-14.2 a goal with no target date is refused', async () => {
 });
 
 test('AC-14.4 with no goals an empty state offers a way in', () => {
-  render(<GoalList goals={[]} items={[]} onAdd={noop} onDelete={noop} />);
+  render(
+    <GoalList now={NOW} goals={[]} items={[]} onAdd={noop} onDelete={noop} />,
+  );
 
   expect(screen.getByText('No goals yet.')).toBeVisible();
 });
@@ -128,6 +149,7 @@ test('AC-14.4 with no goals an empty state offers a way in', () => {
 test('AC-15.1 a goal shows how many of its items are done', () => {
   render(
     <GoalList
+      now={NOW}
       goals={[aGoal()]}
       items={[
         anItem('a', 'g1', true),
@@ -150,7 +172,13 @@ test('AC-15.1 a goal shows how many of its items are done', () => {
 
 test('AC-15.2 a goal with no items reads zero of zero, not an error', () => {
   render(
-    <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[aGoal()]}
+      items={[]}
+      onAdd={noop}
+      onDelete={noop}
+    />,
   );
 
   expect(screen.getByText('0 of 0 done')).toBeVisible();
@@ -164,6 +192,7 @@ test('AC-15.2 a goal with no items reads zero of zero, not an error', () => {
 test('AC-15.1 items belonging to another goal do not count', () => {
   render(
     <GoalList
+      now={NOW}
       goals={[aGoal()]}
       items={[anItem('a', 'g1', true), anItem('b', 'other'), anItem('c', null)]}
       onAdd={noop}
@@ -178,7 +207,13 @@ test('AC-20.3 deleting asks before anything goes', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
   render(
-    <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
+    <GoalList
+      now={NOW}
+      goals={[aGoal()]}
+      items={[]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
   );
 
   // US-60. Delete waits behind More.
@@ -199,7 +234,13 @@ test('AC-20.1 confirming reports the goal id', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
   render(
-    <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
+    <GoalList
+      now={NOW}
+      goals={[aGoal()]}
+      items={[]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
   );
 
   // US-60. Delete waits behind More.
@@ -218,7 +259,13 @@ test('AC-20.3 keeping it removes nothing', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
   render(
-    <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
+    <GoalList
+      now={NOW}
+      goals={[aGoal()]}
+      items={[]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
   );
 
   // US-60. Delete waits behind More.
@@ -240,7 +287,13 @@ describe('US-60 the list first', () => {
   test('AC-60.1 with goals, the list shows and the form waits behind New goal', async () => {
     const user = userEvent.setup();
     render(
-      <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+      <GoalList
+        now={NOW}
+        goals={[aGoal()]}
+        items={[]}
+        onAdd={noop}
+        onDelete={noop}
+      />,
     );
 
     expect(screen.getByText('Finish the quarter clean')).toBeVisible();
@@ -253,7 +306,13 @@ describe('US-60 the list first', () => {
   test('AC-60.2 a card offers no Delete until More is opened', async () => {
     const user = userEvent.setup();
     render(
-      <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+      <GoalList
+        now={NOW}
+        goals={[aGoal()]}
+        items={[]}
+        onAdd={noop}
+        onDelete={noop}
+      />,
     );
 
     expect(

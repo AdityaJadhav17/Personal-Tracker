@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-const LIGHT_BG = 'rgb(247, 249, 249)';
+const LIGHT_BG = 'rgb(245, 246, 248)';
 const DARK_BG = 'rgb(15, 23, 42)';
 
 function background(page: Page) {

@@ -287,9 +287,26 @@ test('AC-05.2 the undo shortcut is announced, not hidden', async () => {
 
   await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
 
-  expect(screen.getByRole('status')).toHaveTextContent(
-    'Marked Rent done. Press u to undo.',
+  // AC-64.1. Said once, on the button that also takes a click.
+  expect(screen.getByRole('status')).toHaveTextContent('Marked Rent done.');
+  expect(screen.getByRole('button', { name: 'Undo' })).toHaveAttribute(
+    'aria-keyshortcuts',
+    'u',
   );
+});
+
+test('AC-64.1 clicking Undo does what u does', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+  expect(doneControls()).toHaveLength(1);
+  expect(
+    screen.queryByRole('button', { name: 'Undo' }),
+  ).not.toBeInTheDocument();
 });
 
 /**

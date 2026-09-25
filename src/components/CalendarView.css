@@ -30,13 +30,11 @@
 }
 
 .calendar__move {
-  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
-  font: inherit;
-  font-size: 0.8125rem;
+  font-family: inherit;
   cursor: pointer;
   transition:
     border-color var(--speed) ease,
@@ -70,8 +68,16 @@
   text-align: left;
 }
 
+/* AC-63.1. Just the chevron, square. */
+.calendar__move--icon {
+  width: var(--control);
+  padding: 0;
+}
+
 .calendar__cell {
-  height: 88px;
+  /* AC-63.5. The month's weeks share the window below the title and
+     weekdays, and never shrink under the height a cell always had. */
+  height: max(88px, calc((100vh - 12rem) / var(--weeks, 6)));
   padding: var(--space-2);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -90,15 +96,11 @@
   anchor-name: --calendar-day;
 }
 
-/* Padding days belong to another month. Nothing to read, nothing to click. */
+/* Padding days belong to another month. Nothing to read, nothing to click.
+   AC-63.2: they keep the grid's lines, recessed to the page's colour, so the
+   month reads as one block. */
 .calendar__cell--outside {
-  border-color: transparent;
-  background: none;
-}
-
-.calendar__cell--today {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: var(--bg);
 }
 
 /* US-41. The date, each item and "more" are buttons that open the day. They
@@ -126,8 +128,16 @@
   color: var(--text-muted);
 }
 
+/* AC-63.4. Today is its number in a filled circle; the cell stays a cell. */
 .calendar__cell--today .calendar__date {
-  color: var(--accent);
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -3px 0 1px -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .calendar__item {
@@ -284,11 +294,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--space-2);
-}
-
-/* US-59. The step's button stands as tall as the fields beside it. */
-.item__step-add .data__button {
-  height: 2.25rem;
 }
 
 /* AC-48.1. Where a dragged item would land. Instant: it tracks the pointer. */

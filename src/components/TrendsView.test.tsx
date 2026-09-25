@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import TrendsView from './TrendsView';
 import type { DayPoint } from '../domain/trends';
 
@@ -52,7 +53,8 @@ test('AC-18.2 the completions line is a separate chart, not a second axis', () =
   expect(screen.getByRole('img', { name: /items finished/i })).toBeVisible();
 });
 
-test('AC-18.4 the same numbers are available as a table', () => {
+test('AC-18.4 and AC-65.2 the same numbers are a table, behind Show the numbers', async () => {
+  const user = userEvent.setup();
   render(
     <TrendsView
       series={series(
@@ -63,6 +65,8 @@ test('AC-18.4 the same numbers are available as a table', () => {
   );
 
   const table = screen.getByRole('table');
+  expect(table).not.toBeVisible();
+  await user.click(screen.getByText('Show the numbers'));
   expect(table).toBeVisible();
   // AC-61.1. The day reads as a date.
   expect(screen.getByRole('row', { name: /Tue, Sep 15/ })).toHaveTextContent(

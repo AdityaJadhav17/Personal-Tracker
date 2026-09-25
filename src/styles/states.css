@@ -40,9 +40,33 @@
   color: var(--text);
 }
 
+/*
+ * AC-62.3. Every button in the page is one height, whatever it does; a row's
+ * own actions are the small one. The rules that colour each kind follow.
+ */
+.empty__action,
+.prompt__button,
+.form__submit,
+.data__button,
+.calendar__move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--control);
+  padding: 0 var(--space-4);
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.item__triage .data__button {
+  min-height: var(--control-small);
+  padding: 0 var(--space-3);
+  font-size: 0.8125rem;
+}
+
 .empty__action,
 .prompt__button {
-  padding: var(--space-2) var(--space-4);
   color: var(--on-accent);
   background: var(--accent);
   border: 1px solid var(--accent);
@@ -70,6 +94,20 @@
   color: var(--text);
   background: transparent;
   border-color: var(--border);
+}
+
+/* AC-64.4. The button that destroys something says so in its colour. */
+.prompt__button--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+/* AC-64.4. Delete, apart from Save at the far end, in red text: it opens a
+   question rather than acting, so it is not filled. */
+.item__delete {
+  margin-left: auto;
+  color: var(--danger);
+  border-color: transparent;
 }
 
 .error {

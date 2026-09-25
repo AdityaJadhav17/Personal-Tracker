@@ -22,3 +22,71 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+
+/*
+ * AC-64.1. Home's status floats at the foot of the window, over the list, so
+ * it takes no room in the page (AC-62.5). Centred on the content, not the
+ * window: the sidebar is 210px wide.
+ */
+.status--toast {
+  position: fixed;
+  bottom: var(--space-5);
+  left: calc(50% + 105px);
+  z-index: 3;
+  min-height: 0;
+  margin: 0;
+  translate: -50% 0;
+}
+
+/* Dark on light, light on dark: the page's two ends swapped, so it reads as
+   something above the page. After a while it steps aside; u still works. */
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  animation: toast-leave 200ms ease 6s forwards;
+}
+
+.toast__undo {
+  min-height: var(--control-small);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 16%, transparent);
+  color: inherit;
+  font-weight: 600;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toast__undo:hover {
+    background: color-mix(in srgb, var(--bg) 26%, transparent);
+  }
+}
+
+/* Hidden, not only faded, so the button cannot be clicked or tabbed to. */
+@keyframes toast-leave {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 700px) {
+  .status--toast {
+    left: 50%;
+  }
+}
+
+/* AC-62.5. An empty status line takes no room. What it holds arrives on a
+   click, so the page moving then is the answer to that click. */
+.status:empty {
+  min-height: 0;
+  margin: 0;
+}

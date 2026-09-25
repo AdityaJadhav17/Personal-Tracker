@@ -11,11 +11,12 @@
   font-weight: 650;
 }
 
-/* US-40. In body text rather than muted: it only appears when there is
-   something worth doing about it. */
+/* US-40. It only appears when there is something worth doing about it, so
+   AC-64.3 gives it the danger colour and Export the primary button. */
 .data__backup {
   margin: 0 0 var(--space-2);
-  color: var(--text);
+  font-weight: 500;
+  color: var(--danger);
 }
 
 /* A tool and its one line of explanation, the buttons in one column. */
@@ -34,10 +35,13 @@
   color: var(--text-muted);
 }
 
+/* AC-64.3. Export, filled while a backup is due, sits where it always does. */
+.data__tool > .prompt__button {
+  justify-self: start;
+}
+
 .data__button {
   justify-self: start;
-  padding: var(--space-1) var(--space-3);
-  font-size: 0.8125rem;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);

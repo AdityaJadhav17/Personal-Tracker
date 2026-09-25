@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { formatDue, toDueAt } from '../domain/dates';
-import { progressOf } from '../domain/goals';
+import { toDueAt } from '../domain/dates';
+import { progressOf, timeLeft } from '../domain/goals';
 import type { Goal, GoalDraft, Item } from '../domain/types';
 import MoreButton from './MoreButton';
 
@@ -13,9 +13,12 @@ interface GoalListProps {
   items: Item[];
   onAdd: (draft: GoalDraft) => void;
   onDelete: (id: string) => void;
+  /** AC-65.1. For how long is left. */
+  now: Date;
 }
 
 export default function GoalList({
+  now,
   goals,
   items,
   onAdd,
@@ -140,7 +143,7 @@ export default function GoalList({
       {pending && (
         <div className="prompt__actions">
           <button
-            className="prompt__button"
+            className="prompt__button prompt__button--danger"
             type="button"
             onClick={() => {
               onDelete(pending.id);
@@ -184,7 +187,7 @@ export default function GoalList({
                 {goal.description && (
                   <p className="goal__description">{goal.description}</p>
                 )}
-                <p className="goal__target">{formatDue(goal.targetAt)}</p>
+                <p className="goal__target">{timeLeft(goal.targetAt, now)}</p>
 
                 <p className="goal__count">{`${done} of ${total} done`}</p>
                 <progress

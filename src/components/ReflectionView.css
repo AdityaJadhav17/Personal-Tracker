@@ -2,10 +2,10 @@
 
 .reflections__question {
   margin: 0 0 var(--space-3);
-  font-size: 1.125rem;
+  font-size: 1rem;
   /* US-49. Headings tighten a little; body text stays at zero. */
   letter-spacing: -0.01em;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* AC-61.2. One segmented control: joined, sharing borders, rounded only at
@@ -70,11 +70,11 @@
 
 .reflections__heading {
   margin: var(--space-5) 0 var(--space-2);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 650;
+  /* AC-62.4. One section heading everywhere: sentence case, body ink. */
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .reflections__empty {

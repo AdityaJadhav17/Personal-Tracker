@@ -13,11 +13,12 @@
 :root {
   color-scheme: light dark;
 
-  --bg: light-dark(#f7f9f9, #0f172a);
+  --bg: light-dark(#f5f6f8, #0f172a);
   --surface: light-dark(#ffffff, #192134);
-  --text: light-dark(#134e4a, #e2e8f0);
+  /* AC-62.2. Neutral ink; the accent is for what you can press. */
+  --text: light-dark(#1d2530, #e2e8f0);
   --text-muted: light-dark(#475569, #94a3b8);
-  --border: light-dark(#d9e4e3, #2a3550);
+  --border: light-dark(#dde2e8, #2a3550);
   --accent: light-dark(#0f766e, #2dd4bf);
   --on-accent: light-dark(#ffffff, #0f172a);
   --accent-soft: light-dark(#e6f4f2, #163a37);
@@ -34,10 +35,11 @@
   --course-3: light-dark(#7c3aed, #a78bfa);
   --course-4: light-dark(#be185d, #f472b6);
 
-  /* The sidebar stays dark in both schemes, as in the reference screenshots. */
-  --sidebar-bg: #172033;
-  --sidebar-text: #cbd5e1;
-  --sidebar-current: #2dd4bf;
+  /* AC-62.1. The sidebar follows the theme, a shade off the page. */
+  --sidebar-bg: light-dark(#eceef2, #172033);
+  --sidebar-text: light-dark(#3b4453, #cbd5e1);
+  --sidebar-current: light-dark(#0f766e, #2dd4bf);
+  --sidebar-current-bg: light-dark(#ffffff, #232d44);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -45,6 +47,9 @@
   --space-4: 16px;
   --space-5: 24px;
   --radius: 6px;
+  /* AC-62.3. The two button heights: in the page, and inside a row. */
+  --control: 2.25rem;
+  --control-small: 1.75rem;
   --speed: 150ms;
 
   /*

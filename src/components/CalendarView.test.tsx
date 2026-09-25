@@ -598,3 +598,22 @@ describe('US-53 adding from the calendar', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+test('AC-63.1 Today brings back the current month from anywhere', async () => {
+  const user = userEvent.setup();
+  renderWith([]);
+  await user.click(screen.getByRole('button', { name: 'Next month' }));
+  await user.click(screen.getByRole('button', { name: 'Next month' }));
+  expect(screen.getByRole('heading', { name: 'November 2026' })).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: 'Today' }));
+
+  expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
+});
+
+test('AC-63.3 a week with nothing due shows no count', () => {
+  renderWith([dueOn('2026-09-16', 'A')]);
+
+  expect(screen.getByRole('cell', { name: '1 due' })).toBeVisible();
+  expect(screen.queryByRole('cell', { name: '0 due' })).toBeNull();
+});

@@ -30,9 +30,7 @@
 
 .goal__target {
   margin: 0 0 var(--space-3);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 

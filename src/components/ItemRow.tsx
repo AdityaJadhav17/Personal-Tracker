@@ -244,7 +244,7 @@ export default function ItemRow({
           </p>
           <div className="prompt__actions">
             <button
-              className="prompt__button"
+              className="prompt__button prompt__button--danger"
               type="button"
               onClick={() => onDelete(item.id)}
             >
@@ -469,7 +469,7 @@ export default function ItemRow({
               never shows a control that destroys it.
             */}
             <button
-              className="prompt__button prompt__button--quiet"
+              className="prompt__button prompt__button--quiet item__delete"
               type="button"
               aria-label={`Delete ${item.title}`}
               onClick={() => setConfirming(true)}
@@ -493,7 +493,7 @@ export default function ItemRow({
               </p>
               <div className="prompt__actions">
                 <button
-                  className="prompt__button"
+                  className="prompt__button prompt__button--danger"
                   type="button"
                   onClick={() => onDelete(item.id)}
                 >

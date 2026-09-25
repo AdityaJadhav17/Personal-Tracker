@@ -62,8 +62,10 @@ export default function TrendsView({ series }: TrendsViewProps) {
         read={(count) => `${count} finished`}
       />
 
-      <h3 className="trends__heading">The numbers</h3>
-      <div className="trends__table">
+      {/* AC-65.2. The charts carry the shape; the exact numbers are one
+          click away rather than a second copy of the page. */}
+      <details className="trends__table">
+        <summary className="trends__summary">Show the numbers</summary>
         <table>
           <thead>
             <tr>
@@ -83,7 +85,7 @@ export default function TrendsView({ series }: TrendsViewProps) {
             ))}
           </tbody>
         </table>
-      </div>
+      </details>
     </section>
   );
 }

@@ -143,7 +143,7 @@ export default function CourseList({
       {pending && (
         <div className="prompt__actions">
           <button
-            className="prompt__button"
+            className="prompt__button prompt__button--danger"
             type="button"
             onClick={() => {
               onDelete(pending.id);

@@ -2,14 +2,11 @@
 
 /*
  * Overdue needs a decision, not a date, so it keeps its own group above the
- * days: tinted, so it reads as "deal with these" without shouting.
+ * days. AC-64.2: the red heading and each row's red "how late" say it; a
+ * tinted box around them was a third alarm for the same fact.
  */
 .overdue {
-  margin-bottom: var(--space-5);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
-  border-radius: 10px;
-  background: var(--danger-soft);
+  margin-bottom: var(--space-4);
 }
 
 .overdue__title {

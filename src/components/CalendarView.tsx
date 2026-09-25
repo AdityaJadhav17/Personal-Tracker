@@ -157,23 +157,37 @@ export default function CalendarView({
         <h1 className="page-title">{monthLabel(month)}</h1>
 
         <div className="calendar__moves">
+          {/* AC-63.1. Chevrons either side of Today, the way back from
+              anywhere. The chevrons keep their names for a screen reader. */}
           <button
-            className="calendar__move"
+            className="calendar__move calendar__move--icon"
             type="button"
+            aria-label="Previous month"
             onClick={() => turn(-1)}
             // AC-39.6. Hovering here mid-drag turns the page, so an item can
             // be dropped in a month that was not on screen when it was picked up.
             onDragEnter={() => turn(-1)}
           >
-            Previous month
+            <Chevron path="M15 6l-6 6 6 6" />
           </button>
           <button
             className="calendar__move"
             type="button"
+            onClick={() => {
+              setOpened(null);
+              setMonth(monthValue(now));
+            }}
+          >
+            Today
+          </button>
+          <button
+            className="calendar__move calendar__move--icon"
+            type="button"
+            aria-label="Next month"
             onClick={() => turn(1)}
             onDragEnter={() => turn(1)}
           >
-            Next month
+            <Chevron path="M9 6l6 6-6 6" />
           </button>
         </div>
       </div>
@@ -190,6 +204,8 @@ export default function CalendarView({
 
       <table
         className="calendar__grid"
+        // AC-63.5. Five weeks or six share the window's height.
+        style={{ '--weeks': cells.length / 7 } as React.CSSProperties}
         onDragEnter={() => {
           inside.current += 1;
         }}
@@ -298,8 +314,28 @@ function LoadCell({ count }: { count: number }) {
   const heavy = count >= HEAVY_WEEK;
   return (
     <td className={`calendar__load ${heavy ? 'calendar__load--heavy' : ''}`}>
-      {count} due{heavy && ', heavy'}
+      {/* AC-63.3. An empty week says nothing rather than "0 due". */}
+      {count > 0 && `${count} due${heavy ? ', heavy' : ''}`}
     </td>
+  );
+}
+
+/** AC-63.1. A chevron on the 24px grid the sidebar icons use. */
+function Chevron({ path }: { path: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={path} />
+    </svg>
   );
 }
 

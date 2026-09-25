@@ -2,11 +2,11 @@
 
 .trends__heading {
   margin: var(--space-4) 0 var(--space-2);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 650;
+  /* AC-62.4. One section heading everywhere: sentence case, body ink. */
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .trends__empty {
@@ -149,13 +149,26 @@
 }
 
 .trends__table thead th {
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 .trends__table tbody th {
   font-weight: 400;
   color: var(--text-muted);
+}
+
+/* AC-65.2. The disclosure reads as a quiet control under the charts. */
+.trends__summary {
+  width: fit-content;
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trends__summary:hover {
+    color: var(--text);
+  }
 }

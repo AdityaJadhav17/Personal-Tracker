@@ -374,3 +374,7 @@ passed 1,300 lines.
 - [US-59, the opened row](stories/US-59.md)
 - [US-60, courses and goals, list first](stories/US-60.md)
 - [US-61, reflections and trends](stories/US-61.md)
+- [US-62, one visual system](stories/US-62.md)
+- [US-63, calendar wayfinding](stories/US-63.md)
+- [US-64, feedback you can act on](stories/US-64.md)
+- [US-65, details](stories/US-65.md)

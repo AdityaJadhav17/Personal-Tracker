@@ -102,6 +102,8 @@ export function useDatabase(): {
   db: Database | null;
   /** The item most recently finished, for the undo prompt. */
   undoableTitle: string | null;
+  /** AC-64.1. What u does, for the Undo button. */
+  undo: () => void;
   /** Empty unless the last write was refused. */
   storageError: string;
   actions: DatabaseActions;
@@ -159,32 +161,37 @@ export function useDatabase(): {
     }));
   }
 
-  // AC-05.2. The handler lives inside the effect so it always closes over the
-  // current database rather than a stale one.
+  /** AC-05.2 and AC-64.1. The inverse of the last done, from u or a click. */
+  function undo() {
+    if (!db || !undoable) return;
+
+    commit({
+      ...db,
+      items: db.items
+        // AC-28.4. The one it created goes with it.
+        .filter((item) => item.id !== undoable.spawnedId)
+        .map((item) =>
+          item.id === undoable.doneId
+            ? { ...item, status: 'open', completedAt: null }
+            : item,
+        ),
+    });
+    setUndoable(null);
+  }
+
+  // AC-05.2. Re-attached every render so it always closes over the current
+  // database rather than a stale one.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'u') return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (isTyping(document.activeElement)) return;
-      if (!db || !undoable) return;
-
-      commit({
-        ...db,
-        items: db.items
-          // AC-28.4. The one it created goes with it.
-          .filter((item) => item.id !== undoable.spawnedId)
-          .map((item) =>
-            item.id === undoable.doneId
-              ? { ...item, status: 'open', completedAt: null }
-              : item,
-          ),
-      });
-      setUndoable(null);
+      undo();
     }
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [db, undoable]);
+  });
 
   const actions: DatabaseActions = {
     addItem(draft) {
@@ -374,6 +381,7 @@ export function useDatabase(): {
     storageError,
     undoableTitle:
       db?.items.find((item) => item.id === undoable?.doneId)?.title ?? null,
+    undo,
     actions,
   };
 }

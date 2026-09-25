@@ -118,6 +118,8 @@ test('AC-18.4 the same numbers are in a table', async ({ page }) => {
     [dayKey(-1), dayKey(-1)],
   );
 
+  // AC-65.2. Behind a disclosure now, one click away.
+  await page.getByText('Show the numbers', { exact: true }).click();
   await expect(page.getByRole('table')).toBeVisible();
   const row = page.getByRole('row', { name: new RegExp(shortName(-1)) });
   await expect(row).toContainText('5');
@@ -134,6 +136,7 @@ test('AC-18.4 a day with no reflection reads as no entry', async ({ page }) => {
     [],
   );
 
+  await page.getByText('Show the numbers', { exact: true }).click();
   await expect(
     page.getByRole('row', { name: new RegExp(shortName(-2)) }),
   ).toContainText('No entry');

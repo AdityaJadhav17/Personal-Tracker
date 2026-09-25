@@ -1,4 +1,4 @@
-import { deleteGoal, progressOf } from './goals';
+import { deleteGoal, progressOf, timeLeft } from './goals';
 import type { Database, Goal, Item } from './types';
 
 function anItem(id: string, goalId: string | null, done = false): Item {
@@ -148,5 +148,22 @@ describe('deleteGoal', () => {
     deleteGoal(db, 'g1');
 
     expect(JSON.stringify(db)).toBe(snapshot);
+  });
+});
+
+describe('AC-65.1 how long is left until a goal', () => {
+  // Thursday 24 September 2026, 10am.
+  const NOW = new Date(2026, 8, 24, 10);
+  const at = (month: number, date: number) =>
+    new Date(2026, month, date, 23, 59).toISOString();
+
+  test.each([
+    [at(9, 10), 'Oct 10 · 16 days left'],
+    [at(8, 26), 'Sep 26 · 2 days left'],
+    [at(8, 25), 'Sep 25 · Tomorrow'],
+    [at(8, 24), 'Sep 24 · Today'],
+    [at(8, 20), 'Sep 20 · Passed'],
+  ])('AC-65.1 %s reads %s', (targetAt, expected) => {
+    expect(timeLeft(targetAt, NOW)).toBe(expected);
   });
 });

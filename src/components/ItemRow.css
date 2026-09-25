@@ -177,13 +177,6 @@
   grid-column: 1 / -1;
 }
 
-/* AC-59.2. One height for every single-line control, whatever its kind. */
-.item__edit .form__input:not(textarea) {
-  box-sizing: border-box;
-  height: 2.25rem;
-  padding-block: 0;
-}
-
 .item__due {
   display: inline-flex;
   flex: none;

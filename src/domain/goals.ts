@@ -1,4 +1,5 @@
-import type { Database, Item } from './types';
+import { daysBetween, localDay, monthDay } from './dates';
+import type { Database, Goal, Item } from './types';
 
 /**
  * How much of a goal's work is finished.
@@ -34,4 +35,21 @@ export function deleteGoal(db: Database, id: string): Database {
       item.goalId === id ? { ...item, goalId: null } : item,
     ),
   };
+}
+
+/**
+ * AC-65.1. A goal's target as its date and how long is left, "Oct 10 · 16
+ * days left". No time of day: a goal is aimed at a day, not a minute.
+ */
+export function timeLeft(targetAt: Goal['targetAt'], now: Date): string {
+  const left = -daysBetween(targetAt, now);
+  const when =
+    left < 0
+      ? 'Passed'
+      : left === 0
+        ? 'Today'
+        : left === 1
+          ? 'Tomorrow'
+          : `${left} days left`;
+  return `${monthDay(localDay(targetAt))} · ${when}`;
 }

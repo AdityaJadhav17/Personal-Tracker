@@ -27,7 +27,7 @@ import type { Database } from './domain/types';
 import { useDatabase } from './state/useDatabase';
 
 export default function App() {
-  const { db, undoableTitle, storageError, actions } = useDatabase();
+  const { db, undoableTitle, undo, storageError, actions } = useDatabase();
 
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
@@ -202,6 +202,7 @@ export default function App() {
         <>
           <h1 className="page-title">Goals</h1>
           <GoalList
+            now={current}
             goals={db.goals}
             items={db.items}
             onAdd={actions.addGoal}
@@ -231,8 +232,9 @@ export default function App() {
             {/* US-40. Beside Export, because that is what fixes it. */}
             {backup && <p className="data__backup">{backup}</p>}
             <div className="data__tool">
+              {/* AC-64.3. The one thing to do here while a backup is due. */}
               <button
-                className="data__button"
+                className={backup ? 'prompt__button' : 'data__button'}
                 type="button"
                 onClick={handleExport}
               >
@@ -371,14 +373,23 @@ export default function App() {
           />
 
           {/* The region stays put so it is announced; the message inside is
-              re-inserted per item so it enters (AC-48.2). */}
-          <p className="status" role="status">
+              re-inserted per item so it enters (AC-48.2). AC-64.1: it floats
+              at the foot of the window, so it takes no room in the page. */}
+          <div className="status status--toast" role="status">
             {undoableTitle && (
-              <span className="status__message" key={undoableTitle}>
-                Marked {undoableTitle} done. Press u to undo.
+              <span className="status__message toast" key={undoableTitle}>
+                Marked {undoableTitle} done.
+                <button
+                  className="toast__undo"
+                  type="button"
+                  aria-keyshortcuts="u"
+                  onClick={undo}
+                >
+                  Undo
+                </button>
               </span>
             )}
-          </p>
+          </div>
 
           {hiddenByFilter ? (
             <section className="empty">
