@@ -1551,6 +1551,7 @@ test('the warning clears once a write succeeds again', async () => {
 
 /**
  * Change an item's repeat through the panel the row opens, then close it.
+ * AC-70.2: picking it is what saves it.
  *
  * Closing is what a person does, and it matters for the assertions too: an
  * open row contains the repeat select, whose options read the same words as
@@ -1563,7 +1564,6 @@ async function setRepeat(title: string, repeat: string) {
     screen.getByLabelText(`Repeat for ${title}`),
     repeat,
   );
-  await user.click(screen.getByRole('button', { name: `Save ${title}` }));
   await user.click(screen.getByRole('button', { name: title }));
 }
 

@@ -75,13 +75,16 @@ test('AC-64.4 Delete is red text at the far end', async ({ page }) => {
   await add(page, 'Rent', 1);
   await open(page, 'Rent');
 
-  const save = (await page
-    .getByRole('button', { name: 'Save Rent', exact: true })
+  // US-70 took Save away; Delete ends the row where the fields end.
+  const field = (await page
+    .getByLabel('Title for Rent', { exact: true })
     .boundingBox())!;
   const remove = page.getByRole('button', { name: 'Delete Rent', exact: true });
   const box = (await remove.boundingBox())!;
   expect(await remove.evaluate((el) => getComputedStyle(el).color)).toBe(
     DANGER,
   );
-  expect(box.x - (save.x + save.width)).toBeGreaterThan(200);
+  expect(Math.abs(box.x + box.width - (field.x + field.width))).toBeLessThan(
+    16,
+  );
 });

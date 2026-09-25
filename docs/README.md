@@ -48,7 +48,7 @@ How it is built and what counts as finished.
   with what was rejected and why.
 - [design/ui-final-polish-plan.md](design/ui-final-polish-plan.md) — the
   last pass, proposed after US-68: consistency, edits that save as you go,
-  and Windows contrast themes. Not built.
+  and Windows contrast themes. Built as US-69 to US-72.
 - [design/ui-reference.md](design/ui-reference.md) — the dashboard screenshots
   that set the visual direction, what transfers from them and what does not.
 - [design/ui-plan.md](design/ui-plan.md) — the layout reasoning, with each

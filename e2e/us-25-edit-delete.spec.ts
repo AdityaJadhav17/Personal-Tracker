@@ -15,7 +15,8 @@ test('AC-25.1 a renamed item keeps its new name across a reload', async ({
 
   await open(page, 'Midterm');
   await page.getByLabel('Title for Midterm').fill('CSE 110 midterm');
-  await page.getByRole('button', { name: 'Save Midterm' }).click();
+  // AC-70.1. Enter keeps it; there is no Save.
+  await page.keyboard.press('Enter');
 
   await expect(page.getByText('CSE 110 midterm')).toBeVisible();
 
@@ -32,7 +33,8 @@ test('AC-25.3 clearing the title saves nothing and says why', async ({
 
   await open(page, 'Midterm');
   await page.getByLabel('Title for Midterm').fill('');
-  await page.getByRole('button', { name: 'Save Midterm' }).click();
+  // AC-70.1. Enter keeps it; there is no Save.
+  await page.keyboard.press('Enter');
 
   await expect(page.getByText('Give it a title.')).toBeVisible();
 
@@ -52,7 +54,8 @@ test('AC-25.2 moving the date moves the item to its new day', async ({
 
   await open(page, 'Midterm');
   await page.getByLabel('Due for Midterm').fill(isoDate(30));
-  await page.getByRole('button', { name: 'Save Midterm' }).click();
+  // AC-70.1. Enter keeps it; there is no Save.
+  await page.keyboard.press('Enter');
 
   await expect(
     page.getByRole('heading', { name: dayName(30), exact: true }),
@@ -69,7 +72,8 @@ test('AC-25.2 a moved deadline survives a reload', async ({ page }) => {
   await open(page, 'Midterm');
   await page.getByLabel('Due for Midterm').fill(isoDate(30));
   await page.getByLabel('Time for Midterm').fill('09:00');
-  await page.getByRole('button', { name: 'Save Midterm' }).click();
+  // AC-70.1. Enter keeps it; there is no Save.
+  await page.keyboard.press('Enter');
 
   await page.reload();
   await expect(page.getByText(/9:00 AM/)).toBeVisible();
@@ -162,6 +166,8 @@ test('AC-25.7 deleting is not finishing: nothing counts as completed', async ({
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
+  // AC-71.1. It folds away before it goes.
+  await expect(page.getByText('Midterm', { exact: true })).toHaveCount(0);
 
   // The whole point of US-25: clearing a mistake must not inflate the
   // completed numbers the way marking it done would.

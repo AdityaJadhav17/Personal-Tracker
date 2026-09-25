@@ -216,7 +216,9 @@
   color: var(--on-accent);
 }
 
-.item--finishing {
+/* AC-71.1. A row on its way out, done or deleted, takes no more clicks. */
+.item--finishing,
+.item--leaving {
   overflow: hidden;
   pointer-events: none;
 }

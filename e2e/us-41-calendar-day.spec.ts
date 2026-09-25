@@ -97,7 +97,8 @@ test('AC-41.3 an item opened from the calendar can be moved by its date field, n
     .getByRole('button', { name: 'CSE 123 HW 1', exact: true })
     .click();
   await opened.getByLabel('Due for CSE 123 HW 1').fill(input(later));
-  await opened.getByRole('button', { name: 'Save CSE 123 HW 1' }).click();
+  // AC-70.1. Enter keeps it; there is no Save.
+  await page.keyboard.press('Enter');
 
   await page.reload();
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();

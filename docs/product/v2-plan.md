@@ -382,4 +382,6 @@ passed 1,300 lines.
 - [US-67, finishing and removing feel final, and forgivable](stories/US-67.md)
 - [US-68, neighbouring dates in the calendar](stories/US-68.md)
 - [US-69, one page header, one corner scale, spacing that scales](stories/US-69.md)
+- [US-70, edits save as you go](stories/US-70.md)
+- [US-71, leaving the list looks like one thing](stories/US-71.md)
 - [US-72, Windows contrast themes](stories/US-72.md)

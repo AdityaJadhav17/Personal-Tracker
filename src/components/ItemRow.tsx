@@ -91,30 +91,53 @@ export default function ItemRow({
   const rowRef = useRef<HTMLLIElement>(null);
   useLayoutEffect(() => {
     if (!finishing) return;
-    const row = rowRef.current;
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!row?.animate || still) {
+    // The check shows for 180ms before the row starts to close.
+    const fold = foldAway(rowRef.current, 180);
+    if (!fold) {
       onLeft?.();
       return;
     }
-    const fold = row.animate(
-      [
-        { height: `${row.offsetHeight}px`, opacity: 1 },
-        { height: '0px', opacity: 0, paddingBlock: '0px' },
-      ],
-      {
-        duration: 220,
-        delay: 180,
-        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
-        fill: 'forwards',
-      },
-    );
     fold.finished.then(() => onLeft?.()).catch(() => {});
     // Undone mid-fold: the row stands back up where it was.
     return () => fold.cancel();
     // Runs when the item turns done, not when Home hands down a new onLeft.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finishing]);
+
+  // AC-71.1. Delete and Drop leave the way a tick does: the row folds, then
+  // the item goes. A delete lost to a reload mid-fold leaves the item where
+  // it was, which is harmless, so unlike a tick it can wait for the fold.
+  const [removing, setRemoving] = useState(false);
+  // AC-71.2. The fold ends after other rows may have changed the database,
+  // so it deletes through whatever onDelete the latest render handed down.
+  const deleteRef = useRef(onDelete);
+  useLayoutEffect(() => {
+    deleteRef.current = onDelete;
+  });
+
+  // Whether a delete is waiting on its fold. If the row unmounts first, say
+  // because you switched views mid-fold, the delete happens then instead of
+  // being lost with the row.
+  const pending = useRef(false);
+  const finishDelete = () => {
+    if (!pending.current) return;
+    pending.current = false;
+    deleteRef.current(item.id);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => finishDelete, []);
+
+  function remove() {
+    if (removing) return;
+    const fold = foldAway(rowRef.current, 0);
+    if (!fold) {
+      onDelete(item.id);
+      return;
+    }
+    setRemoving(true);
+    pending.current = true;
+    fold.finished.then(finishDelete).catch(() => {});
+  }
   // US-45. The add-a-step form, held until Add step.
   const [stepTitle, setStepTitle] = useState('');
   const [stepDate, setStepDate] = useState('');
@@ -173,23 +196,42 @@ export default function ItemRow({
     ),
   ].filter((part) => part !== false && part !== null && part !== undefined);
 
-  function handleSave() {
+  /**
+   * AC-70. Keep what the row says now. Called when focus leaves the open
+   * row, on Enter in the title, date or time, and when a repeat is picked,
+   * which passes its new value since the state has not caught up yet.
+   */
+  function save(picked: { repeat?: Repeat } = {}) {
     const trimmed = title.trim();
     const at = toDueAt(dueDate, dueTime);
+    const nextRepeat = picked.repeat ?? repeat;
 
     setTitleError(trimmed ? '' : TITLE_REQUIRED);
     setDueError(at ? '' : DUE_REQUIRED);
-    // AC-25.3. Nothing is written while either half is unusable.
+    // AC-25.3 and AC-70.3. Nothing is written while either half is
+    // unusable; what was typed stays, to be fixed.
     if (!trimmed || !at) return;
+    // AC-70.5. Leaving a row you only read writes nothing.
+    if (
+      trimmed === item.title &&
+      at === item.dueAt &&
+      nextRepeat === item.repeat
+    ) {
+      return;
+    }
 
-    onEdit(item.id, trimmed, at, repeat);
+    onEdit(item.id, trimmed, at, nextRepeat);
   }
+
+  const saveOnEnter = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') save();
+  };
 
   return (
     // AC-57.7. The priority modifier makes a high item's title bold. Position
     // in the sorted list is the primary signal; the weight only confirms it.
     <li
-      className={`item item--${item.priority} ${finishing ? 'item--finishing' : ''}`}
+      className={`item item--${item.priority} ${finishing ? 'item--finishing' : ''} ${removing ? 'item--leaving' : ''}`}
       ref={rowRef}
     >
       {/*
@@ -288,15 +330,24 @@ export default function ItemRow({
             className="data__button"
             type="button"
             aria-label={`Drop ${item.title}`}
-            // AC-67.3. At once; the undo message is the way back.
-            onClick={() => onDelete(item.id)}
+            // AC-67.3 and AC-71.1. No question; it folds away, and the undo
+            // message is the way back.
+            onClick={remove}
           >
             Drop
           </button>
         </span>
       )}
       {open && (
-        <div className="item__edit">
+        <div
+          className="item__edit"
+          // AC-70.1. The row is the unit you edit: moving between its own
+          // fields keeps your place, leaving it keeps your changes. Saving
+          // the date alone would move the row before you reached the time.
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) save();
+          }}
+        >
           {/*
             The visible words are a span, not a <label htmlFor>, so each input
             has exactly one source for its accessible name: the aria-label,
@@ -314,6 +365,7 @@ export default function ItemRow({
               aria-label={`Title for ${item.title}`}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              onKeyDown={saveOnEnter}
               aria-describedby={
                 titleError ? `title-error-${item.id}` : undefined
               }
@@ -336,6 +388,7 @@ export default function ItemRow({
               aria-label={`Due for ${item.title}`}
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
+              onKeyDown={saveOnEnter}
               aria-describedby={dueError ? `due-error-${item.id}` : undefined}
             />
             {dueError && (
@@ -356,6 +409,7 @@ export default function ItemRow({
               aria-label={`Time for ${item.title}`}
               value={dueTime}
               onChange={(event) => setDueTime(event.target.value)}
+              onKeyDown={saveOnEnter}
             />
           </div>
 
@@ -372,7 +426,12 @@ export default function ItemRow({
               id={`repeat-${item.id}`}
               aria-label={`Repeat for ${item.title}`}
               value={repeat}
-              onChange={(event) => setRepeat(event.target.value as Repeat)}
+              // AC-70.2. Picked is kept, like course and goal below.
+              onChange={(event) => {
+                const picked = event.target.value as Repeat;
+                setRepeat(picked);
+                save({ repeat: picked });
+              }}
             >
               <option value="none">Never</option>
               <option value="weekly">Weekly</option>
@@ -491,14 +550,6 @@ export default function ItemRow({
           )}
 
           <div className="item__actions">
-            <button
-              className="prompt__button"
-              type="button"
-              aria-label={`Save ${item.title}`}
-              onClick={handleSave}
-            >
-              Save
-            </button>
             {/*
               Delete lives inside the disclosure, so a row you are only reading
               never shows a control that destroys it.
@@ -507,8 +558,9 @@ export default function ItemRow({
               className="prompt__button prompt__button--quiet item__delete"
               type="button"
               aria-label={`Delete ${item.title}`}
-              // AC-67.3. At once; the undo message is the way back.
-              onClick={() => onDelete(item.id)}
+              // AC-67.3 and AC-71.1. No question; it folds away, and the undo
+              // message is the way back.
+              onClick={remove}
             >
               Delete
             </button>
@@ -516,5 +568,28 @@ export default function ItemRow({
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * AC-67.1 and AC-71.1. Close a row up so the rows below slide into its place
+ * rather than jumping. Height has to move for that; the row is one line, so
+ * the layout cost is small. Null when there is nothing to animate (jsdom has
+ * no animations, and reduced motion asks for none): the caller goes at once.
+ */
+function foldAway(row: HTMLElement | null, delay: number): Animation | null {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!row?.animate || still) return null;
+  return row.animate(
+    [
+      { height: `${row.offsetHeight}px`, opacity: 1 },
+      { height: '0px', opacity: 0, paddingBlock: '0px' },
+    ],
+    {
+      duration: 220,
+      delay,
+      easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      fill: 'forwards',
+    },
   );
 }

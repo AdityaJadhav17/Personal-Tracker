@@ -181,7 +181,7 @@ test('AC-42.3 a deadline can be moved from the calendar with the keyboard alone'
   await page.keyboard.type(
     value.split('-').slice(1).join('') + value.slice(0, 4),
   );
-  await row.getByRole('button', { name: 'Save Rent' }).focus();
+  // AC-70.1. Enter in the field keeps it; there is no Save to reach.
   await page.keyboard.press('Enter');
 
   const stored = await page.evaluate(() => {

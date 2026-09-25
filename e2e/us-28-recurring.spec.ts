@@ -218,7 +218,6 @@ test('AC-29.3 and AC-29.4 a repeat can be switched off, and then creates nothing
   // Open the row, stop the repeat, save, close.
   await page.getByRole('button', { name: 'Rent', exact: true }).click();
   await page.getByLabel('Repeat for Rent').selectOption('none');
-  await page.getByRole('button', { name: 'Save Rent' }).click();
   await page.getByRole('button', { name: 'Rent', exact: true }).click();
 
   await expect(row.getByText('Monthly')).toHaveCount(0);
@@ -235,7 +234,6 @@ test('AC-29.2 a repeat switched on survives a reload and then works', async ({
 
   await page.getByRole('button', { name: 'Rent', exact: true }).click();
   await page.getByLabel('Repeat for Rent').selectOption('monthly');
-  await page.getByRole('button', { name: 'Save Rent' }).click();
 
   await page.reload();
 
@@ -255,7 +253,6 @@ test('AC-29.6 changing the repeat does not move the deadline', async ({
 
   await page.getByRole('button', { name: 'Rent', exact: true }).click();
   await page.getByLabel('Repeat for Rent').selectOption('weekly');
-  await page.getByRole('button', { name: 'Save Rent' }).click();
 
   expect((await stored(page))[0]!.dueAt).toBe(before);
 });

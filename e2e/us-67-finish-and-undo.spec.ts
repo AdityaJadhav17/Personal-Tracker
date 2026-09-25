@@ -90,7 +90,8 @@ test('AC-67.4 a delete from the calendar day can be undone right there', async (
   const day = page.getByRole('dialog');
   await day.getByRole('button', { name: 'Rent', exact: true }).click();
   await day.getByRole('button', { name: 'Delete Rent', exact: true }).click();
-  expect(await stored(page)).toEqual([]);
+  // AC-71.1. Gone once its fold ends.
+  await expect.poll(() => stored(page)).toEqual([]);
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   expect((await stored(page)).map((i) => i.title)).toEqual(['Rent']);

@@ -92,3 +92,15 @@
   min-height: 0;
   margin: 0;
 }
+
+/* AC-71.3. The fade waits while you reach for Undo, or tab to it. Hover
+   only with a mouse: a tap would leave it paused for good. */
+.toast:focus-within {
+  animation-play-state: paused;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toast:hover {
+    animation-play-state: paused;
+  }
+}

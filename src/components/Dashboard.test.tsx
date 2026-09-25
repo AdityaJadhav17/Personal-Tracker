@@ -968,7 +968,7 @@ function renderEditable(
   );
 }
 
-test('AC-25.1 the title can be changed, and the new one is reported', async () => {
+test('AC-25.1 and AC-70.1 the title can be changed, and leaving the row reports it', async () => {
   const user = userEvent.setup();
   const edits: string[] = [];
   renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
@@ -977,7 +977,8 @@ test('AC-25.1 the title can be changed, and the new one is reported', async () =
   const field = screen.getByLabelText('Title for Midterm');
   await user.clear(field);
   await user.type(field, 'CSE 110 midterm');
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+  // AC-70.1. Leaving the row saves it.
+  await user.click(document.body);
 
   expect(edits).toEqual(['CSE 110 midterm']);
 });
@@ -1003,7 +1004,8 @@ test('AC-25.2 the due date can be moved, and comes back as an instant', async ()
   fireEvent.change(screen.getByLabelText('Time for Midterm'), {
     target: { value: '17:00' },
   });
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+  screen.getByLabelText('Time for Midterm').focus();
+  await user.click(document.body);
 
   expect(dues).toHaveLength(1);
   const moved = new Date(dues[0]!);
@@ -1013,14 +1015,14 @@ test('AC-25.2 the due date can be moved, and comes back as an instant', async ()
   expect(moved.getHours()).toBe(17);
 });
 
-test('AC-25.3 an empty title saves nothing and says why', async () => {
+test('AC-25.3 and AC-70.3 an empty title saves nothing and says why', async () => {
   const user = userEvent.setup();
   const edits: string[] = [];
   renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
 
   await openItem(user, 'Midterm');
   await user.clear(screen.getByLabelText('Title for Midterm'));
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
+  await user.click(document.body);
 
   expect(edits).toEqual([]);
   expect(screen.getByText('Give it a title.')).toBeVisible();
@@ -1075,8 +1077,8 @@ test('AC-29.2 setting a repeat reports it with the rest of the edit', async () =
     screen.getByLabelText('Repeat for Midterm'),
     'monthly',
   );
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
 
+  // AC-70.2. Picked is saved.
   expect(edits).toEqual(['monthly']);
 });
 
@@ -1090,7 +1092,6 @@ test('AC-29.3 clearing a repeat reports never', async () => {
 
   await openItem(user, 'Midterm');
   await user.selectOptions(screen.getByLabelText('Repeat for Midterm'), 'none');
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
 
   expect(edits).toEqual(['none']);
 });
@@ -1111,7 +1112,6 @@ test('AC-29.6 changing only the repeat leaves the title and date alone', async (
     screen.getByLabelText('Repeat for Midterm'),
     'weekly',
   );
-  await user.click(screen.getByRole('button', { name: 'Save Midterm' }));
 
   expect(saved[0]?.title).toBe('Midterm');
   expect(saved[0]?.dueAt).toBe(anItem('Midterm', 1).dueAt);
@@ -1419,5 +1419,58 @@ describe('US-59 the opened row', () => {
     ]) {
       expect(within(row).getByText(words, { exact: true })).toBeVisible();
     }
+  });
+});
+
+describe('US-70 edits save as you go', () => {
+  test('AC-70.1 Enter in the title saves it without leaving', async () => {
+    const user = userEvent.setup();
+    const edits: string[] = [];
+    renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
+
+    await openItem(user, 'Midterm');
+    const field = screen.getByLabelText('Title for Midterm');
+    await user.clear(field);
+    await user.type(field, 'Midterm 1{Enter}');
+
+    expect(edits).toEqual(['Midterm 1']);
+  });
+
+  test('AC-70.1 moving between fields inside the row saves nothing yet', async () => {
+    const user = userEvent.setup();
+    const edits: string[] = [];
+    renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
+
+    await openItem(user, 'Midterm');
+    await user.type(screen.getByLabelText('Title for Midterm'), ' 1');
+    await user.click(screen.getByLabelText('Due for Midterm'));
+
+    expect(edits).toEqual([]);
+  });
+
+  test('AC-70.4 the open row has no Save, and Delete is still there', async () => {
+    const user = userEvent.setup();
+    renderEditable();
+
+    await openItem(user, 'Midterm');
+
+    expect(
+      screen.queryByRole('button', { name: /^Save/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Delete Midterm' }),
+    ).toBeVisible();
+  });
+
+  test('AC-70.5 leaving a row you did not change saves nothing', async () => {
+    const user = userEvent.setup();
+    const edits: string[] = [];
+    renderEditable({}, { onEdit: (_id, title) => edits.push(title) });
+
+    await openItem(user, 'Midterm');
+    await user.click(screen.getByLabelText('Title for Midterm'));
+    await user.click(document.body);
+
+    expect(edits).toEqual([]);
   });
 });
