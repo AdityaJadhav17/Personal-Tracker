@@ -1540,3 +1540,90 @@ adding a field or a view, and a rule about Playwright's substring matching.
 **Where it stands.** 642 unit tests and 201 Playwright specs pass, lint and
 typecheck are clean, and the build passes. What is left is Aditya's: push,
 deploy, re-export the calendar to the phone, and use it.
+
+## 2026-09-24: UI polish, deploys that run themselves, and Home as a timeline
+
+Aditya asked for the UI polish phases, for clicking the calendar to add, and
+reported a bug: a monthly rent never showed in November. Later the same day he
+asked to stop running `npm run deploy` by hand, and for an audit that made the
+UI "modern, not AI slop".
+
+**Built, in order.** US-47 to US-51 were the polish phases: press feedback and
+motion tokens, feedback while dragging and opening, type tracked by size and a
+more-contrast palette, a title bar that matches the page, and a light and dark
+toggle. US-52 fixed the November bug by drawing a repeat's later rounds on the
+calendar as dashed previews. US-53 made any day open as a popover with its own
+add form, picked from three prototypes. US-54 capped Home at ten upcoming
+items with overdue always whole, and US-55 put every list in date order, with
+priority only breaking ties on the same day.
+
+**Deploys.** US-56 is `scripts/update.mjs`, run every five minutes by a
+scheduled task. It keeps its own clone, waits for CI to go green on the new
+commit, builds, checks, and writes a marker, so a push is live about five
+minutes after CI passes and a half-finished deploy repairs itself on the next
+run.
+
+**The first audit.** US-57 rebuilt Home as a timeline, the day as a column on
+the left, picked from three prototypes. US-58 gathered export and import into
+a Data view, US-59 laid the open row out as a grid, US-60 put Courses and
+Goals list-first with one colour per course, and US-61 gave the charts titles,
+scales and a hover readout.
+
+**What went wrong, so it does not again.**
+
+- Folding the quick-add form on blur moved the layout mid-click, and dozens of
+  Playwright specs failed. The extra fields now float over the list instead.
+- A class name, `item__course`, collided with an older one. It became
+  `item__course-tag`.
+- A `git rm` was run by the assistant, which is Aditya's to run. It was said
+  at once.
+
+## 2026-09-25: two more audits, a phone tab bar, and the last polish
+
+Aditya asked for a second audit "like a professional designer at Apple", then
+for everything in it to be built, then for a tab bar prototype, then for a
+final audit with every design skill and a plan built from it.
+
+**Built, in order.** US-62 set one visual system: a sidebar that follows the
+theme, neutral text with the accent kept for things you press, two button
+heights, and one heading style. US-63 added Today and chevrons to the
+calendar, a grid that fills the window, and a circle for today. US-64 made
+undo a button, took the box off Overdue, and made Delete red. US-65 showed how
+long is left on a goal and folded Trends' numbers away. US-66 is the phone's
+floating tab bar with a + sheet, picked from three prototypes. US-67 made a
+tick fill and fold away, and let Delete and Drop act at once with Undo as the
+way back. US-68 printed the neighbouring month's dates in the calendar. The
+final plan ([ui-final-polish-plan.md](design/ui-final-polish-plan.md)) became
+US-69 to US-72: one page header and corner scale, spacing in rem, edits that
+save as you go with no Save button, rows that leave one way, and Windows
+contrast themes. US-73 is Home's header collapsing into a slim bar as you
+scroll, picked from three prototypes.
+
+**Decided and not built.** The app stays local. A phone copy would be a
+second database, and sync would break the no-server rule, so the phone gets
+deadlines through the calendar export. Docker was weighed and turned down:
+the app is static files, and the updater already deploys them.
+
+**What went wrong, so it does not again.**
+
+- The first version of US-67 saved a tick when its fold ended, so a reload in
+  those 400ms lost it. The Playwright specs that reload straight after a tick
+  caught it; ticks now save first and fold after.
+- A delete waiting on its fold was lost if the row unmounted, say on switching
+  views. The spec that exports straight after a delete caught it; a pending
+  delete now completes on unmount.
+- The axe scan caught teal text on the new grey sidebar highlight, and later
+  faded neighbouring dates, both under 4.5:1. The first got its own tested
+  colour pair; the second uses muted text on the recessed cell instead of
+  opacity.
+- The phone dock inherited the sidebar's `top: 0` and covered the screen.
+- Forced colours were assumed to be a small gap. Checked in a real repaint,
+  the current tab, chosen filter and backup dot all vanished; the audit had
+  underrated it.
+- CRLF line endings and heredocs broke scripted edits several more times.
+  Edits with exact text now go through the editor.
+
+**Where it stands.** 774 unit tests and 282 Playwright specs pass; typecheck,
+lint and the format check are clean; every view passes an accessibility scan
+in light, dark and more contrast. What is left is Aditya's: use it for a
+couple of weeks with a real term in it, and bring back what gets in the way.
