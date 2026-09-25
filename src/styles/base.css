@@ -63,6 +63,8 @@
   --rise: 4px;
   /* US-53. Where a popover grows from. */
   --pop-scale: 0.96;
+  /* AC-66.4. The iOS sheet curve: fast out of the gate, a long soft landing. */
+  --drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Shell, { VIEWS } from './Shell';
 
@@ -148,4 +148,83 @@ test('AC-42.2 the first thing Tab reaches is a link that skips the sidebar', asy
   expect(skip).toHaveFocus();
   expect(skip).toHaveAttribute('href', '#main');
   expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
+});
+
+describe('US-66 the phone tab bar', () => {
+  test('AC-66.2 More opens a sheet of the other views, and choosing one goes there and closes it', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn<(view: string) => void>();
+    render(
+      <Shell view="home" onNavigate={onNavigate}>
+        <p>content</p>
+      </Shell>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    const sheet = screen.getByRole('dialog', { name: 'More views' });
+    for (const name of ['Courses', 'Reflections', 'Trends', 'Data']) {
+      expect(within(sheet).getByRole('button', { name })).toBeVisible();
+    }
+
+    await user.click(within(sheet).getByRole('button', { name: 'Trends' }));
+
+    expect(onNavigate).toHaveBeenCalledWith('trends');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  test('AC-66.2 More is current on the views it holds, and carries the backup dot', () => {
+    render(
+      <Shell view="trends" onNavigate={noop} backupDue>
+        <p>content</p>
+      </Shell>,
+    );
+
+    const more = screen.getByRole('button', { name: 'More' });
+    expect(more).toHaveAttribute('aria-current', 'page');
+    expect(more).toHaveAttribute('aria-description', 'Backup due');
+  });
+
+  test('AC-66.2 More is not current on a view the bar shows itself', () => {
+    render(
+      <Shell view="goals" onNavigate={noop}>
+        <p>content</p>
+      </Shell>,
+    );
+
+    expect(screen.getByRole('button', { name: 'More' })).not.toHaveAttribute(
+      'aria-current',
+    );
+  });
+
+  test('AC-66.3 + opens the add form, and adding closes it', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn(() => true);
+    render(
+      <Shell view="calendar" onNavigate={noop} onAdd={onAdd}>
+        <p>content</p>
+      </Shell>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add a deadline' }));
+    const sheet = screen.getByRole('dialog', { name: 'Add a deadline' });
+    await user.type(within(sheet).getByLabelText('Title'), 'CSE 120 HW 1');
+    await user.click(within(sheet).getByRole('button', { name: 'Add' }));
+
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'CSE 120 HW 1' }),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  test('AC-66.3 with nowhere to add to, there is no + at all', () => {
+    render(
+      <Shell view="home" onNavigate={noop}>
+        <p>content</p>
+      </Shell>,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Add a deadline' }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -314,3 +314,22 @@ describe("US-57 Home's one-line form", () => {
     expect(screen.queryByLabelText('Due')).toBeNull();
   });
 });
+
+test('AC-66.3 two forms on one page each label their own fields', () => {
+  render(
+    <>
+      <AddItemForm onAdd={() => true} titleRef={{ current: null }} />
+      <AddItemForm
+        onAdd={() => true}
+        titleRef={{ current: null }}
+        from="2026-09-24"
+      />
+    </>,
+  );
+
+  const titles = screen.getAllByLabelText('Title');
+  expect(titles).toHaveLength(2);
+  expect(titles[0]).not.toBe(titles[1]);
+  // AC-66.3. The sheet's form starts on today, with every field showing.
+  expect(screen.getAllByLabelText('Due')[1]).toHaveValue('2026-09-24');
+});

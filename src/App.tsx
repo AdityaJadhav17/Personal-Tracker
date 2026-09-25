@@ -150,7 +150,12 @@ export default function App() {
   }
 
   return (
-    <Shell view={view} onNavigate={setView} backupDue={backup !== null}>
+    <Shell
+      view={view}
+      onNavigate={setView}
+      backupDue={backup !== null}
+      onAdd={actions.addItem}
+    >
       {view === 'calendar' ? (
         <CalendarView
           items={db.items}

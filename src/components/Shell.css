@@ -122,3 +122,142 @@
   margin-inline: auto;
   padding: var(--space-5) var(--space-5) var(--space-5);
 }
+
+/* AC-66.1. The phone's More tab and + button; a wide screen has the sidebar. */
+.sidebar__more,
+.sidebar__add {
+  display: none;
+}
+
+/*
+ * AC-66.4. A sheet rising from the foot of the screen, and leaving the same
+ * way. It is a popover, so the browser's own centring is undone first.
+ * display and overlay transition discretely so the exit plays before the top
+ * layer lets it go.
+ */
+.sheet {
+  position: fixed;
+  inset: auto 0 0;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: 85vh;
+  margin: 0;
+  padding: var(--space-5) var(--space-4)
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
+  overflow: auto;
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.18);
+  translate: 0 100%;
+  transition:
+    translate 300ms var(--drawer),
+    display 300ms allow-discrete,
+    overlay 300ms allow-discrete;
+}
+
+.sheet:popover-open {
+  translate: 0 0;
+}
+
+@starting-style {
+  .sheet:popover-open {
+    translate: 0 100%;
+  }
+}
+
+/* Dim to focus: the sheet is a task, so the page steps back behind it. */
+.sheet::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background 300ms ease,
+    display 300ms allow-discrete,
+    overlay 300ms allow-discrete;
+}
+
+.sheet:popover-open::backdrop {
+  background: rgb(0 0 0 / 0.32);
+}
+
+@starting-style {
+  .sheet:popover-open::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+
+/* Reduce, don't eliminate: the sheet fades in place instead of rising. */
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    translate: none;
+    opacity: 0;
+    transition:
+      opacity 200ms ease,
+      display 200ms allow-discrete,
+      overlay 200ms allow-discrete;
+  }
+
+  .sheet:popover-open {
+    translate: none;
+    opacity: 1;
+  }
+
+  @starting-style {
+    .sheet:popover-open {
+      opacity: 0;
+    }
+  }
+}
+
+.sheet__links {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+/* A row as tall as a finger, with room for the backup dot at its end. */
+.sheet__link,
+.sheet .sidebar__theme {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font-size: 1rem;
+  text-align: left;
+  transition:
+    background var(--speed) ease,
+    scale 160ms var(--ease-out);
+}
+
+.sheet__link:active,
+.sheet .sidebar__theme:active {
+  scale: var(--press-scale);
+  background: var(--bg);
+}
+
+.sheet__link[aria-current='page'] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sheet .sidebar__theme {
+  margin: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+}
+
+/* The add form sits in the sheet's own card, so it drops its own. */
+.sheet .form {
+  padding: 0;
+  border: 0;
+  background: none;
+}

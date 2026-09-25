@@ -1,4 +1,8 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { now, toDateValue } from '../domain/dates';
+import type { ItemDraft } from '../domain/types';
+import AddItemForm from './AddItemForm';
 import ThemeToggle from './ThemeToggle';
 
 export type View =
@@ -52,6 +56,15 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
   },
 ];
 
+/**
+ * AC-66.1. The views a phone's tab bar has no room for. They stay in the
+ * sidebar on a wide screen and move behind More on a phone.
+ */
+const TUCKED: View[] = ['courses', 'reflections', 'trends', 'data'];
+
+const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
+const PLUS = 'M12 5v14M5 12h14';
+
 interface ShellProps {
   view: View;
   onNavigate: (view: View) => void;
@@ -61,6 +74,8 @@ interface ShellProps {
    * sidebar marks Data wherever you are.
    */
   backupDue?: boolean;
+  /** AC-66.3. Adds from the phone's + button. Without it there is no +. */
+  onAdd?: (draft: ItemDraft) => boolean;
 }
 
 export default function Shell({
@@ -68,7 +83,13 @@ export default function Shell({
   onNavigate,
   children,
   backupDue = false,
+  onAdd,
 }: ShellProps) {
+  // AC-66.2 and AC-66.3. Which of the phone's two sheets is open, if any.
+  const [sheet, setSheet] = useState<'more' | 'add' | null>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const tucked = TUCKED.includes(view);
+
   return (
     <div className="shell">
       {/* AC-42.2. Six sidebar buttons stand between a keyboard and the work
@@ -85,7 +106,7 @@ export default function Shell({
             <button
               className={`sidebar__item ${
                 view === id ? 'sidebar__item--current' : ''
-              }`}
+              } ${TUCKED.includes(id) ? 'sidebar__item--tucked' : ''}`}
               key={id}
               type="button"
               aria-current={view === id ? 'page' : undefined}
@@ -95,24 +116,10 @@ export default function Shell({
               }
               onClick={() => onNavigate(id)}
             >
-              <svg
-                className="sidebar__icon"
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d={icon} />
-              </svg>
+              <Icon path={icon} />
               {/*
-                Wrapped so a narrow screen can hide the words and keep the
-                icons. A bare text node cannot be targeted by CSS, and hiding
-                the label with `display: none` would take the name with it.
+                Wrapped so a narrow screen can style the words apart from the
+                icon. A bare text node cannot be targeted by CSS.
               */}
               <span className="sidebar__label">{label}</span>
               {id === 'data' && backupDue && (
@@ -120,16 +127,178 @@ export default function Shell({
               )}
             </button>
           ))}
+          {/* AC-66.2. A phone's fourth tab; a wide screen hides it. Current
+              while you are on any view it holds, and it carries Data's dot. */}
+          <button
+            className={`sidebar__item sidebar__more ${
+              tucked ? 'sidebar__item--current' : ''
+            }`}
+            type="button"
+            aria-current={tucked ? 'page' : undefined}
+            aria-description={backupDue ? 'Backup due' : undefined}
+            onClick={() => setSheet('more')}
+          >
+            <Icon path={MORE} weight={3} />
+            <span className="sidebar__label">More</span>
+            {backupDue && <span className="sidebar__dot" aria-hidden="true" />}
+          </button>
         </nav>
 
         {/* US-51. Outside the nav: it changes how things look, not where you are. */}
         <ThemeToggle />
+
+        {/* AC-66.3. Adding, one tap from any view on a phone. */}
+        {onAdd && (
+          <button
+            className="sidebar__add"
+            type="button"
+            aria-label="Add a deadline"
+            onClick={() => setSheet('add')}
+          >
+            <Icon path={PLUS} size={26} weight={2.2} />
+          </button>
+        )}
       </div>
 
       {/* tabIndex lets the skip link move focus here, not only scroll. */}
       <main className="shell__main" id="main" tabIndex={-1}>
         {children}
       </main>
+
+      {sheet === 'more' && (
+        <Sheet label="More views" onClosed={() => setSheet(null)}>
+          {(close) => (
+            <>
+              <ul className="sheet__links">
+                {VIEWS.filter(({ id }) => TUCKED.includes(id)).map(
+                  ({ id, label, icon }) => (
+                    <li key={id}>
+                      <button
+                        className="sheet__link"
+                        type="button"
+                        aria-current={view === id ? 'page' : undefined}
+                        aria-description={
+                          id === 'data' && backupDue ? 'Backup due' : undefined
+                        }
+                        onClick={() => {
+                          onNavigate(id);
+                          close();
+                        }}
+                      >
+                        <Icon path={icon} size={22} />
+                        {label}
+                        {id === 'data' && backupDue && (
+                          <span className="sidebar__dot" aria-hidden="true" />
+                        )}
+                      </button>
+                    </li>
+                  ),
+                )}
+              </ul>
+              {/* A phone has no sidebar corner for it, so it lives here. */}
+              <ThemeToggle />
+            </>
+          )}
+        </Sheet>
+      )}
+
+      {sheet === 'add' && onAdd && (
+        <Sheet label="Add a deadline" onClosed={() => setSheet(null)}>
+          {(close) => (
+            <AddItemForm
+              onAdd={(draft) => {
+                const added = onAdd(draft);
+                if (added) close();
+                return added;
+              }}
+              titleRef={titleRef}
+              from={toDateValue(now())}
+            />
+          )}
+        </Sheet>
+      )}
     </div>
+  );
+}
+
+/** A 24px-grid icon, drawn inline so nothing is fetched. Decorative. */
+function Icon({
+  path,
+  size = 16,
+  weight = 1.8,
+}: {
+  path: string;
+  size?: number;
+  weight?: number;
+}) {
+  return (
+    <svg
+      className="sidebar__icon"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={weight}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={path} />
+    </svg>
+  );
+}
+
+/**
+ * AC-66.4. A sheet that rises from the foot of the screen. A native popover,
+ * like the calendar's day: Escape and a tap outside close it for free. Focus
+ * moves into it on open and back to what opened it after.
+ *
+ * However it closes, it leaves the page only once its exit has run, so it
+ * goes back down the way it came instead of vanishing.
+ */
+function Sheet({
+  label,
+  onClosed,
+  children,
+}: {
+  label: string;
+  onClosed: () => void;
+  children: (close: () => void) => ReactNode;
+}) {
+  const ref = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current!;
+    const opener = document.activeElement;
+    el.setAttribute('popover', 'auto');
+    el.showPopover();
+    el.querySelector<HTMLElement>('input, button')?.focus();
+
+    const toggled = (event: Event) => {
+      if ((event as ToggleEvent).newState !== 'closed') return;
+      const running = el.getAnimations?.() ?? [];
+      void Promise.allSettled(running.map((a) => a.finished)).then(onClosed);
+    };
+    el.addEventListener('toggle', toggled);
+    return () => {
+      el.removeEventListener('toggle', toggled);
+      const lost = document.activeElement;
+      if (
+        opener instanceof HTMLElement &&
+        opener.isConnected &&
+        (lost === document.body || lost === null || el.contains(lost))
+      ) {
+        opener.focus();
+      }
+    };
+    // Opened once per mount; the parent unmounts it to close it for good.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <section className="sheet" ref={ref} role="dialog" aria-label={label}>
+      {children(() => ref.current?.hidePopover())}
+    </section>
   );
 }

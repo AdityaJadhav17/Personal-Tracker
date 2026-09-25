@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { toDueAt } from '../domain/dates';
 import type { Category, ItemDraft, Priority, Repeat } from '../domain/types';
 
@@ -21,6 +21,11 @@ interface AddItemFormProps {
    * than this is filled in.
    */
   quickFrom?: string;
+  /**
+   * AC-66.3. The day Due starts on, with every field showing: the phone's
+   * add sheet, which is already a step you chose to take.
+   */
+  from?: string;
 }
 
 export default function AddItemForm({
@@ -28,11 +33,15 @@ export default function AddItemForm({
   titleRef,
   day,
   quickFrom,
+  from,
 }: AddItemFormProps) {
+  // AC-66.3. Home's form and the phone's add sheet can share a page, so each
+  // form's labels point at its own fields.
+  const id = useId();
   const quick = quickFrom !== undefined;
   const [open, setOpen] = useState(!quick);
   const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState(day ?? quickFrom ?? '');
+  const [dueDate, setDueDate] = useState(day ?? quickFrom ?? from ?? '');
   const [dueTime, setDueTime] = useState('');
   const [category, setCategory] = useState<Category>('academic');
   const [priority, setPriority] = useState<Priority>('normal');
@@ -55,7 +64,7 @@ export default function AddItemForm({
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.
     setTitle('');
-    setDueDate(day ?? quickFrom ?? '');
+    setDueDate(day ?? quickFrom ?? from ?? '');
     setDueTime('');
     setCategory('academic');
     setRepeat('none');
@@ -91,21 +100,21 @@ export default function AddItemForm({
       <div className="form__field form__field--title">
         <label
           className={quick ? 'visually-hidden' : 'form__label'}
-          htmlFor="title"
+          htmlFor={`${id}-title`}
         >
           Title
         </label>
         <input
           className="form__input"
-          id="title"
+          id={`${id}-title`}
           ref={titleRef}
           placeholder={quick ? 'Add a deadline…' : undefined}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          aria-describedby={titleError ? 'title-error' : undefined}
+          aria-describedby={titleError ? `${id}-title-error` : undefined}
         />
         {titleError && (
-          <p className="form__error" id="title-error">
+          <p className="form__error" id={`${id}-title-error`}>
             {titleError}
           </p>
         )}
@@ -117,19 +126,19 @@ export default function AddItemForm({
         <div className="form__more">
           {day === undefined && (
             <div className="form__field">
-              <label className="form__label" htmlFor="due">
+              <label className="form__label" htmlFor={`${id}-due`}>
                 Due
               </label>
               <input
                 className="form__input"
-                id="due"
+                id={`${id}-due`}
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                aria-describedby={dueError ? 'due-error' : undefined}
+                aria-describedby={dueError ? `${id}-due-error` : undefined}
               />
               {dueError && (
-                <p className="form__error" id="due-error">
+                <p className="form__error" id={`${id}-due-error`}>
                   {dueError}
                 </p>
               )}
@@ -141,12 +150,12 @@ export default function AddItemForm({
             Left empty it means 23:59, which is what AC-19.2 asks for.
           */}
           <div className="form__field form__field--time">
-            <label className="form__label" htmlFor="due-time">
+            <label className="form__label" htmlFor={`${id}-due-time`}>
               Time
             </label>
             <input
               className="form__input"
-              id="due-time"
+              id={`${id}-due-time`}
               type="time"
               value={dueTime}
               onChange={(e) => setDueTime(e.target.value)}
@@ -154,12 +163,12 @@ export default function AddItemForm({
           </div>
 
           <div className="form__field">
-            <label className="form__label" htmlFor="category">
+            <label className="form__label" htmlFor={`${id}-category`}>
               Category
             </label>
             <select
               className="form__select"
-              id="category"
+              id={`${id}-category`}
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
             >
@@ -169,12 +178,12 @@ export default function AddItemForm({
           </div>
 
           <div className="form__field">
-            <label className="form__label" htmlFor="priority">
+            <label className="form__label" htmlFor={`${id}-priority`}>
               Priority
             </label>
             <select
               className="form__select"
-              id="priority"
+              id={`${id}-priority`}
               value={priority}
               onChange={(e) => setPriority(e.target.value as Priority)}
             >
@@ -185,12 +194,12 @@ export default function AddItemForm({
           </div>
 
           <div className="form__field">
-            <label className="form__label" htmlFor="repeat">
+            <label className="form__label" htmlFor={`${id}-repeat`}>
               Repeat
             </label>
             <select
               className="form__select"
-              id="repeat"
+              id={`${id}-repeat`}
               value={repeat}
               onChange={(e) => setRepeat(e.target.value as Repeat)}
             >

@@ -81,6 +81,8 @@
 @media (max-width: 700px) {
   .status--toast {
     left: 50%;
+    /* AC-66.5. Above the dock, not under it. */
+    bottom: calc(var(--dock-clear) + var(--space-3));
   }
 }
 

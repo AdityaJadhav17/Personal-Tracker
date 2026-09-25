@@ -378,3 +378,4 @@ passed 1,300 lines.
 - [US-63, calendar wayfinding](stories/US-63.md)
 - [US-64, feedback you can act on](stories/US-64.md)
 - [US-65, details](stories/US-65.md)
+- [US-66, the phone's floating tab bar](stories/US-66.md)

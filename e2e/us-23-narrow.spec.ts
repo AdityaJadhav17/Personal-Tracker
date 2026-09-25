@@ -58,9 +58,18 @@ test('AC-23.3 every view is reachable on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/');
 
-  for (const view of VIEWS) {
+  // US-66. Three tabs in the bar, the other four one tap behind More.
+  const nav = page.getByRole('navigation', { name: 'Views' });
+  for (const view of VIEWS.slice(0, 3)) {
     await expect(
-      page.getByRole('button', { name: view, exact: true }),
+      nav.getByRole('button', { name: view, exact: true }),
+    ).toBeVisible();
+  }
+  await nav.getByRole('button', { name: 'More', exact: true }).click();
+  const more = page.getByRole('dialog', { name: 'More views' });
+  for (const view of VIEWS.slice(3)) {
+    await expect(
+      more.getByRole('button', { name: view, exact: true }),
     ).toBeVisible();
   }
 });
@@ -81,11 +90,12 @@ test('AC-23.4 each view still announces its name on a phone', async ({
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/');
 
-  // The labels are hidden from the eye, not from the accessibility tree.
-  for (const view of VIEWS) {
+  // US-66. The tabs are labelled on screen, not only for a screen reader.
+  const nav = page.getByRole('navigation', { name: 'Views' });
+  for (const view of ['Home', 'Calendar', 'Goals', 'More']) {
     await expect(
-      page.getByRole('button', { name: view, exact: true }),
-    ).toHaveCount(1);
+      nav.getByRole('button', { name: view, exact: true }),
+    ).toContainText(view);
   }
 });
 
@@ -114,22 +124,17 @@ test('AC-23.5 a wide screen still shows the labels', async ({ page }) => {
   }
 });
 
-test('AC-23.6 the sidebar is no taller than what is in it', async ({
+test('AC-23.6 the tab bar is no taller than what is in it', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
-  const slack = await page.evaluate(() => {
-    const bar = document.querySelector('.sidebar')!.getBoundingClientRect();
-    const nav = document
-      .querySelector('.sidebar__nav')!
-      .getBoundingClientRect();
-    return bar.bottom - nav.bottom;
-  });
-
-  // Padding below the icons, not a band of empty colour. A grid stretches its
-  // rows to fill the page by default, which gave the sidebar 82px of nothing.
-  expect(slack).toBeLessThan(24);
+  // US-66. The sidebar is the floating dock now: as tall as its tabs, never
+  // a band stretched to fill the page.
+  const bar = (await page
+    .getByRole('navigation', { name: 'Views' })
+    .boundingBox())!;
+  expect(bar.height).toBeLessThanOrEqual(64);
 });

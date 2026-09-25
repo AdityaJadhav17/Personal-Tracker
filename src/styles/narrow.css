@@ -1,70 +1,143 @@
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 700px) {
+  :root {
+    /* AC-66.5. How much of the foot of the screen the tab bar takes: its
+       height, the gap under it, and the home indicator's inset. */
+    --dock: 60px;
+    --dock-clear: calc(
+      var(--dock) + var(--space-2) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
   .shell {
     /* minmax(0, 1fr), not 1fr: a grid track sized 1fr still refuses to go
        below its content's minimum, which is how a single wide child used to
        push the whole page past the screen. */
     grid-template-columns: minmax(0, 1fr);
-    /* Sidebar as tall as its icons, content takes the rest. Without this the
-       grid stretches both rows to fill 100vh and the sidebar becomes a band
-       of empty colour above the page. */
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .sidebar {
-    position: relative;
-    height: auto;
-    padding: var(--space-3);
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar__title {
-    margin-bottom: var(--space-3);
   }
 
   /*
-   * Icons only. Six labelled items measure 568px, which is why the page used
-   * to have a floor of 592px and every phone scrolled sideways. Six icons fit
-   * a 320px screen in one row with room left over.
+   * AC-66.1. The sidebar becomes the dock: a floating capsule of four
+   * labelled tabs, and the + beside it. Fixed, so it takes no row of the
+   * page; the page clears it instead (AC-66.5).
    */
-  .sidebar__nav {
+  .sidebar {
+    position: fixed;
+    /* The wide sidebar is pinned to the top; the dock only to the foot. */
+    top: auto;
+    right: var(--space-4);
+    bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    left: var(--space-4);
+    z-index: 4;
     flex-direction: row;
-    gap: var(--space-1);
+    align-items: center;
+    gap: 10px;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  /* The page's own title names the view; the theme moves into More. */
+  .sidebar__title,
+  .sidebar > .sidebar__theme,
+  .sidebar__item--tucked {
+    display: none;
+  }
+
+  /* Glass: the list shows through as it scrolls under, so the bar floats. */
+  .sidebar__nav {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    height: var(--dock);
+    padding: var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
   }
 
   .sidebar__item {
+    position: relative;
+    flex-direction: column;
     justify-content: center;
-    width: auto;
-    flex: 1 1 0;
-    padding: var(--space-2);
-  }
-
-  /* Hidden from the eye, not from the accessibility tree. Same declarations
-     as .visually-hidden, which cannot be reached from here. */
-  .sidebar__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
+    gap: 2px;
+    min-width: 0;
+    height: 100%;
     padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
   }
 
-  /* US-51. Beside the title, so a phone gains no extra row for it. */
-  .sidebar__theme {
+  .sidebar__more {
+    display: flex;
+  }
+
+  .sidebar__nav .sidebar__icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* The tab you are on: the accent on its soft tint, a pair the contrast
+     test already holds to 4.5:1. */
+  .sidebar__item--current {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 600;
+  }
+
+  /* AC-58.2's dot, on the icon's shoulder rather than at the row's end. */
+  .sidebar__nav .sidebar__dot {
     position: absolute;
-    top: var(--space-2);
-    right: var(--space-3);
-    margin-top: 0;
-    flex: none;
+    top: 8px;
+    left: calc(50% + 8px);
+    margin: 0;
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--surface);
   }
 
+  /* AC-66.3. Adding: the one filled control on the screen. */
+  .sidebar__add {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: var(--dock);
+    height: var(--dock);
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+    transition: scale 160ms var(--ease-out);
+  }
+
+  .sidebar__add:active {
+    scale: var(--press-scale);
+  }
+
+  /* AC-66.5. The last row scrolls clear of the dock. */
   .shell__main {
-    padding: var(--space-4) var(--space-3);
+    padding: calc(env(safe-area-inset-top, 0px) + var(--space-4)) var(--space-3)
+      calc(var(--dock-clear) + var(--space-5));
+  }
+
+  /* AC-66.3. The + replaces Home's field, except while Home is empty and
+     "Add your first item" needs somewhere to send you. */
+  .shell__main:not(:has(.empty)) .form--quick {
+    display: none;
+  }
+
+  /* AC-66.6. iOS zooms into any field under 16px, then leaves you there. */
+  .form__input,
+  .form__select,
+  .filter__select {
+    font-size: 1rem;
   }
 
   .form__field {
@@ -73,5 +146,41 @@
 
   .item__due {
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 700px) and (prefers-reduced-transparency: reduce) {
+  .sidebar__nav {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (max-width: 700px) {
+  /* The theme button in More is a row like the views above it, not a tab. */
+  .sheet .sidebar__theme {
+    flex-direction: row;
+    justify-content: flex-start;
+    height: auto;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  /* A badge asks for attention, so on a phone it is red, as iOS's are. */
+  .sheet .sidebar__dot {
+    background: var(--danger);
+  }
+
+  /* AC-66.3. Two fields to a row after the title, so the sheet stays short
+     enough to leave the page showing above it. */
+  .sheet .form__field {
+    flex: 1 1 calc(50% - var(--space-2));
+  }
+
+  .sheet .form__field--title,
+  .sheet .form__submit {
+    flex: 1 1 100%;
   }
 }
