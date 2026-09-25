@@ -68,15 +68,15 @@ test('AC-44.2 Tomorrow takes an item out of Overdue, due tomorrow at the same ti
   ).toHaveCount(0);
 });
 
-test('AC-44.3 Drop asks, and only Yes removes it', async ({ page }) => {
+test('AC-44.3 and AC-67.3 Drop removes it at once, and Undo is offered', async ({
+  page,
+}) => {
   await seedOverdue(page);
 
   await page.getByRole('button', { name: 'Drop Old quiz' }).click();
-  await page.getByRole('button', { name: 'Keep' }).click();
-  expect(await stored(page)).toHaveLength(2);
-
-  await page.getByRole('button', { name: 'Drop Old quiz' }).click();
-  await page.getByRole('button', { name: 'Yes, drop it' }).click();
+  await expect(page.getByRole('status').last()).toContainText(
+    'Deleted Old quiz.',
+  );
   await page.reload();
   expect((await stored(page)).map((i) => i.id)).toEqual(['lab']);
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   formatDue,
   groupOf,
@@ -33,6 +33,11 @@ interface ItemRowProps {
   /** US-45. The title of the item this is a step of, or null. */
   parentTitle: string | null;
   onAddStep: (parentId: string, title: string, dueAt: string) => void;
+  /**
+   * AC-67.1. Home kept this row to fold it away and it has folded. Rows
+   * elsewhere just vanish when done, so they pass nothing.
+   */
+  onLeft?: () => void;
 }
 
 /**
@@ -60,6 +65,7 @@ export default function ItemRow({
   steps,
   parentTitle,
   onAddStep,
+  onLeft,
 }: ItemRowProps) {
   // The note is held locally while you type and reported on blur, so a save
   // does not run on every keystroke. See the storage note in docs/plan.md.
@@ -75,7 +81,40 @@ export default function ItemRow({
   const [repeat, setRepeat] = useState<Repeat>(item.repeat);
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
-  const [confirming, setConfirming] = useState(false);
+  // AC-67.1. Done is saved the moment it is ticked. A row still showing a
+  // done item is one Home kept on screen to fold away: its check shows,
+  // then it closes up so the rows below slide into its place, then Home
+  // lets it go. Height has to move for that; the row is one line, so the
+  // layout cost is small. With no animation to run (jsdom, or reduced
+  // motion) it goes at once.
+  const finishing = item.status === 'done';
+  const rowRef = useRef<HTMLLIElement>(null);
+  useLayoutEffect(() => {
+    if (!finishing) return;
+    const row = rowRef.current;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!row?.animate || still) {
+      onLeft?.();
+      return;
+    }
+    const fold = row.animate(
+      [
+        { height: `${row.offsetHeight}px`, opacity: 1 },
+        { height: '0px', opacity: 0, paddingBlock: '0px' },
+      ],
+      {
+        duration: 220,
+        delay: 180,
+        easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        fill: 'forwards',
+      },
+    );
+    fold.finished.then(() => onLeft?.()).catch(() => {});
+    // Undone mid-fold: the row stands back up where it was.
+    return () => fold.cancel();
+    // Runs when the item turns done, not when Home hands down a new onLeft.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishing]);
   // US-45. The add-a-step form, held until Add step.
   const [stepTitle, setStepTitle] = useState('');
   const [stepDate, setStepDate] = useState('');
@@ -95,8 +134,6 @@ export default function ItemRow({
     setStepDate('');
   }
 
-  // US-44. Dropping from the overdue list asks first, like Delete does.
-  const [dropping, setDropping] = useState(false);
   const overdue = groupOf(item.dueAt, now) === 'overdue';
 
   const course = courses.find((one) => one.id === item.courseId);
@@ -151,7 +188,10 @@ export default function ItemRow({
   return (
     // AC-57.7. The priority modifier makes a high item's title bold. Position
     // in the sorted list is the primary signal; the weight only confirms it.
-    <li className={`item item--${item.priority}`}>
+    <li
+      className={`item item--${item.priority} ${finishing ? 'item--finishing' : ''}`}
+      ref={rowRef}
+    >
       {/*
         The done control comes first so Tab walks the list in the order it is
         displayed. Its label carries the title, because "Done" on its own says
@@ -161,9 +201,26 @@ export default function ItemRow({
         className="item__done"
         type="button"
         aria-label={`Mark ${item.title} done`}
-        onClick={() => onDone(item.id)}
+        // A row folding away is already done; Enter on it again would
+        // finish a repeat twice.
+        onClick={() => !finishing && onDone(item.id)}
       >
         Done
+        {/* AC-67.1. The check that fills the circle the moment it is hit. */}
+        <svg
+          className="item__check"
+          viewBox="0 0 24 24"
+          width="12"
+          height="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
       </button>{' '}
       {/*
         The title is the disclosure rather than a separate chevron, which would
@@ -231,34 +288,12 @@ export default function ItemRow({
             className="data__button"
             type="button"
             aria-label={`Drop ${item.title}`}
-            onClick={() => setDropping(true)}
+            // AC-67.3. At once; the undo message is the way back.
+            onClick={() => onDelete(item.id)}
           >
             Drop
           </button>
         </span>
-      )}
-      {dropping && (
-        <div className="item__confirm">
-          <p className="status" role="status">
-            Drop {item.title}? It is gone for good.
-          </p>
-          <div className="prompt__actions">
-            <button
-              className="prompt__button prompt__button--danger"
-              type="button"
-              onClick={() => onDelete(item.id)}
-            >
-              Yes, drop it
-            </button>
-            <button
-              className="prompt__button prompt__button--quiet"
-              type="button"
-              onClick={() => setDropping(false)}
-            >
-              Keep
-            </button>
-          </div>
-        </div>
       )}
       {open && (
         <div className="item__edit">
@@ -472,43 +507,12 @@ export default function ItemRow({
               className="prompt__button prompt__button--quiet item__delete"
               type="button"
               aria-label={`Delete ${item.title}`}
-              onClick={() => setConfirming(true)}
+              // AC-67.3. At once; the undo message is the way back.
+              onClick={() => onDelete(item.id)}
             >
               Delete
             </button>
           </div>
-
-          {confirming && (
-            <div className="item__confirm">
-              {/*
-                Blunter than the course and goal wording, which can promise the
-                items survive. Nothing survives this one, so it says so.
-              */}
-              <p className="status" role="status">
-                {steps.length === 0
-                  ? `Delete ${item.title}? It is gone for good.`
-                  : `Delete ${item.title} and its ${steps.length} ${
-                      steps.length === 1 ? 'step' : 'steps'
-                    }? They are gone for good.`}
-              </p>
-              <div className="prompt__actions">
-                <button
-                  className="prompt__button prompt__button--danger"
-                  type="button"
-                  onClick={() => onDelete(item.id)}
-                >
-                  Yes, delete
-                </button>
-                <button
-                  className="prompt__button prompt__button--quiet"
-                  type="button"
-                  onClick={() => setConfirming(false)}
-                >
-                  Keep
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </li>

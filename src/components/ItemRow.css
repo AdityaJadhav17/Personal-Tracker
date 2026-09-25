@@ -172,8 +172,7 @@
 .item__edit .form__field--title,
 .item__edit .item__field--full,
 .item__edit .item__steps,
-.item__edit .item__actions,
-.item__edit .item__confirm {
+.item__edit .item__actions {
   grid-column: 1 / -1;
 }
 
@@ -204,5 +203,44 @@
   .item__edit .form__field,
   .item__edit .item__field--half {
     grid-column: 1 / -1;
+  }
+}
+
+/*
+ * AC-67.1. Ticked: the circle fills with the accent and a check grows into
+ * it, then the row folds away (ItemRow animates the height). Nothing in the
+ * row takes a click while it goes.
+ */
+.item__check {
+  display: none;
+  color: var(--on-accent);
+}
+
+.item--finishing {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.item--finishing .item__done {
+  display: grid;
+  place-items: center;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.item--finishing .item__check {
+  display: block;
+  transition: scale 180ms var(--ease-out);
+}
+
+@starting-style {
+  .item--finishing .item__check {
+    scale: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item--finishing .item__check {
+    transition: none;
   }
 }

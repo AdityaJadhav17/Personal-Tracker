@@ -95,13 +95,13 @@ function isTyping(element: Element | null): boolean {
  * and the file input stay in the component.
  *
  * Undo lives here rather than in the component because it only exists as the
- * inverse of `markDone`, and the two drift if they are kept apart.
+ * inverse of `markDone` and `removeItem`, and they drift if kept apart.
  */
 export function useDatabase(): {
   /** Null only when storage itself cannot be read, which is AC-11.2. */
   db: Database | null;
-  /** The item most recently finished, for the undo prompt. */
-  undoableTitle: string | null;
+  /** What Undo would reverse, "Marked Rent done." or "Deleted Rent." */
+  undoMessage: string | null;
   /** AC-64.1. What u does, for the Undo button. */
   undo: () => void;
   /** Empty unless the last write was refused. */
@@ -117,16 +117,18 @@ export function useDatabase(): {
       return null;
     }
   });
-  /**
-   * What the last "done" did, so `u` can be its exact inverse. US-28 made
-   * finishing something able to create a second item, and undo that only
-   * reopens the first would leave a duplicate behind.
-   */
   const [storageError, setStorageError] = useState('');
-  const [undoable, setUndoable] = useState<{
-    doneId: string;
-    spawnedId: string | null;
-  } | null>(null);
+  /**
+   * What the last done or delete did, so `u` can be its exact inverse. US-28
+   * made finishing something able to create a second item, and undo that
+   * only reopens the first would leave a duplicate behind. AC-67.3 added a
+   * delete, whose inverse is putting back what went, steps included.
+   */
+  const [undoable, setUndoable] = useState<
+    | { kind: 'done'; title: string; doneId: string; spawnedId: string | null }
+    | { kind: 'deleted'; title: string; removed: Item[] }
+    | null
+  >(null);
 
   /**
    * Write first, then show. If storage refuses the write, the change is not
@@ -161,17 +163,24 @@ export function useDatabase(): {
     }));
   }
 
-  /** AC-05.2 and AC-64.1. The inverse of the last done, from u or a click. */
+  /** AC-05.2, AC-64.1 and AC-67.3. The inverse of the last done or delete. */
   function undo() {
     if (!db || !undoable) return;
 
+    if (undoable.kind === 'deleted') {
+      commit({ ...db, items: [...db.items, ...undoable.removed] });
+      setUndoable(null);
+      return;
+    }
+
+    const { doneId, spawnedId } = undoable;
     commit({
       ...db,
       items: db.items
         // AC-28.4. The one it created goes with it.
-        .filter((item) => item.id !== undoable.spawnedId)
+        .filter((item) => item.id !== spawnedId)
         .map((item) =>
-          item.id === undoable.doneId
+          item.id === doneId
             ? { ...item, status: 'open', completedAt: null }
             : item,
         ),
@@ -247,7 +256,12 @@ export function useDatabase(): {
                 createdAt: now().toISOString(),
               };
 
-        setUndoable({ doneId: id, spawnedId: next?.id ?? null });
+        setUndoable({
+          kind: 'done',
+          title: finished.title,
+          doneId: id,
+          spawnedId: next?.id ?? null,
+        });
 
         const items = current.items.map((item) =>
           item.id === id ? done : item,
@@ -272,15 +286,17 @@ export function useDatabase(): {
     },
 
     removeItem(id) {
-      update((current) => ({
-        ...current,
-        // AC-45.4. A step without its project has nothing to be a step of.
-        items: current.items.filter(
-          (item) => item.id !== id && item.parentId !== id,
-        ),
-      }));
-      // An item that no longer exists cannot be un-finished.
-      setUndoable(null);
+      if (!db) return;
+      // AC-45.4. A step without its project has nothing to be a step of.
+      const goes = (item: Item) => item.id === id || item.parentId === id;
+      const removed = db.items.filter(goes);
+      const title = removed.find((item) => item.id === id)?.title;
+      if (!title) return;
+      if (!commit({ ...db, items: db.items.filter((item) => !goes(item)) })) {
+        return;
+      }
+      // AC-67.3. No question first; putting it back is the way out instead.
+      setUndoable({ kind: 'deleted', title, removed });
     },
 
     addStep(parentId, title, dueAt) {
@@ -379,8 +395,12 @@ export function useDatabase(): {
   return {
     db,
     storageError,
-    undoableTitle:
-      db?.items.find((item) => item.id === undoable?.doneId)?.title ?? null,
+    undoMessage:
+      undoable === null
+        ? null
+        : undoable.kind === 'done'
+          ? `Marked ${undoable.title} done.`
+          : `Deleted ${undoable.title}.`,
     undo,
     actions,
   };

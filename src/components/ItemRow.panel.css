@@ -5,12 +5,6 @@
   gap: var(--space-2);
 }
 
-/* Drop's question sits on the closed row, under everything else on it. */
-.item__confirm {
-  flex: 1 1 100%;
-  order: 4;
-}
-
 /* AC-48.2. An opening row's panel fades and rises 4px over 150ms. Opened
    tens of times a day, so it stays near imperceptible. */
 .item__edit {

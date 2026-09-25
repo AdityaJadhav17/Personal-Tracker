@@ -67,7 +67,12 @@ export default function Dashboard({
   allItems,
   onAddStep,
 }: DashboardProps) {
-  const open = items.filter((item) => item.status === 'open');
+  // AC-67.1. Items ticked here, kept on screen while their row folds away.
+  // They are already saved as done; this only decides what is drawn.
+  const [leaving, setLeaving] = useState<string[]>([]);
+  const open = items.filter(
+    (item) => item.status === 'open' || leaving.includes(item.id),
+  );
   // AC-54.3. Not remembered, like the filters: a reload shows ten again.
   const [showAll, setShowAll] = useState(false);
 
@@ -93,7 +98,11 @@ export default function Dashboard({
       key={item.id}
       item={item}
       now={now}
-      onDone={onDone}
+      onDone={(id) => {
+        setLeaving((ids) => [...ids, id]);
+        onDone(id);
+      }}
+      onLeft={() => setLeaving((ids) => ids.filter((id) => id !== item.id))}
       onNoteChange={onNoteChange}
       courses={courses}
       onCourseChange={onCourseChange}

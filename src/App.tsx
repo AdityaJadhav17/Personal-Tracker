@@ -27,7 +27,7 @@ import type { Database } from './domain/types';
 import { useDatabase } from './state/useDatabase';
 
 export default function App() {
-  const { db, undoableTitle, undo, storageError, actions } = useDatabase();
+  const { db, undoMessage, undo, storageError, actions } = useDatabase();
 
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
@@ -377,25 +377,6 @@ export default function App() {
             quickFrom={toDateValue(current)}
           />
 
-          {/* The region stays put so it is announced; the message inside is
-              re-inserted per item so it enters (AC-48.2). AC-64.1: it floats
-              at the foot of the window, so it takes no room in the page. */}
-          <div className="status status--toast" role="status">
-            {undoableTitle && (
-              <span className="status__message toast" key={undoableTitle}>
-                Marked {undoableTitle} done.
-                <button
-                  className="toast__undo"
-                  type="button"
-                  aria-keyshortcuts="u"
-                  onClick={undo}
-                >
-                  Undo
-                </button>
-              </span>
-            )}
-          </div>
-
           {hiddenByFilter ? (
             <section className="empty">
               <p>{hiding}</p>
@@ -433,6 +414,26 @@ export default function App() {
           {storageError}
         </p>
       )}
+
+      {/* The region stays put so it is announced; the message inside is
+          re-inserted per change so it enters (AC-48.2). AC-64.1: it floats at
+          the foot of the window. AC-67.4: outside the views, so a delete from
+          the calendar's day can be undone there too. */}
+      <div className="status status--toast" role="status">
+        {undoMessage && (
+          <span className="status__message toast" key={undoMessage}>
+            {undoMessage}
+            <button
+              className="toast__undo"
+              type="button"
+              aria-keyshortcuts="u"
+              onClick={undo}
+            >
+              Undo
+            </button>
+          </span>
+        )}
+      </div>
     </Shell>
   );
 }

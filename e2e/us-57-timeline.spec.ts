@@ -106,9 +106,10 @@ test('AC-57.7 and AC-57.8 high priority reads bold, and courses keep their colou
   expect(await weight('HW 1')).toBeLessThan(600);
 
   // CSE 120 was added first, so it has the first colour, blue in light mode.
+  // A span: US-67's check icon is hidden from screen readers too.
   const dot = (title: string) =>
     row(page, title)
-      .locator('[aria-hidden="true"]')
+      .locator('span[aria-hidden="true"]')
       .first()
       .evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(await dot('Midterm')).toBe('rgb(37, 99, 235)');

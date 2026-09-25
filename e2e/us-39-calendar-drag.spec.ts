@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /**
+ * The calendar's "moved to" line. AC-67.4 put the undo message on every
+ * view, so the page has two status regions; the calendar's comes first.
+ */
+const moved = (page: Page) => page.getByRole('status').first();
+
+/**
  * A day next to today in the same month, so both cells are on screen whatever
  * day the spec runs: tomorrow, unless today is the last of the month.
  */
@@ -79,9 +85,7 @@ test('AC-39.2 a dragged item is on its new day after a reload, at the same time'
   await seedHomework(page);
 
   await page.getByText('CSE 123 HW 1').dragTo(cell(page, to));
-  await expect(page.getByRole('status')).toHaveText(
-    `CSE 123 HW 1 moved to ${dayName(to)}`,
-  );
+  await expect(moved(page)).toHaveText(`CSE 123 HW 1 moved to ${dayName(to)}`);
 
   await page.reload();
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
@@ -104,7 +108,7 @@ test('AC-39.4 dropping it back on its own day leaves the deadline alone', async 
 
   await page.getByText('CSE 123 HW 1').dragTo(cell(page, 0));
 
-  await expect(page.getByRole('status')).toBeEmpty();
+  await expect(moved(page)).toBeEmpty();
   expect(await storedDue(page)).toEqual(before);
 });
 
@@ -141,9 +145,7 @@ test('AC-39.6 an item dragged over Next month can be dropped in the next month',
   await page.mouse.move(day!.x + 20, day!.y + 20, { steps: 5 });
   await page.mouse.up();
 
-  await expect(page.getByRole('status')).toHaveText(
-    `CSE 123 HW 1 moved to ${target}`,
-  );
+  await expect(moved(page)).toHaveText(`CSE 123 HW 1 moved to ${target}`);
   await page.reload();
   expect(await storedDue(page)).toEqual({ day: 10, hours: 8 });
 });

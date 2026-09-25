@@ -1026,42 +1026,15 @@ test('AC-25.3 an empty title saves nothing and says why', async () => {
   expect(screen.getByText('Give it a title.')).toBeVisible();
 });
 
-test('AC-25.4 deleting asks first and removes nothing yet', async () => {
+test('AC-25.5 and AC-67.3 Delete reports the deletion at once, with no question', async () => {
   const user = userEvent.setup();
   const deleted: string[] = [];
   renderEditable({}, { onDelete: (id) => deleted.push(id) });
 
   await openItem(user, 'Midterm');
   await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
-
-  expect(
-    screen.getByText('Delete Midterm? It is gone for good.'),
-  ).toBeVisible();
-  expect(deleted).toEqual([]);
-});
-
-test('AC-25.5 confirming reports the deletion', async () => {
-  const user = userEvent.setup();
-  const deleted: string[] = [];
-  renderEditable({}, { onDelete: (id) => deleted.push(id) });
-
-  await openItem(user, 'Midterm');
-  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
-  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
   expect(deleted).toHaveLength(1);
-});
-
-test('AC-25.8 declining removes nothing', async () => {
-  const user = userEvent.setup();
-  const deleted: string[] = [];
-  renderEditable({}, { onDelete: (id) => deleted.push(id) });
-
-  await openItem(user, 'Midterm');
-  await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
-  await user.click(screen.getByRole('button', { name: 'Keep' }));
-
-  expect(deleted).toEqual([]);
   expect(screen.queryByText(/gone for good/)).toBeNull();
 });
 
@@ -1198,19 +1171,14 @@ test('AC-44.2 Tomorrow moves the deadline to tomorrow at the time it had', async
   );
 });
 
-test('AC-44.3 Drop asks first, then deletes; Keep leaves it', async () => {
+test('AC-44.3 and AC-67.3 Drop deletes at once; Undo is the way back', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn();
   const lab = anItem('Missed lab', -2);
   renderTriage([lab], { onDelete });
 
   await user.click(screen.getByRole('button', { name: 'Drop Missed lab' }));
-  expect(onDelete).not.toHaveBeenCalled();
-  await user.click(screen.getByRole('button', { name: 'Keep' }));
-  expect(onDelete).not.toHaveBeenCalled();
 
-  await user.click(screen.getByRole('button', { name: 'Drop Missed lab' }));
-  await user.click(screen.getByRole('button', { name: 'Yes, drop it' }));
   expect(onDelete).toHaveBeenCalledWith(lab.id);
 });
 

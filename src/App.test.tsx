@@ -1455,7 +1455,6 @@ test('AC-25.5 deleting an item through the real app removes it from storage', as
 
   await user.click(screen.getByRole('button', { name: 'Midterm' }));
   await user.click(screen.getByRole('button', { name: 'Delete Midterm' }));
-  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
   const left = storedTitles();
   expect(left).toHaveLength(1);
@@ -1807,7 +1806,7 @@ test('AC-45.3 the item says how many of its steps are done', async () => {
   expect(within(project()).getByText('1 of 2 steps done')).toBeVisible();
 });
 
-test('AC-45.4 deleting an item takes its steps with it, and says so first', async () => {
+test('AC-45.4 and AC-67.3 deleting an item takes its steps with it, and Undo brings both back', async () => {
   const user = userEvent.setup();
   seedProject();
   render(<App />);
@@ -1815,14 +1814,40 @@ test('AC-45.4 deleting an item takes its steps with it, and says so first', asyn
   await addStep('Design doc', '2026-11-20');
 
   await user.click(screen.getByRole('button', { name: 'Delete Project 2b' }));
-  expect(
-    screen.getByText(
-      'Delete Project 2b and its 1 step? They are gone for good.',
-    ),
-  ).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
-
   expect(storedItems5()).toEqual([]);
+  expect(screen.getByRole('status')).toHaveTextContent('Deleted Project 2b.');
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(storedItems5()).toHaveLength(2);
+});
+
+test('AC-67.5 undo reaches back one step: a delete replaces a finish', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+  await addItem('Dentist', todayIso());
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+  await user.click(screen.getByRole('button', { name: 'Dentist' }));
+  await user.click(screen.getByRole('button', { name: 'Delete Dentist' }));
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+  // Dentist is back; Rent stays finished.
+  expect(doneControls()).toHaveLength(1);
+  expect(
+    screen.getByRole('button', { name: 'Mark Dentist done' }),
+  ).toBeVisible();
+});
+
+test('AC-67.4 the undo message is there on every view, not only Home', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addItem('Rent', todayIso());
+  await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
+
+  await goTo('Calendar');
+
+  expect(screen.getByRole('button', { name: 'Undo' })).toBeVisible();
 });
 
 test('AC-45.1 a step cannot have steps of its own', async () => {

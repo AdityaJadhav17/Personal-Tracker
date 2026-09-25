@@ -70,9 +70,7 @@ test('AC-64.3 a due backup makes Export the primary button, and exporting settle
   expect(await background()).toBe('rgb(255, 255, 255)');
 });
 
-test('AC-64.4 Delete is red text at the far end, and its confirm is a red button', async ({
-  page,
-}) => {
+test('AC-64.4 Delete is red text at the far end', async ({ page }) => {
   await page.goto('/');
   await add(page, 'Rent', 1);
   await open(page, 'Rent');
@@ -86,10 +84,4 @@ test('AC-64.4 Delete is red text at the far end, and its confirm is a red button
     DANGER,
   );
   expect(box.x - (save.x + save.width)).toBeGreaterThan(200);
-
-  await remove.click();
-  const yes = page.getByRole('button', { name: 'Yes, delete', exact: true });
-  expect(await yes.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
-    DANGER,
-  );
 });

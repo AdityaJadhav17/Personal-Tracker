@@ -75,7 +75,7 @@ test('AC-25.2 a moved deadline survives a reload', async ({ page }) => {
   await expect(page.getByText(/9:00 AM/)).toBeVisible();
 });
 
-test('AC-25.4 and AC-25.8 deleting asks first, and Keep removes nothing', async ({
+test('AC-67.3 Delete acts at once, and Undo puts it back for good', async ({
   page,
 }) => {
   await page.goto('/');
@@ -83,12 +83,9 @@ test('AC-25.4 and AC-25.8 deleting asks first, and Keep removes nothing', async 
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
+  await expect(page.getByText('Midterm', { exact: true })).toHaveCount(0);
 
-  await expect(
-    page.getByText('Delete Midterm? It is gone for good.'),
-  ).toBeVisible();
-
-  await page.getByRole('button', { name: 'Keep' }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await page.reload();
   await expect(page.getByText('Midterm', { exact: true })).toBeVisible();
 });
@@ -100,7 +97,6 @@ test('AC-25.5 a confirmed deletion does not come back', async ({ page }) => {
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
-  await page.getByRole('button', { name: 'Yes, delete' }).click();
 
   await expect(page.getByText('Midterm', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Rent', { exact: true })).toBeVisible();
@@ -120,7 +116,6 @@ test('AC-25.5 a deleted item leaves the calendar too', async ({ page }) => {
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
-  await page.getByRole('button', { name: 'Yes, delete' }).click();
 
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
   await expect(page.getByText('Midterm', { exact: true })).toHaveCount(0);
@@ -152,7 +147,6 @@ test('AC-25.6 deleting an item drops it from its goal progress', async ({
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   await open(page, 'Pset 2');
   await page.getByRole('button', { name: 'Delete Pset 2' }).click();
-  await page.getByRole('button', { name: 'Yes, delete' }).click();
 
   await page.getByRole('button', { name: 'Goals', exact: true }).click();
   await expect(page.getByText('0 of 1 done')).toBeVisible();
@@ -168,7 +162,6 @@ test('AC-25.7 deleting is not finishing: nothing counts as completed', async ({
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
-  await page.getByRole('button', { name: 'Yes, delete' }).click();
 
   // The whole point of US-25: clearing a mistake must not inflate the
   // completed numbers the way marking it done would.
@@ -187,7 +180,6 @@ test('AC-25.5 a deleted item is not in the calendar export either', async ({
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
-  await page.getByRole('button', { name: 'Yes, delete' }).click();
 
   await openData(page);
   const wait = page.waitForEvent('download');
