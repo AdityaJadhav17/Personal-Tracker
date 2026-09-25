@@ -17,3 +17,92 @@
   margin: 6px 0 0;
   color: var(--text-muted);
 }
+
+/*
+ * AC-73. As Home scrolls, the large date fades and shrinks away and a slim
+ * translucent bar takes its place: the iOS large title. Both are driven by
+ * the scroll position, not a timer, so they move exactly as fast as the hand
+ * and reverse the moment it does (AC-73.3). A browser without scroll-driven
+ * animations keeps the bar hidden and Home as it was (AC-73.5).
+ */
+.today__bar {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .today__bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    /* Beside the sidebar; narrow.css takes it to the screen's edge. */
+    left: 210px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    height: 3.25rem;
+    padding: 0 var(--space-5);
+    border-bottom: 1px solid var(--border);
+    /* AC-73.2. The list shows through, blurred, as it scrolls under. */
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    animation: today-bar-arrive linear both;
+    animation-timeline: scroll(root);
+    animation-range: 30px 70px;
+  }
+
+  .today__bar strong {
+    font-size: 0.9375rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .today__bar span {
+    overflow: hidden;
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+  }
+
+  .today__date {
+    transform-origin: left center;
+    animation: today-date-leave linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 60px;
+  }
+}
+
+@keyframes today-bar-arrive {
+  to {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@keyframes today-date-leave {
+  to {
+    opacity: 0;
+    scale: 0.92;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .today__bar {
+    background: var(--bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .today__bar {
+    left: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(3.25rem + env(safe-area-inset-top, 0px));
+  }
+}

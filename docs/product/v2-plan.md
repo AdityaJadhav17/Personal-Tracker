@@ -385,3 +385,4 @@ passed 1,300 lines.
 - [US-70, edits save as you go](stories/US-70.md)
 - [US-71, leaving the list looks like one thing](stories/US-71.md)
 - [US-72, Windows contrast themes](stories/US-72.md)
+- [US-73, Home's header collapses as you scroll](stories/US-73.md)

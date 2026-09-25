@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate } from './helpers';
+import { isoDate, summary } from './helpers';
 
 async function goTo(page: Page, view: string) {
   await page.getByRole('button', { name: view }).click();
@@ -145,10 +145,10 @@ test('AC-16.1 and AC-57.1 Home says what is left today', async ({ page }) => {
     await page.getByRole('button', { name: 'Add', exact: true }).click();
   }
 
-  await expect(page.getByText('3 due today', { exact: true })).toBeVisible();
+  await expect(summary(page, '3 due today')).toBeVisible();
 
   await page.getByRole('button', { name: 'Mark Pset 1 done' }).click();
-  await expect(page.getByText('2 due today', { exact: true })).toBeVisible();
+  await expect(summary(page, '2 due today')).toBeVisible();
 });
 
 test('AC-16.3 and AC-57.1 an empty day says so rather than hiding', async ({
@@ -156,7 +156,5 @@ test('AC-16.3 and AC-57.1 an empty day says so rather than hiding', async ({
 }) => {
   await page.goto('/');
 
-  await expect(
-    page.getByText('Nothing due today', { exact: true }),
-  ).toBeVisible();
+  await expect(summary(page, 'Nothing due today')).toBeVisible();
 });

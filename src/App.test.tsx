@@ -1152,7 +1152,10 @@ test('AC-08.1 the header counts the whole day, not the filtered view', async () 
 
   // Two remain due today. The filter narrows the list you read, not the day
   // you are having.
-  expect(screen.getByText('2 due today')).toBeVisible();
+  // US-73's bar repeats the sentence for the eye; this is the heard one.
+  expect(
+    screen.getByText('2 due today', { ignore: '[aria-hidden="true"] *' }),
+  ).toBeVisible();
 });
 
 /** Click a button by its accessible name. */

@@ -31,6 +31,14 @@ function anItem(overrides: Partial<Item> = {}): Item {
   };
 }
 
+/**
+ * The summary sentence as a screen reader has it. AC-73's bar repeats it for
+ * the eye inside an aria-hidden block, which these tests are not about.
+ */
+function summary(text: string) {
+  return screen.getByText(text, { ignore: '[aria-hidden="true"] *' });
+}
+
 // US-57 turned US-16's two numbers into the header's sentence. The facts are
 // the same; each test names the criterion it carries forward.
 
@@ -55,7 +63,7 @@ test('AC-57.1 (was AC-16.1) it says how many are due today', () => {
     />,
   );
 
-  expect(screen.getByText('3 due today')).toBeVisible();
+  expect(summary('3 due today')).toBeVisible();
 });
 
 test('AC-57.1 (was AC-16.2) it says how many were finished yesterday', () => {
@@ -69,15 +77,13 @@ test('AC-57.1 (was AC-16.2) it says how many were finished yesterday', () => {
     />,
   );
 
-  expect(
-    screen.getByText('Nothing due today · 2 finished yesterday'),
-  ).toBeVisible();
+  expect(summary('Nothing due today · 2 finished yesterday')).toBeVisible();
 });
 
 test('AC-57.1 (was AC-16.3) with nothing due today it says so rather than hiding', () => {
   render(<StatRow now={NOW} items={[]} />);
 
-  expect(screen.getByText('Nothing due today')).toBeVisible();
+  expect(summary('Nothing due today')).toBeVisible();
 });
 
 test('AC-57.1 overdue and this week are counted too, and zeros are left out', () => {
@@ -88,7 +94,20 @@ test('AC-57.1 overdue and this week are counted too, and zeros are left out', ()
     />,
   );
 
-  expect(
-    screen.getByText('1 due today · 1 overdue · 1 this week'),
-  ).toBeVisible();
+  expect(summary('1 due today · 1 overdue · 1 this week')).toBeVisible();
+});
+
+test('AC-73.1 and AC-73.4 a slim bar repeats the date and two counts, for the eye only', () => {
+  render(
+    <StatRow
+      now={NOW}
+      items={[anItem({ dueAt: at(0) }), anItem({ dueAt: at(-1) })]}
+    />,
+  );
+
+  // Once as the heading, once in the bar.
+  expect(screen.getAllByText('Tuesday, September 15')).toHaveLength(2);
+  expect(screen.getAllByRole('heading')).toHaveLength(1);
+  const counts = screen.getAllByText('1 due today · 1 overdue').at(-1)!;
+  expect(counts.closest('[aria-hidden="true"]')).not.toBeNull();
 });

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { dayName, isoDate, open, openData } from './helpers';
+import { dayName, isoDate, open, openData, summary } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 1) {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -162,7 +162,7 @@ test('AC-25.7 deleting is not finishing: nothing counts as completed', async ({
   await page.goto('/');
   // Due today, so it shows in the header's count.
   await addItem(page, 'Midterm', 0);
-  await expect(page.getByText('1 due today', { exact: true })).toBeVisible();
+  await expect(summary(page, '1 due today')).toBeVisible();
 
   await open(page, 'Midterm');
   await page.getByRole('button', { name: 'Delete Midterm' }).click();

@@ -86,3 +86,14 @@ export async function openHome(page: Page) {
     .getByRole('button', { name: 'Home', exact: true })
     .click();
 }
+
+/**
+ * US-73. Home's summary sentence, the one a screen reader hears. The
+ * collapsing bar repeats it for the eye, hidden from assistive technology,
+ * so matching the text alone finds two.
+ */
+export function summary(page: Page, text: string) {
+  return page
+    .getByRole('paragraph')
+    .filter({ hasText: new RegExp(`^${text}$`) });
+}

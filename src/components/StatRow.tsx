@@ -41,6 +41,13 @@ export default function StatRow({ items, now }: StatRowProps) {
     <header className="today">
       <h1 className="today__date">{dayHeading(now)}</h1>
       <p className="today__summary">{parts.join(' · ')}</p>
+      {/* AC-73. What the large date turns into as the list scrolls under it:
+          the date, small, and the two counts that matter most. For the eye
+          only; the heading above is what a screen reader hears. */}
+      <div className="today__bar" aria-hidden="true">
+        <strong>{dayHeading(now)}</strong>
+        <span>{parts.slice(0, 2).join(' · ')}</span>
+      </div>
     </header>
   );
 }

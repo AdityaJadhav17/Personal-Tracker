@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate } from './helpers';
+import { isoDate, summary } from './helpers';
 
 async function addItem(
   page: Page,
@@ -102,7 +102,7 @@ test('AC-08.1 the filter narrows the list, not the day', async ({ page }) => {
   // Two things are still due today, whatever the list is showing. Read off the
   // paragraph that holds both the number and the words, so this cannot pass on
   // a stray 2 somewhere else on the page.
-  await expect(page.getByText('2 due today', { exact: true })).toBeVisible();
+  await expect(summary(page, '2 due today')).toBeVisible();
 });
 
 test('AC-08.1 marking something done still works while filtered', async ({
