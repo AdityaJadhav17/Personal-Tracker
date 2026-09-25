@@ -13,11 +13,13 @@
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-top: 3px solid var(--accent);
   border-radius: var(--radius);
 }
 
 .course__name {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
   margin: 0 0 var(--space-3);
   font-size: 1rem;
   font-weight: 600;
@@ -38,4 +40,54 @@
 .course__details dd {
   margin: 0 0 var(--space-2);
   overflow-wrap: anywhere;
+}
+
+/*
+ * US-60. Shared by the course and goal cards: the name with its More control
+ * at the far end, the button that opens the add form, and the dots that stand
+ * for More. The coloured top stripe went: a stock template look, and course
+ * colour now says which is which.
+ */
+.card__head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.card__more {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  margin: -6px -8px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  transition:
+    background-color var(--speed) ease,
+    scale 160ms var(--ease-out);
+}
+
+.card__more:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card__more:hover {
+    background: var(--bg);
+  }
+}
+
+.card__more[aria-expanded='true'] {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.list__new {
+  margin-bottom: var(--space-2);
 }

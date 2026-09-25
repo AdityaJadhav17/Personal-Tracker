@@ -146,6 +146,10 @@ test('AC-27.7 deleting the course you filtered to shows everything again', async
   await expect(titled(page, 'Dentist')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Courses', exact: true }).click();
+  // US-60. Delete waits behind the card's More.
+  await page
+    .getByRole('button', { name: 'More for CSE 110', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Delete CSE 110' }).click();
   await page.getByRole('button', { name: 'Yes, delete' }).click();
   await page.getByRole('button', { name: 'Home', exact: true }).click();

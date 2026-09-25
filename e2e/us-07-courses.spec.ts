@@ -109,6 +109,10 @@ test('AC-07.3 and AC-20.3 deleting asks first, then keeps the items', async ({
     .selectOption({ label: 'CSE 100' });
 
   await page.getByRole('button', { name: 'Courses' }).click();
+  // US-60. Delete waits behind the card's More.
+  await page
+    .getByRole('button', { name: 'More for CSE 100', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Delete CSE 100' }).click();
 
   // Nothing gone yet.
@@ -131,6 +135,14 @@ test('AC-20.3 keeping the course removes nothing', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Courses' }).click();
   await addCourse(page, 'CSE 100');
+
+  // US-60. Delete waits behind the card's More.
+
+  await page
+
+    .getByRole('button', { name: 'More for CSE 100', exact: true })
+
+    .click();
 
   await page.getByRole('button', { name: 'Delete CSE 100' }).click();
   await page.getByRole('button', { name: 'Keep' }).click();

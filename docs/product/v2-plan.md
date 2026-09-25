@@ -372,3 +372,4 @@ passed 1,300 lines.
 - [US-57, Home as a timeline](stories/US-57.md)
 - [US-58, one place for data](stories/US-58.md)
 - [US-59, the opened row](stories/US-59.md)
+- [US-60, courses and goals, list first](stories/US-60.md)

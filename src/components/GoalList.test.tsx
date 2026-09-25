@@ -181,6 +181,10 @@ test('AC-20.3 deleting asks before anything goes', async () => {
     <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
   );
 
+  // US-60. Delete waits behind More.
+  await user.click(
+    screen.getByRole('button', { name: 'More for Finish the quarter clean' }),
+  );
   await user.click(
     screen.getByRole('button', { name: 'Delete Finish the quarter clean' }),
   );
@@ -198,6 +202,10 @@ test('AC-20.1 confirming reports the goal id', async () => {
     <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
   );
 
+  // US-60. Delete waits behind More.
+  await user.click(
+    screen.getByRole('button', { name: 'More for Finish the quarter clean' }),
+  );
   await user.click(
     screen.getByRole('button', { name: 'Delete Finish the quarter clean' }),
   );
@@ -213,6 +221,10 @@ test('AC-20.3 keeping it removes nothing', async () => {
     <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={onDelete} />,
   );
 
+  // US-60. Delete waits behind More.
+  await user.click(
+    screen.getByRole('button', { name: 'More for Finish the quarter clean' }),
+  );
   await user.click(
     screen.getByRole('button', { name: 'Delete Finish the quarter clean' }),
   );
@@ -222,4 +234,36 @@ test('AC-20.3 keeping it removes nothing', async () => {
   expect(
     screen.queryByRole('button', { name: 'Yes, delete' }),
   ).not.toBeInTheDocument();
+});
+
+describe('US-60 the list first', () => {
+  test('AC-60.1 with goals, the list shows and the form waits behind New goal', async () => {
+    const user = userEvent.setup();
+    render(
+      <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+    );
+
+    expect(screen.getByText('Finish the quarter clean')).toBeVisible();
+    expect(screen.queryByLabelText('Goal name')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'New goal' }));
+    expect(screen.getByLabelText('Goal name')).toBeVisible();
+  });
+
+  test('AC-60.2 a card offers no Delete until More is opened', async () => {
+    const user = userEvent.setup();
+    render(
+      <GoalList goals={[aGoal()]} items={[]} onAdd={noop} onDelete={noop} />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Delete Finish the quarter clean' }),
+    ).toBeNull();
+    await user.click(
+      screen.getByRole('button', { name: 'More for Finish the quarter clean' }),
+    );
+    expect(
+      screen.getByRole('button', { name: 'Delete Finish the quarter clean' }),
+    ).toBeVisible();
+  });
 });

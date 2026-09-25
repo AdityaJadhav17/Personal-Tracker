@@ -13,7 +13,6 @@
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-top: 3px solid var(--accent);
   border-radius: var(--radius);
 }
 

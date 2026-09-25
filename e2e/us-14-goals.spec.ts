@@ -103,6 +103,10 @@ test('AC-20.1 and AC-20.3 deleting a goal asks, then keeps the items', async ({
     .selectOption({ label: 'Finish the quarter' });
 
   await page.getByRole('button', { name: 'Goals' }).click();
+  // US-60. Delete waits behind the card's More.
+  await page
+    .getByRole('button', { name: 'More for Finish the quarter', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Delete Finish the quarter' }).click();
 
   await expect(

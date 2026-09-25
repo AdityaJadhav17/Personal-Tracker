@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatDue, toDueAt } from '../domain/dates';
 import { progressOf } from '../domain/goals';
 import type { Goal, GoalDraft, Item } from '../domain/types';
+import MoreButton from './MoreButton';
 
 const NAME_REQUIRED = 'Give the goal a name.';
 const TARGET_REQUIRED = 'Pick a target date.';
@@ -26,6 +27,12 @@ export default function GoalList({
   const [nameError, setNameError] = useState('');
   const [targetError, setTargetError] = useState('');
   const [confirming, setConfirming] = useState<string | null>(null);
+  // US-60. Which card has its More open, showing Delete. One at a time.
+  const [more, setMore] = useState<string | null>(null);
+  // US-60. The list comes first; the form waits behind a button, except when
+  // there is nothing to list yet.
+  const [adding, setAdding] = useState(false);
+  const showForm = adding || goals.length === 0;
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -43,66 +50,88 @@ export default function GoalList({
     setName('');
     setDescription('');
     setTarget('');
+    setAdding(false);
   }
 
   const pending = goals.find((goal) => goal.id === confirming);
 
   return (
     <section className="goals">
-      <form className="form" onSubmit={handleSubmit}>
-        <div className="form__field form__field--title">
-          <label className="form__label" htmlFor="goal-name">
-            Goal name
-          </label>
-          <input
-            className="form__input"
-            id="goal-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            aria-describedby={nameError ? 'goal-name-error' : undefined}
-          />
-          {nameError && (
-            <p className="form__error" id="goal-name-error">
-              {nameError}
-            </p>
-          )}
-        </div>
-
-        <div className="form__field form__field--title">
-          <label className="form__label" htmlFor="goal-description">
-            Description
-          </label>
-          <input
-            className="form__input"
-            id="goal-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="form__field">
-          <label className="form__label" htmlFor="goal-target">
-            Target date
-          </label>
-          <input
-            className="form__input"
-            id="goal-target"
-            type="date"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            aria-describedby={targetError ? 'goal-target-error' : undefined}
-          />
-          {targetError && (
-            <p className="form__error" id="goal-target-error">
-              {targetError}
-            </p>
-          )}
-        </div>
-
-        <button className="form__submit" type="submit">
-          Add goal
+      {!showForm && (
+        <button
+          className="prompt__button list__new"
+          type="button"
+          onClick={() => setAdding(true)}
+        >
+          New goal
         </button>
-      </form>
+      )}
+
+      {showForm && (
+        <form className="form" onSubmit={handleSubmit}>
+          <div className="form__field form__field--title">
+            <label className="form__label" htmlFor="goal-name">
+              Goal name
+            </label>
+            <input
+              className="form__input"
+              id="goal-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              aria-describedby={nameError ? 'goal-name-error' : undefined}
+            />
+            {nameError && (
+              <p className="form__error" id="goal-name-error">
+                {nameError}
+              </p>
+            )}
+          </div>
+
+          <div className="form__field form__field--title">
+            <label className="form__label" htmlFor="goal-description">
+              Description
+            </label>
+            <input
+              className="form__input"
+              id="goal-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="form__field">
+            <label className="form__label" htmlFor="goal-target">
+              Target date
+            </label>
+            <input
+              className="form__input"
+              id="goal-target"
+              type="date"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              aria-describedby={targetError ? 'goal-target-error' : undefined}
+            />
+            {targetError && (
+              <p className="form__error" id="goal-target-error">
+                {targetError}
+              </p>
+            )}
+          </div>
+
+          <button className="form__submit" type="submit">
+            Add goal
+          </button>
+          {goals.length > 0 && (
+            <button
+              className="prompt__button prompt__button--quiet"
+              type="button"
+              onClick={() => setAdding(false)}
+            >
+              Cancel
+            </button>
+          )}
+        </form>
+      )}
 
       <p className="status" role="status">
         {pending ? `Delete ${pending.name}? Its items stay.` : ''}
@@ -144,7 +173,14 @@ export default function GoalList({
             const { done, total } = progressOf(items, goal.id);
             return (
               <li className="goal" key={goal.id}>
-                <h3 className="goal__name">{goal.name}</h3>
+                <div className="card__head">
+                  <h3 className="goal__name">{goal.name}</h3>
+                  <MoreButton
+                    name={goal.name}
+                    open={more === goal.id}
+                    onToggle={() => setMore(more === goal.id ? null : goal.id)}
+                  />
+                </div>
                 {goal.description && (
                   <p className="goal__description">{goal.description}</p>
                 )}
@@ -160,14 +196,16 @@ export default function GoalList({
                   max={total || 1}
                 />
 
-                <button
-                  className="data__button"
-                  type="button"
-                  aria-label={`Delete ${goal.name}`}
-                  onClick={() => setConfirming(goal.id)}
-                >
-                  Delete
-                </button>
+                {more === goal.id && (
+                  <button
+                    className="data__button"
+                    type="button"
+                    aria-label={`Delete ${goal.name}`}
+                    onClick={() => setConfirming(goal.id)}
+                  >
+                    Delete
+                  </button>
+                )}
               </li>
             );
           })}

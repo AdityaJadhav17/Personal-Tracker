@@ -57,6 +57,7 @@ test('AC-21.1 an item shows in the cell for the day it is due', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -74,6 +75,7 @@ test('AC-21.1 an item due another day is not in this day', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -89,6 +91,7 @@ test('AC-21.2 today is marked as today', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -105,6 +108,7 @@ test('AC-21.3 the calendar opens on the current month', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -121,6 +125,7 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -141,6 +146,7 @@ test('AC-21.3 moving back returns to the month you came from', async () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -160,6 +166,7 @@ test('AC-21.2 today is only marked in the month it falls in', async () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -182,6 +189,7 @@ test('AC-21.4 a day with more items than fit says how many more', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -197,6 +205,7 @@ test('AC-21.4 a day that fits says nothing about more', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -212,6 +221,7 @@ test('AC-21.5 a month with nothing in it still draws the grid', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -234,6 +244,7 @@ test('AC-21.6 a done item is not on the calendar', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -249,6 +260,7 @@ test('the weekday headings name the columns', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -279,6 +291,7 @@ test('AC-39.1 dropping an item on another day moves it there at the same time', 
       now={NOW}
       onMove={onMove}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -299,6 +312,7 @@ test('AC-39.3 a line says what moved and where it went', () => {
       now={NOW}
       onMove={() => {}}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -319,6 +333,7 @@ test('AC-39.4 dropping an item back on its own day changes nothing', () => {
       now={NOW}
       onMove={onMove}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -339,6 +354,7 @@ test('AC-39.6 dragging over Next month turns the page, and the drop lands there'
       now={NOW}
       onMove={onMove}
       onAdd={() => true}
+      courses={[]}
       goals={[]}
       renderDay={listTitles}
     />,
@@ -378,6 +394,7 @@ function renderWith(
       now={NOW}
       onMove={() => {}}
       onAdd={onAdd}
+      courses={[]}
       goals={goals}
       renderDay={listTitles}
     />,

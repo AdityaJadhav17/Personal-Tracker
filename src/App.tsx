@@ -160,6 +160,7 @@ export default function App() {
           }
           goals={db.goals}
           onAdd={actions.addItem}
+          courses={db.courses}
           renderDay={(dayItems) => (
             <ul className="group__list">
               {dayItems.map((item) => (

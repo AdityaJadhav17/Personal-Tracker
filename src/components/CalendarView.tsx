@@ -10,7 +10,7 @@ import {
   shiftMonth,
   toDateValue,
 } from '../domain/dates';
-import type { Goal, Item, ItemDraft } from '../domain/types';
+import type { Course, Goal, Item, ItemDraft } from '../domain/types';
 import AddItemForm from './AddItemForm';
 
 /** Sunday first, matching the date control the add form already uses. */
@@ -47,6 +47,8 @@ interface CalendarViewProps {
   renderDay: (items: Item[]) => ReactNode;
   /** US-53. Adds to the open day. False when storage refused it. */
   onAdd: (draft: ItemDraft) => boolean;
+  /** AC-60.4. In the order added, which is what picks each one's colour. */
+  courses: Course[];
 }
 
 /**
@@ -68,6 +70,7 @@ export default function CalendarView({
   goals,
   renderDay,
   onAdd,
+  courses,
 }: CalendarViewProps) {
   const [month, setMonth] = useState(() => monthValue(now));
   // AC-39.3. There is no undo, so a drop that lands on the wrong day has to
@@ -93,6 +96,13 @@ export default function CalendarView({
 
   const today = toDateValue(now);
   const cells = monthGrid(month, items, goals);
+
+  // AC-60.4. An item's bar takes its course's colour, the one Home and the
+  // Courses view show; an item with no course keeps the accent.
+  const hueOf = (item: Item) => {
+    const index = courses.findIndex((one) => one.id === item.courseId);
+    return index === -1 ? '' : `calendar__item--course-${(index % 4) + 1}`;
+  };
   const openCell = cells.find((cell) => cell?.day === opened);
 
   function turn(by: number) {
@@ -226,6 +236,7 @@ export default function CalendarView({
                     isTarget={cell.day === target}
                     onTarget={setTarget}
                     onDragEnd={clearTarget}
+                    hueOf={hueOf}
                   />
                 ),
               )}
@@ -310,6 +321,7 @@ function Cell({
   isTarget,
   onTarget,
   onDragEnd,
+  hueOf,
 }: {
   cell: DayCell;
   isToday: boolean;
@@ -319,6 +331,7 @@ function Cell({
   isTarget: boolean;
   onTarget: (day: string) => void;
   onDragEnd: () => void;
+  hueOf: (item: Item) => string;
 }) {
   const shown = cell.items.slice(0, SHOWN);
   const repeats = cell.repeats.slice(0, SHOWN - shown.length);
@@ -366,7 +379,7 @@ function Cell({
 
       {shown.map((item) => (
         <button
-          className={`calendar__item calendar__item--${item.priority}`}
+          className={`calendar__item calendar__item--${item.priority} ${hueOf(item)}`}
           key={item.id}
           type="button"
           draggable
@@ -384,7 +397,7 @@ function Cell({
           real one and its repeats follow. */}
       {repeats.map((item) => (
         <button
-          className={`calendar__item calendar__item--${item.priority} calendar__item--repeat`}
+          className={`calendar__item calendar__item--${item.priority} ${hueOf(item)} calendar__item--repeat`}
           key={item.id}
           type="button"
           // Starts with the visible title, so voice control still finds it.

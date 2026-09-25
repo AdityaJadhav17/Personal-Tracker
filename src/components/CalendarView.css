@@ -145,9 +145,26 @@
   color: var(--text);
 }
 
+/* AC-60.4. High priority reads bold, as it does on Home; the bar's colour
+   belongs to the course now, so it no longer turns red. */
 .calendar__item--high {
-  border-left-color: var(--danger);
-  background: var(--danger-soft);
+  font-weight: 650;
+}
+
+.calendar__item--course-1 {
+  border-left-color: var(--course-1);
+}
+
+.calendar__item--course-2 {
+  border-left-color: var(--course-2);
+}
+
+.calendar__item--course-3 {
+  border-left-color: var(--course-3);
+}
+
+.calendar__item--course-4 {
+  border-left-color: var(--course-4);
 }
 
 /* AC-52.6. A repeat that does not exist yet: the same bar, dashed, with no

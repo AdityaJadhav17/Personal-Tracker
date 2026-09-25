@@ -804,6 +804,9 @@ async function goTo(view: string) {
 
 async function addCourse(name: string, location = '', email = '', hours = '') {
   const user = userEvent.setup();
+  // US-60. With a course already there, the form waits behind New course.
+  const more = screen.queryByRole('button', { name: 'New course' });
+  if (more) await user.click(more);
   await user.type(screen.getByLabelText('Course name'), name);
   if (location) await user.type(screen.getByLabelText('Location'), location);
   if (email) await user.type(screen.getByLabelText('Professor email'), email);
@@ -871,6 +874,7 @@ test('AC-07.3 deleting a course keeps its items, without the course', async () =
   ]);
 
   await goTo('Courses');
+  await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Delete CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
   await goTo('Home');
@@ -903,6 +907,9 @@ test('moving between views swaps what is shown', async () => {
 
 async function addGoal(name: string, description = '', target = '2026-12-15') {
   const user = userEvent.setup();
+  // US-60. With a goal already there, the form waits behind New goal.
+  const more = screen.queryByRole('button', { name: 'New goal' });
+  if (more) await user.click(more);
   await user.type(screen.getByLabelText('Goal name'), name);
   if (description) {
     await user.type(screen.getByLabelText('Description'), description);
@@ -985,6 +992,9 @@ test('AC-20.1 deleting a goal keeps its items, without the goal', async () => {
   ]);
 
   await goTo('Goals');
+  await user.click(
+    screen.getByRole('button', { name: 'More for Finish the quarter' }),
+  );
   await user.click(
     screen.getByRole('button', { name: 'Delete Finish the quarter' }),
   );
@@ -1265,6 +1275,7 @@ test('AC-27.7 deleting the course you filtered to shows everything again', async
   await showCourse('CSE 110');
 
   await goTo('Courses');
+  await user.click(screen.getByRole('button', { name: 'More for CSE 110' }));
   await user.click(screen.getByRole('button', { name: 'Delete CSE 110' }));
   await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
   await goTo('Home');

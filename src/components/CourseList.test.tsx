@@ -98,6 +98,8 @@ test('AC-20.3 deleting asks before anything is removed', async () => {
   const onDelete = vi.fn<(id: string) => void>();
   render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
 
+  // US-60. Delete waits behind More, so a card you are reading cannot lose it.
+  await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Delete CSE 100' }));
 
   expect(onDelete).not.toHaveBeenCalled();
@@ -109,6 +111,8 @@ test('AC-20.3 confirming reports the course id', async () => {
   const onDelete = vi.fn<(id: string) => void>();
   render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
 
+  // US-60. Delete waits behind More, so a card you are reading cannot lose it.
+  await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Delete CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Yes, delete' }));
 
@@ -120,6 +124,8 @@ test('AC-20.3 keeping it removes nothing and puts the question away', async () =
   const onDelete = vi.fn<(id: string) => void>();
   render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
 
+  // US-60. Delete waits behind More, so a card you are reading cannot lose it.
+  await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Delete CSE 100' }));
   await user.click(screen.getByRole('button', { name: 'Keep' }));
 
@@ -139,6 +145,7 @@ test('AC-20.3 the question names the course, so you know which one', async () =>
     />,
   );
 
+  await user.click(screen.getByRole('button', { name: 'More for MATH 20C' }));
   await user.click(screen.getByRole('button', { name: 'Delete MATH 20C' }));
 
   expect(screen.getByRole('status')).toHaveTextContent(
@@ -150,4 +157,55 @@ test('with no courses an empty state explains what this is for', () => {
   render(<CourseList courses={[]} onAdd={noop} onDelete={noop} />);
 
   expect(screen.getByText('No courses yet.')).toBeVisible();
+});
+
+describe('US-60 the list first', () => {
+  test('AC-60.1 with courses, the list shows and the form waits behind New course', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn<(draft: CourseDraft) => void>();
+    const { rerender } = render(
+      <CourseList courses={[aCourse()]} onAdd={onAdd} onDelete={noop} />,
+    );
+
+    expect(screen.getByText('CSE 100')).toBeVisible();
+    expect(screen.queryByLabelText('Course name')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'New course' }));
+    await user.type(screen.getByLabelText('Course name'), 'CSE 120');
+    await user.click(screen.getByRole('button', { name: 'Add course' }));
+    rerender(
+      <CourseList
+        courses={[aCourse(), aCourse({ id: 'c2', name: 'CSE 120' })]}
+        onAdd={onAdd}
+        onDelete={noop}
+      />,
+    );
+
+    expect(onAdd).toHaveBeenCalled();
+    expect(screen.queryByLabelText('Course name')).toBeNull();
+  });
+
+  test('AC-60.1 Cancel puts the form away without adding', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn<(draft: CourseDraft) => void>();
+    render(<CourseList courses={[aCourse()]} onAdd={onAdd} onDelete={noop} />);
+
+    await user.click(screen.getByRole('button', { name: 'New course' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByLabelText('Course name')).toBeNull();
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  test('AC-60.2 a card offers no Delete until More is opened', async () => {
+    const user = userEvent.setup();
+    render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={noop} />);
+
+    expect(screen.queryByRole('button', { name: 'Delete CSE 100' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Delete CSE 100' }),
+    ).toBeVisible();
+  });
 });
