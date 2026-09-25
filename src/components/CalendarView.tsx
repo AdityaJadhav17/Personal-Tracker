@@ -4,6 +4,7 @@ import { HEAVY_WEEK, monthGrid, weekLoad } from '../domain/calendar';
 import type { DayCell } from '../domain/calendar';
 import {
   dayLabel,
+  gridDate,
   monthLabel,
   monthValue,
   moveToDay,
@@ -240,7 +241,13 @@ export default function CalendarView({
                     className="calendar__cell calendar__cell--outside"
                     key={position}
                     role="presentation"
-                  />
+                  >
+                    {/* AC-68. Its date, dimmed, for the eye only: a screen
+                        reader hears every real day in full already. */}
+                    <span className="calendar__date" aria-hidden="true">
+                      {gridDate(month, index * 7 + position)}
+                    </span>
+                  </td>
                 ) : (
                   <Cell
                     cell={cell}

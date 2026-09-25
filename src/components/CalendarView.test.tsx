@@ -617,3 +617,19 @@ test('AC-63.3 a week with nothing due shows no count', () => {
   expect(screen.getByRole('cell', { name: '1 due' })).toBeVisible();
   expect(screen.queryByRole('cell', { name: '0 due' })).toBeNull();
 });
+
+test('AC-68.1 the days either side of the month show their dates', () => {
+  renderWith([]);
+
+  // September has no 31st: this one is August's, in the padding.
+  expect(screen.getByText('31')).toBeInTheDocument();
+  // September 1 and October 1.
+  expect(screen.getAllByText('1')).toHaveLength(2);
+});
+
+test('AC-68.2 a neighbouring day is not a cell you can open', () => {
+  renderWith([]);
+
+  expect(screen.queryByRole('cell', { name: /August 31/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /August 31/ })).toBeNull();
+});

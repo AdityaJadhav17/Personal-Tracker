@@ -146,8 +146,9 @@ const WEEK = 7;
  *
  * Days before the first of the month are null, and the array is padded to
  * whole weeks, so a seven column layout never has to reason about where a row
- * ends. Adjacent months are not shown: a blank cell says "not this month"
- * without inviting you to read it as a deadline you have.
+ * ends. Adjacent months hold nothing here: a padding cell says "not this
+ * month" without inviting you to read it as a deadline you have. US-68 prints
+ * their date numbers, from gridDate, and nothing else.
  *
  * Day zero of the next month is the last day of this one, which is how the
  * length comes out right in February and in a leap year without a table.
@@ -164,6 +165,18 @@ export function monthCells(month: string): (string | null)[] {
   while (cells.length % WEEK !== 0) cells.push(null);
 
   return cells;
+}
+
+/**
+ * AC-68.1. The day of the month at a position in monthCells' grid, whichever
+ * month it falls in: position 0 of September 2026 is August 30, so 30. The
+ * Date constructor rolls a day before the 1st or past the last into the
+ * neighbouring month by itself.
+ */
+export function gridDate(month: string, position: number): number {
+  const [year, index] = parseMonth(month);
+  const blanks = new Date(year, index, 1).getDay();
+  return new Date(year, index, 1 - blanks + position).getDate();
 }
 
 /** US-57. Home's heading, "Thursday, September 24". */

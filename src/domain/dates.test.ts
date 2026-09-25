@@ -7,6 +7,7 @@ import {
   groupOf,
   lateBy,
   monthCells,
+  gridDate,
   monthLabel,
   monthValue,
   moveToDay,
@@ -506,5 +507,24 @@ describe('US-57 the words the timeline uses', () => {
 describe('US-61 a day in few words', () => {
   test('AC-61.1 a stored day reads as weekday, month and date', () => {
     expect(shortDay('2026-09-23')).toBe('Wed, Sep 23');
+  });
+});
+
+describe('US-68 the date at a grid position', () => {
+  test('AC-68.1 September 2026 opens on August 30 and 31', () => {
+    expect([gridDate('2026-09', 0), gridDate('2026-09', 1)]).toEqual([30, 31]);
+  });
+
+  test('AC-68.1 the first real day is 1, and the padding after it restarts at 1', () => {
+    expect(gridDate('2026-09', 2)).toBe(1);
+    // Two blanks and thirty days: positions 32 to 34 are October 1 to 3.
+    expect([32, 33, 34].map((at) => gridDate('2026-09', at))).toEqual([
+      1, 2, 3,
+    ]);
+  });
+
+  test('AC-68.1 the day before March in a leap year is the 29th', () => {
+    // March 2028 starts on a Wednesday: three blanks, the last is Feb 29.
+    expect(gridDate('2028-03', 2)).toBe(29);
   });
 });

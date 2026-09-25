@@ -46,6 +46,9 @@ How it is built and what counts as finished.
 - [design/ui-polish-plan.md](design/ui-polish-plan.md) — phases 1 to 5
   built. Motion, feedback, type and phone fixes drawn from six design skills,
   with what was rejected and why.
+- [design/ui-final-polish-plan.md](design/ui-final-polish-plan.md) — the
+  last pass, proposed after US-68: consistency, edits that save as you go,
+  and Windows contrast themes. Not built.
 - [design/ui-reference.md](design/ui-reference.md) — the dashboard screenshots
   that set the visual direction, what transfers from them and what does not.
 - [design/ui-plan.md](design/ui-plan.md) — the layout reasoning, with each

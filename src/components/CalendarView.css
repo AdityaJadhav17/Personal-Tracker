@@ -125,7 +125,9 @@
   margin-bottom: var(--space-1);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-muted);
+  /* AC-68.1. The month's own days in full ink, so the neighbours' muted
+     numbers read as further away. */
+  color: var(--text);
 }
 
 /* AC-63.4. Today is its number in a filled circle; the cell stays a cell. */
@@ -341,4 +343,13 @@
   .calendar__item {
     font-size: 0.625rem;
   }
+}
+
+/* AC-68.1. A neighbouring month's date: the same place and size as a real
+   one, in muted ink on the recessed cell, a pair the contrast test holds to
+   4.5:1. Faded any further it would fail that. */
+.calendar__cell--outside .calendar__date {
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: default;
 }
