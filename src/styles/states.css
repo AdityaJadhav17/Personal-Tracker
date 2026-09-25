@@ -6,7 +6,7 @@
   padding: var(--space-5) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
 }
 
 /* US-43. The calendar file preview lives inside the data row, so it takes the
@@ -48,7 +48,8 @@
 .prompt__button,
 .form__submit,
 .data__button,
-.calendar__move {
+.calendar__move,
+.page-head__action {
   display: inline-flex;
   align-items: center;
   justify-content: center;

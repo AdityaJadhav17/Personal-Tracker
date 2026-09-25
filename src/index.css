@@ -27,3 +27,4 @@
 @import './components/ItemRow.panel.css';
 @import './components/BulkAdd.css';
 @import './components/CategoryFilter.css';
+@import './styles/forced.css';

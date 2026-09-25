@@ -261,3 +261,39 @@
   border: 0;
   background: none;
 }
+
+/* AC-69.1. A page's title with its action at the far end, the layout the
+   calendar's month and moves already had. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.page-head .page-title {
+  margin: 0;
+}
+
+/*
+ * AC-69.4. The last buttons without a press state. Every other button in
+ * the app already takes one; these were missed because they do not look
+ * like buttons.
+ */
+.toast__undo,
+.calendar__item,
+.calendar__date,
+.calendar__more,
+.trends__summary {
+  transition: scale 160ms var(--ease-out);
+}
+
+.toast__undo:active,
+.calendar__item:active,
+.calendar__date:active,
+.calendar__more:active,
+.trends__summary:active {
+  scale: var(--press-scale);
+}

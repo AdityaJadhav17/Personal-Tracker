@@ -1,0 +1,66 @@
+/* ---------- Windows contrast themes (US-72) ---------- */
+
+/*
+ * With forced colours on, the browser repaints every background to the
+ * theme's page colour and drops every shadow. Anything the app marks with a
+ * fill or a shadow alone disappears. These rules give each such marker a
+ * system colour the theme chose, so it survives in whatever palette the
+ * person picked. apple-design §14.
+ *
+ * Last in the cascade, so each rule only has to say what changes.
+ */
+@media (forced-colors: active) {
+  /* AC-72.1. "This one": the current tab, filter, mood, today, a ticked
+     circle, and the current view in More. */
+  .sidebar__item--current,
+  .filter__option--current,
+  .score--chosen,
+  .calendar__cell--today .calendar__date,
+  .item--finishing .item__done,
+  .sheet__link[aria-current='page'] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  /* AC-72.2. Dots are fills and nothing else. In text colour they keep
+     their shape; the course name beside each says which course. */
+  .item__dot,
+  .sidebar__dot {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+
+  .goal__bar {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .goal__bar::-webkit-progress-bar {
+    background: Canvas;
+  }
+
+  .goal__bar::-webkit-progress-value {
+    background: Highlight;
+  }
+
+  .goal__bar::-moz-progress-bar {
+    background: Highlight;
+  }
+
+  /* AC-72.3. The open day and a drop target were rings drawn as shadows. */
+  .calendar__cell--open,
+  .calendar__cell--target {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  /* AC-72.4. Floating things were set apart by shadow; give them an edge. */
+  .toast,
+  .sheet,
+  .calendar__day {
+    border: 1px solid CanvasText;
+  }
+}

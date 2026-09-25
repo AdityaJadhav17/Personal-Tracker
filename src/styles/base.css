@@ -41,12 +41,16 @@
   --sidebar-current: light-dark(#0f766e, #2dd4bf);
   --sidebar-current-bg: light-dark(#ffffff, #232d44);
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
+  /* AC-69.3. In rem, so the gaps grow with the text when Windows or the
+     browser is set to larger type. At the default 16px they are 4 to 24px. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  /* AC-69.2. Two corners: controls, and anything that holds content. */
   --radius: 6px;
+  --radius-card: 10px;
   /* AC-62.3. The two button heights: in the page, and inside a row. */
   --control: 2.25rem;
   --control-small: 1.75rem;

@@ -60,15 +60,21 @@ export default function GoalList({
 
   return (
     <section className="goals">
-      {!showForm && (
-        <button
-          className="prompt__button list__new"
-          type="button"
-          onClick={() => setAdding(true)}
-        >
-          New goal
-        </button>
-      )}
+      {/* AC-69.1. The title and its one action on a row, as the calendar
+          has them: the action at the far end, quiet, since this page is
+          read far more than it is added to. */}
+      <div className="page-head">
+        <h1 className="page-title">Goals</h1>
+        {!showForm && (
+          <button
+            className="page-head__action"
+            type="button"
+            onClick={() => setAdding(true)}
+          >
+            New goal
+          </button>
+        )}
+      </div>
 
       {showForm && (
         <form className="form" onSubmit={handleSubmit}>

@@ -29,7 +29,10 @@
   gap: var(--space-2);
 }
 
-.calendar__move {
+/* AC-69.1. The quiet button: the calendar's moves, and every page header's
+   action. */
+.calendar__move,
+.page-head__action {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -42,12 +45,14 @@
 }
 
 /* US-47. Press feedback, the one motion allowed even on frequent actions. */
-.calendar__move:active {
+.calendar__move:active,
+.page-head__action:active {
   scale: var(--press-scale);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .calendar__move:hover {
+  .calendar__move:hover,
+  .page-head__action:hover {
     border-color: var(--accent);
   }
 }
@@ -227,7 +232,7 @@
   padding: var(--space-4);
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   background: var(--surface);
   color: var(--text);
   box-shadow:

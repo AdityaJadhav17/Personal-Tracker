@@ -13,7 +13,7 @@
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
 }
 
 .course__name {
@@ -84,8 +84,4 @@
 .card__more[aria-expanded='true'] {
   background: var(--bg);
   color: var(--text);
-}
-
-.list__new {
-  margin-bottom: var(--space-2);
 }

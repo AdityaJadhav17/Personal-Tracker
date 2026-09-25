@@ -381,3 +381,5 @@ passed 1,300 lines.
 - [US-66, the phone's floating tab bar](stories/US-66.md)
 - [US-67, finishing and removing feel final, and forgivable](stories/US-67.md)
 - [US-68, neighbouring dates in the calendar](stories/US-68.md)
+- [US-69, one page header, one corner scale, spacing that scales](stories/US-69.md)
+- [US-72, Windows contrast themes](stories/US-72.md)

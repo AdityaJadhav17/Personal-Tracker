@@ -204,25 +204,19 @@ export default function App() {
           />
         </>
       ) : view === 'goals' ? (
-        <>
-          <h1 className="page-title">Goals</h1>
-          <GoalList
-            now={current}
-            goals={db.goals}
-            items={db.items}
-            onAdd={actions.addGoal}
-            onDelete={actions.removeGoal}
-          />
-        </>
+        <GoalList
+          now={current}
+          goals={db.goals}
+          items={db.items}
+          onAdd={actions.addGoal}
+          onDelete={actions.removeGoal}
+        />
       ) : view === 'courses' ? (
-        <>
-          <h1 className="page-title">Courses</h1>
-          <CourseList
-            courses={db.courses}
-            onAdd={actions.addCourse}
-            onDelete={actions.removeCourse}
-          />
-        </>
+        <CourseList
+          courses={db.courses}
+          onAdd={actions.addCourse}
+          onDelete={actions.removeCourse}
+        />
       ) : view === 'data' ? (
         // US-58. Every tool that moves data in or out, in one place instead
         // of at the foot of every view. Each says what it is for, because

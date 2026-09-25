@@ -1,6 +1,7 @@
 # UI final polish
 
-Proposed 25 September 2026, after US-62 to US-68. Nothing here is built yet.
+Proposed 25 September 2026, after US-62 to US-68. US-69 and US-72 are built;
+US-70 and US-71 are not.
 
 The audit read every view in both themes and at phone width, with the app in
 the state a term actually looks like: three courses, a goal, a week of

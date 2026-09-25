@@ -8,7 +8,7 @@
   padding: var(--space-3);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
 }
 
 /*
@@ -106,7 +106,7 @@
   /* AC-62.5. One step to the list; the status line no longer sits between. */
   margin-bottom: var(--space-4);
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-card);
 }
 
 .form--quick:focus-within {
@@ -138,7 +138,7 @@
   padding: var(--space-3);
   border: 1px solid var(--accent);
   border-top-color: var(--border);
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
   background: var(--surface);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
 }
