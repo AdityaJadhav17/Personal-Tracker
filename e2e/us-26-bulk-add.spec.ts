@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate } from './helpers';
+import { isoDate, openData, openHome } from './helpers';
 
 async function paste(page: Page, text: string) {
+  await openData(page);
   await page.getByRole('button', { name: 'Paste a list' }).click();
   await page.getByLabel('Paste a list').fill(text);
 }
@@ -40,6 +41,7 @@ test('AC-26.1 and AC-26.2 a pasted term is previewed, then added in one go', asy
 
   await page.getByRole('button', { name: 'Add 3 items' }).click();
 
+  await openHome(page);
   await expect(
     page.getByRole('button', { name: 'Read chapter 4', exact: true }),
   ).toBeVisible();
@@ -82,6 +84,7 @@ test('AC-26.5 a line with no time is due at the end of that day', async ({
   // The preview says so before anything is saved.
   await expect(page.getByText(/11:59 PM/)).toBeVisible();
   await page.getByRole('button', { name: 'Add 1 item' }).click();
+  await openHome(page);
 
   // AC-57.5. The row leaves 11:59pm unsaid; the item holds it.
   await page

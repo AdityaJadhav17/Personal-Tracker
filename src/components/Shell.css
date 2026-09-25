@@ -78,6 +78,25 @@
   }
 }
 
+/* AC-58.2. A backup is due: a dot at the end of the row, which stays beside
+   the icon when a narrow screen hides the labels. */
+.sidebar__dot {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--sidebar-current);
+}
+
+/* US-58. Every view opens with its name, in the size Home's date uses. */
+.page-title {
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: 1.625rem;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
 .sidebar__item--current {
   color: var(--sidebar-current);
   background: rgba(255, 255, 255, 0.08);

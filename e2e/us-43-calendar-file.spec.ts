@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openData, openHome } from './helpers';
 
 /** A UTC iCalendar stamp `days` from now at 06:59Z, like Canvas writes. */
 function stamp(days: number): string {
@@ -26,6 +27,7 @@ function feed(): string {
 
 /** Hand text to the file input without touching the filesystem. */
 async function choose(page: Page, text: string, name: string) {
+  await openData(page);
   await page.getByLabel('Add from calendar file').evaluate(
     (node, [contents, filename]) => {
       const input = node as HTMLInputElement;
@@ -98,5 +100,6 @@ test('AC-43.7 a backup chosen by mistake is refused and changes nothing', async 
   await choose(page, '{"version": 4, "items": []}', 'backup.json');
 
   await expect(page.getByRole('alert')).toContainText('not a calendar');
+  await openHome(page);
   await expect(page.getByText('Nothing due yet.')).toBeVisible();
 });

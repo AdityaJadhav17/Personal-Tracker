@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openData } from './helpers';
 
 function tomorrow(): string {
   const d = new Date();
@@ -22,6 +23,7 @@ test('AC-46.1 and AC-46.3 an exam gets two alarms and a low priority chore none'
   await addWithPriority(page, 'CSE 120 Midterm', 'high');
   await addWithPriority(page, 'Water plants', 'low');
 
+  await openData(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export calendar' }).click(),

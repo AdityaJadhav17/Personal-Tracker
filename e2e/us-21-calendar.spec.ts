@@ -87,7 +87,8 @@ test('AC-21.3 the next month shows that month, and today is no longer marked', a
 }) => {
   await seed(page, []);
 
-  const heading = page.getByRole('heading', { level: 2 });
+  // US-58. The month is the view's title, a level-one heading in main.
+  const heading = page.getByRole('main').getByRole('heading', { level: 1 });
   const opened = await heading.textContent();
 
   await page.getByRole('button', { name: 'Next month' }).click();

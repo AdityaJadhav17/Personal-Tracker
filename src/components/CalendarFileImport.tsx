@@ -66,15 +66,23 @@ export default function CalendarFileImport({
 
   return (
     <>
-      <span className="data__import">
-        <label htmlFor="calendar-file">Add from calendar file</label>
-        <input
-          id="calendar-file"
-          type="file"
-          accept=".ics,text/calendar"
-          onChange={handleFile}
-        />
-      </span>
+      {/* US-58. The file input is the labelled control; the label is what
+          you see, dressed as a button. */}
+      <div className="data__tool">
+        <label className="data__button data__file">
+          Add from calendar file
+          <input
+            className="visually-hidden"
+            type="file"
+            accept=".ics,text/calendar"
+            onChange={handleFile}
+          />
+        </label>
+        <p className="data__what">
+          An .ics from Canvas or a course site. You see what it found before
+          anything is added.
+        </p>
+      </div>
 
       {error && (
         <p className="alert" role="alert">

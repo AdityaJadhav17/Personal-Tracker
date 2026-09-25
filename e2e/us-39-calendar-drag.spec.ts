@@ -112,7 +112,8 @@ test('AC-39.6 an item dragged over Next month can be dropped in the next month',
   page,
 }) => {
   await seedHomework(page);
-  const heading = page.getByRole('heading', { level: 2 });
+  // US-58. The month is the view's title, a level-one heading in main.
+  const heading = page.getByRole('main').getByRole('heading', { level: 1 });
   const thisMonth = await heading.textContent();
 
   const next = new Date();

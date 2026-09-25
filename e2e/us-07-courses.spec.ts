@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate, open } from './helpers';
+import { isoDate, open, openData } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 0) {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -145,6 +145,7 @@ test('courses survive an export and import round trip', async ({ page }) => {
   await addCourse(page, 'CSE 100', { location: 'Center Hall 101' });
 
   await page.getByRole('button', { name: 'Home' }).click();
+  await openData(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export', exact: true }).click(),
@@ -153,6 +154,7 @@ test('courses survive an export and import round trip', async ({ page }) => {
 
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
 
   await page.getByRole('button', { name: 'Courses' }).click();

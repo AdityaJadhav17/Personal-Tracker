@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openData } from './helpers';
 
 function today(): string {
   const d = new Date();
@@ -31,15 +32,19 @@ test('AC-40.4 exporting clears the backup reminder, and it stays cleared after a
   await page.getByLabel('Title', { exact: true }).fill('Rent');
   await page.getByLabel('Due', { exact: true }).fill(today());
   await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await openData(page);
   await expect(page.getByText('Not backed up yet.')).toBeVisible();
 
+  await openData(page);
   await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export', exact: true }).click(),
   ]);
+  await openData(page);
   await expect(page.getByText('Not backed up yet.')).toHaveCount(0);
 
   await page.reload();
   await expect(page.getByText('Rent', { exact: true })).toBeVisible();
+  await openData(page);
   await expect(page.getByText('Not backed up yet.')).toHaveCount(0);
 });

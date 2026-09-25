@@ -1,8 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-import { add, isoDate, open } from './helpers';
+import { add, isoDate, open, openData } from './helpers';
 
 /** Click Export and read the file the browser actually produced. */
 async function exportAndRead(page: Page) {
+  await openData(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export', exact: true }).click(),

@@ -1,7 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /** Every view the sidebar offers, so a new one cannot be quietly dropped. */
-const VIEWS = ['Home', 'Calendar', 'Goals', 'Courses', 'Reflections', 'Trends'];
+const VIEWS = [
+  'Home',
+  'Calendar',
+  'Goals',
+  'Courses',
+  'Reflections',
+  'Trends',
+  'Data',
+];
 
 /** How much wider than the screen the document is. Zero is the whole point. */
 function overflow(page: Page) {

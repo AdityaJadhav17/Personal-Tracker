@@ -1,13 +1,5 @@
 /* ---------- Trends ---------- */
 
-.trends__title {
-  margin: 0 0 var(--space-3);
-  font-size: 1.125rem;
-  /* US-49. Headings tighten a little; body text stays at zero. */
-  letter-spacing: -0.01em;
-  font-weight: 600;
-}
-
 .trends__heading {
   margin: var(--space-4) 0 var(--space-2);
   font-size: 0.75rem;

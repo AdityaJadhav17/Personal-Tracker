@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import ThemeToggle from './ThemeToggle';
 
 export type View =
-  'home' | 'calendar' | 'goals' | 'courses' | 'reflections' | 'trends';
+  'home' | 'calendar' | 'goals' | 'courses' | 'reflections' | 'trends' | 'data';
 
 /**
  * Every destination the sidebar offers.
@@ -44,15 +44,31 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
     label: 'Trends',
     icon: 'M3 17l5-6 4 3 5-7M21 7h-4M21 7v4',
   },
+  // US-58. Export, import and the calendar tools, which belong to no one view.
+  {
+    id: 'data',
+    label: 'Data',
+    icon: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  },
 ];
 
 interface ShellProps {
   view: View;
   onNavigate: (view: View) => void;
   children: ReactNode;
+  /**
+   * AC-58.2. A backup is due. The reminder lives on the Data view, so the
+   * sidebar marks Data wherever you are.
+   */
+  backupDue?: boolean;
 }
 
-export default function Shell({ view, onNavigate, children }: ShellProps) {
+export default function Shell({
+  view,
+  onNavigate,
+  children,
+  backupDue = false,
+}: ShellProps) {
   return (
     <div className="shell">
       {/* AC-42.2. Six sidebar buttons stand between a keyboard and the work
@@ -73,6 +89,10 @@ export default function Shell({ view, onNavigate, children }: ShellProps) {
               key={id}
               type="button"
               aria-current={view === id ? 'page' : undefined}
+              // The name stays "Data"; the reminder is its description.
+              aria-description={
+                id === 'data' && backupDue ? 'Backup due' : undefined
+              }
               onClick={() => onNavigate(id)}
             >
               <svg
@@ -95,6 +115,9 @@ export default function Shell({ view, onNavigate, children }: ShellProps) {
                 the label with `display: none` would take the name with it.
               */}
               <span className="sidebar__label">{label}</span>
+              {id === 'data' && backupDue && (
+                <span className="sidebar__dot" aria-hidden="true" />
+              )}
             </button>
           ))}
         </nav>

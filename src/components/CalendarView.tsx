@@ -144,7 +144,7 @@ export default function CalendarView({
   return (
     <section className="calendar">
       <div className="calendar__bar">
-        <h2 className="calendar__title">{monthLabel(month)}</h2>
+        <h1 className="page-title">{monthLabel(month)}</h1>
 
         <div className="calendar__moves">
           <button

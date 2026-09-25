@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { openData } from './helpers';
 
 /** Hold the mouse down on a button and read its scale once the press settles. */
 async function pressedScale(page: Page, name: string) {
@@ -57,6 +58,7 @@ test.describe('with reduced motion asked for', () => {
     await page.getByLabel('Title', { exact: true }).click();
 
     expect(await pressedScale(page, 'Add')).toBe('1');
+    await openData(page);
     const duration = await page
       .getByRole('button', { name: 'Export', exact: true })
       .evaluate((el) => getComputedStyle(el).transitionDuration);

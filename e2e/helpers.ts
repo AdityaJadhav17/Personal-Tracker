@@ -70,3 +70,19 @@ export function dayName(daysFromToday: number): string {
     year: 'numeric',
   });
 }
+
+/** US-58. Export, import and the calendar tools live in the Data view. */
+export async function openData(page: Page) {
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'Data', exact: true })
+    .click();
+}
+
+/** Back to the list, to read what an import or a paste brought in. */
+export async function openHome(page: Page) {
+  await page
+    .getByRole('navigation')
+    .getByRole('button', { name: 'Home', exact: true })
+    .click();
+}

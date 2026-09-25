@@ -22,7 +22,7 @@ export default function TrendsView({ series }: TrendsViewProps) {
   if (daysWithData(series) < 2) {
     return (
       <section className="trends">
-        <h2 className="trends__title">Trends</h2>
+        <h1 className="page-title">Trends</h1>
         <p className="trends__empty">
           There is not enough yet. Record how a couple of days went, or finish
           something on more than one day, and the shape will show up here.
@@ -35,7 +35,7 @@ export default function TrendsView({ series }: TrendsViewProps) {
 
   return (
     <section className="trends">
-      <h2 className="trends__title">Trends</h2>
+      <h1 className="page-title">Trends</h1>
 
       <h3 className="trends__heading">How the day went</h3>
       <LineChart

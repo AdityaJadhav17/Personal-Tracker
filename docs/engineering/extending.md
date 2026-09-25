@@ -32,9 +32,9 @@ lists are what versions 4 and 5 actually took.
 
 1. **`src/components/Shell.tsx`.** Add it to `VIEWS`, with a label and an
    icon path. The sidebar, its keyboard order and `aria-current` follow.
-2. **`src/App.tsx`.** Add a branch to the view conditional. There are six
-   branches now; if a seventh makes it hard to read, that is the time to turn
-   it into a map, not before.
+2. **`src/App.tsx`.** Add a branch to the view conditional. There are seven
+   branches now, Data the longest; if an eighth makes it hard to read, that
+   is the time to turn it into a map, not before.
 3. **`e2e/us-42-accessibility.spec.ts`.** Add the view's label to `VIEWS`, so
    the WCAG scan covers it in both colour schemes.
 4. **`e2e/us-23-narrow.spec.ts`.** Add it to `VIEWS` there too, so it is

@@ -9,7 +9,15 @@ import { test, expect, type Page } from '@playwright/test';
  * cannot: a control with no name, a landmark missing, a region unlabelled.
  */
 
-const VIEWS = ['Home', 'Calendar', 'Goals', 'Courses', 'Reflections', 'Trends'];
+const VIEWS = [
+  'Home',
+  'Calendar',
+  'Goals',
+  'Courses',
+  'Reflections',
+  'Trends',
+  'Data',
+];
 
 /** Something in every group and every collection, so each view has content. */
 async function seed(page: Page) {

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { dayName, isoDate, open } from './helpers';
+import { dayName, isoDate, open, openData } from './helpers';
 
 async function addItem(page: Page, title: string, daysFromToday = 1) {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -189,6 +189,7 @@ test('AC-25.5 a deleted item is not in the calendar export either', async ({
   await page.getByRole('button', { name: 'Delete Midterm' }).click();
   await page.getByRole('button', { name: 'Yes, delete' }).click();
 
+  await openData(page);
   const wait = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export calendar' }).click();
   const download = await wait;

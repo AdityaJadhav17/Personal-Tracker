@@ -10,7 +10,7 @@ nothing leaves the machine.
 
 ## What it does
 
-Six views, in a sidebar, and a button at its foot that switches between light
+Seven views, in a sidebar, and a button at its foot that switches between light
 and dark. With no choice made, the app follows your system.
 
 **Home** holds anything with a date and a consequence: a midterm, rent, a
@@ -94,6 +94,10 @@ entry per day.
 **Trends** plots those scores and what you finished, one point per day, with
 the same numbers in a table underneath.
 
+**Data** holds everything that moves data in or out, each with a line saying
+what it is for. When a backup is due, a dot on Data in the sidebar says so
+from any view.
+
 Paste a list fills a whole term at once: one line each, a date, an optional
 time, then the title. It shows you what every line was understood as, and lists
 the ones it could not read, before anything is saved. The format is strict on
@@ -107,7 +111,8 @@ makes no network request.
 
 Export everything to a JSON file you keep, and import it back on another
 machine. Files written by the first version still import. Once a week has
-passed since the last export, a line by the Export button says so.
+passed since the last export, a line by the Export button says so, and Data
+gets its dot.
 
 Export calendar writes an `.ics` file of every open deadline, with reminders
 set by priority: a high priority item warns a day before and an hour before, a

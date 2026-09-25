@@ -1,8 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-import { add, open } from './helpers';
+import { add, open, openData, openHome } from './helpers';
 
 /** Export, and hand back the path of the file the browser actually wrote. */
 async function exportToDisk(page: Page) {
+  await openData(page);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export', exact: true }).click(),
@@ -15,6 +16,7 @@ async function exportToDisk(page: Page) {
  * which keeps @types/node out of the project for one test helper.
  */
 async function uploadText(page: Page, text: string) {
+  await openData(page);
   await page.getByLabel('Import').evaluate((node, contents: string) => {
     const input = node as HTMLInputElement;
     const transfer = new DataTransfer();
@@ -55,8 +57,10 @@ test('AC-10.1 a real export imports back into an empty database exactly', async 
   await page.reload();
   await expect(page.getByText('Nothing due yet.')).toBeVisible();
 
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
 
+  await openHome(page);
   await expect(page.getByText('Rent', { exact: true })).toBeVisible();
   const after = await page.evaluate(() =>
     localStorage.getItem('personal-tracker/v1'),
@@ -133,6 +137,7 @@ test('AC-10.4 Replace swaps everything for the file', async ({ page }) => {
   await page.reload();
   await add(page, 'New thing');
 
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
   await page.getByRole('button', { name: 'Replace' }).click();
 
@@ -150,10 +155,12 @@ test('AC-10.4 Merge keeps both, and merging the same file twice is a no-op', asy
   await page.reload();
   await add(page, 'New thing');
 
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
   await page.getByRole('button', { name: 'Merge' }).click();
   expect(await storedTitles(page)).toEqual(['New thing', 'Old thing']);
 
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
   await page.getByRole('button', { name: 'Merge' }).click();
   expect(await storedTitles(page)).toEqual(['New thing', 'Old thing']);
@@ -183,6 +190,7 @@ test('AC-10.4 Merge keeps the courses you already had, after a reload', async ({
   await page.goto('/');
   await uploadText(page, withCourse('CSE 120'));
   // Anything held, so the second file asks Replace or Merge.
+  await openHome(page);
   await add(page, 'Rent');
   await uploadText(page, withCourse('CSE 123'));
   await page.getByRole('button', { name: 'Merge' }).click();
@@ -209,6 +217,7 @@ test('importing sends nothing off-origin', async ({ page }) => {
   await page.goto('/');
   await add(page, 'Rent');
   const file = await exportToDisk(page);
+  await openData(page);
   await page.getByLabel('Import').setInputFiles(file!);
   await page.getByRole('button', { name: 'Merge' }).click();
 

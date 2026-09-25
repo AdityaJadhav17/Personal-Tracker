@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate } from './helpers';
+import { isoDate, openData, openHome } from './helpers';
 
 async function addRepeating(
   page: Page,
@@ -30,6 +30,7 @@ function stored(page: Page) {
  * which keeps @types/node out of the project. Same trick as us-10-import.
  */
 async function uploadText(page: Page, text: string) {
+  await openData(page);
   await page.getByLabel('Import').evaluate((node, contents: string) => {
     const input = node as HTMLInputElement;
     const transfer = new DataTransfer();
@@ -158,6 +159,7 @@ test('AC-28.7 a version 1 export still imports, with nothing repeating', async (
 
   await uploadText(page, v1);
 
+  await openHome(page);
   await expect(
     page.getByRole('button', { name: 'Old v1 item', exact: true }),
   ).toBeVisible();
@@ -176,6 +178,7 @@ test('AC-28.8 a repeating item survives an export and import round trip', async 
   await page.goto('/');
   await addRepeating(page, 'Rent', 'monthly');
 
+  await openData(page);
   const wait = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export', exact: true }).click();
   const download = await wait;
@@ -195,6 +198,7 @@ test('AC-28.8 a repeating item survives an export and import round trip', async 
 
   await uploadText(page, text);
 
+  await openHome(page);
   await expect(
     page.getByRole('button', { name: 'Rent', exact: true }),
   ).toBeVisible();

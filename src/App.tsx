@@ -150,7 +150,7 @@ export default function App() {
   }
 
   return (
-    <Shell view={view} onNavigate={setView}>
+    <Shell view={view} onNavigate={setView} backupDue={backup !== null}>
       {view === 'calendar' ? (
         <CalendarView
           items={db.items}
@@ -189,24 +189,162 @@ export default function App() {
       ) : view === 'trends' ? (
         <TrendsView series={dailySeries(db.items, db.reflections)} />
       ) : view === 'reflections' ? (
-        <ReflectionView
-          today={toDateValue(current)}
-          reflections={db.reflections}
-          onRecord={actions.recordToday}
-        />
+        <>
+          <h1 className="page-title">Reflections</h1>
+          <ReflectionView
+            today={toDateValue(current)}
+            reflections={db.reflections}
+            onRecord={actions.recordToday}
+          />
+        </>
       ) : view === 'goals' ? (
-        <GoalList
-          goals={db.goals}
-          items={db.items}
-          onAdd={actions.addGoal}
-          onDelete={actions.removeGoal}
-        />
+        <>
+          <h1 className="page-title">Goals</h1>
+          <GoalList
+            goals={db.goals}
+            items={db.items}
+            onAdd={actions.addGoal}
+            onDelete={actions.removeGoal}
+          />
+        </>
       ) : view === 'courses' ? (
-        <CourseList
-          courses={db.courses}
-          onAdd={actions.addCourse}
-          onDelete={actions.removeCourse}
-        />
+        <>
+          <h1 className="page-title">Courses</h1>
+          <CourseList
+            courses={db.courses}
+            onAdd={actions.addCourse}
+            onDelete={actions.removeCourse}
+          />
+        </>
+      ) : view === 'data' ? (
+        // US-58. Every tool that moves data in or out, in one place instead
+        // of at the foot of every view. Each says what it is for, because
+        // they are used a few times a term and not remembered in between.
+        <>
+          <h1 className="page-title">Data</h1>
+
+          <section className="data" aria-labelledby="data-out">
+            <h2 className="data__heading" id="data-out">
+              Keep a copy
+            </h2>
+            {/* US-40. Beside Export, because that is what fixes it. */}
+            {backup && <p className="data__backup">{backup}</p>}
+            <div className="data__tool">
+              <button
+                className="data__button"
+                type="button"
+                onClick={handleExport}
+              >
+                Export
+              </button>
+              <p className="data__what">
+                Everything, as a file you keep. Import brings it back, here or
+                on another laptop.
+              </p>
+            </div>
+            <div className="data__tool">
+              <button
+                className="data__button"
+                type="button"
+                onClick={handleCalendarExport}
+              >
+                Export calendar
+              </button>
+              <p className="data__what">
+                Your open deadlines as an .ics for your phone, whose calendar
+                then does the reminding.
+              </p>
+            </div>
+          </section>
+
+          <section className="data" aria-labelledby="data-in">
+            <h2 className="data__heading" id="data-in">
+              Bring things in
+            </h2>
+            <div className="data__tool">
+              {/* The file input is the labelled control; the label is what
+                  you see, dressed as a button. */}
+              <label className="data__button data__file">
+                Import
+                <input
+                  className="visually-hidden"
+                  type="file"
+                  accept="application/json"
+                  onChange={handleImportFile}
+                />
+              </label>
+              <p className="data__what">A file made by Export.</p>
+            </div>
+            <CalendarFileImport
+              items={db.items}
+              courses={db.courses}
+              now={current}
+              onAdd={actions.addItems}
+            />
+            <div className="data__tool">
+              <button
+                className="data__button"
+                type="button"
+                onClick={() => setPasting(!pasting)}
+              >
+                Paste a list
+              </button>
+              <p className="data__what">
+                One line each: a date, an optional time, then the title.
+              </p>
+            </div>
+            {pasting && (
+              <BulkAdd
+                onAdd={actions.addItems}
+                onClose={() => setPasting(false)}
+              />
+            )}
+
+            {importError && (
+              <p className="alert" role="alert">
+                {importError}
+              </p>
+            )}
+
+            {pendingImport && (
+              <section className="prompt">
+                <p>
+                  You already have {db.items.length} saved. Replace everything
+                  with the file, or keep both?
+                </p>
+                <div className="prompt__actions">
+                  <button
+                    className="prompt__button"
+                    type="button"
+                    onClick={() => {
+                      actions.replaceAll(pendingImport);
+                      setPendingImport(null);
+                    }}
+                  >
+                    Replace
+                  </button>
+                  <button
+                    className="prompt__button"
+                    type="button"
+                    onClick={() => {
+                      actions.merge(pendingImport);
+                      setPendingImport(null);
+                    }}
+                  >
+                    Merge
+                  </button>
+                  <button
+                    className="prompt__button prompt__button--quiet"
+                    type="button"
+                    onClick={() => setPendingImport(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </section>
+            )}
+          </section>
+        </>
       ) : (
         <>
           <StatRow items={db.items} now={current} />
@@ -273,104 +411,10 @@ export default function App() {
         </>
       )}
 
-      {/*
-        Export sits after the list so it stays out of the add-then-finish
-        keyboard path, which is the one used every day.
-      */}
-      <div className="data">
-        {/* US-40. Next to Export, because that is what fixes it. */}
-        {backup && <p className="data__backup">{backup}</p>}
-
-        <button className="data__button" type="button" onClick={handleExport}>
-          Export
-        </button>
-
-        <button
-          className="data__button"
-          type="button"
-          onClick={handleCalendarExport}
-        >
-          Export calendar
-        </button>
-
-        <button
-          className="data__button"
-          type="button"
-          onClick={() => setPasting(!pasting)}
-        >
-          Paste a list
-        </button>
-
-        <span className="data__import">
-          <label htmlFor="import-file">Import</label>
-          <input
-            id="import-file"
-            type="file"
-            accept="application/json"
-            onChange={handleImportFile}
-          />
-        </span>
-
-        <CalendarFileImport
-          items={db.items}
-          courses={db.courses}
-          now={current}
-          onAdd={actions.addItems}
-        />
-      </div>
-
-      {pasting && (
-        <BulkAdd onAdd={actions.addItems} onClose={() => setPasting(false)} />
-      )}
-
       {storageError && (
         <p className="alert" role="alert">
           {storageError}
         </p>
-      )}
-
-      {importError && (
-        <p className="alert" role="alert">
-          {importError}
-        </p>
-      )}
-
-      {pendingImport && (
-        <section className="prompt">
-          <p>
-            You already have {db.items.length} saved. Replace everything with
-            the file, or keep both?
-          </p>
-          <div className="prompt__actions">
-            <button
-              className="prompt__button"
-              type="button"
-              onClick={() => {
-                actions.replaceAll(pendingImport);
-                setPendingImport(null);
-              }}
-            >
-              Replace
-            </button>
-            <button
-              className="prompt__button"
-              type="button"
-              onClick={() => {
-                actions.merge(pendingImport);
-                setPendingImport(null);
-              }}
-            >
-              Merge
-            </button>
-            <button
-              className="prompt__button prompt__button--quiet"
-              type="button"
-              onClick={() => setPendingImport(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </section>
       )}
     </Shell>
   );

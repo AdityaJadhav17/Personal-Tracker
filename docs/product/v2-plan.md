@@ -370,3 +370,4 @@ passed 1,300 lines.
 - [US-55, dates first](stories/US-55.md)
 - [US-56, deploys itself](stories/US-56.md)
 - [US-57, Home as a timeline](stories/US-57.md)
+- [US-58, one place for data](stories/US-58.md)

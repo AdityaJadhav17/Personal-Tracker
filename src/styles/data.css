@@ -1,32 +1,48 @@
-/* ---------- Data footer: export and import ---------- */
+/* ---------- The Data view (US-58) ---------- */
 
-/* US-40. Its own line above the buttons, in body text rather than muted: it
-   only appears when there is something worth doing about it. */
+/* Two groups, out and in, each a short list of tools with what they are for. */
+.data {
+  margin-bottom: var(--space-5);
+}
+
+.data__heading {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+/* US-40. In body text rather than muted: it only appears when there is
+   something worth doing about it. */
 .data__backup {
-  flex-basis: 100%;
-  margin: 0;
+  margin: 0 0 var(--space-2);
   color: var(--text);
 }
 
-.data {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+/* A tool and its one line of explanation, the buttons in one column. */
+.data__tool {
+  display: grid;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
   gap: var(--space-3);
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
+  align-items: center;
+  padding: var(--space-2) 0;
   border-top: 1px solid var(--border);
+}
+
+.data__what {
+  margin: 0;
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
 .data__button {
+  justify-self: start;
   padding: var(--space-1) var(--space-3);
   font-size: 0.8125rem;
   color: var(--text);
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  cursor: pointer;
   transition:
     border-color var(--speed) ease,
     scale 160ms var(--ease-out);
@@ -43,18 +59,18 @@
   }
 }
 
-.data__import {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  max-width: 100%;
+/* US-58. A file picker dressed as a button. The real input is visually
+   hidden but still takes focus, so the ring shows on the label around it. */
+.data__file:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* A file input's width is the browser's to choose; on a 320px phone, US-43's
-   longer label beside it did not fit, so the pair wraps and the input yields. */
-.data__import input {
-  max-width: 100%;
+@media (max-width: 700px) {
+  .data__tool {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
 }
 
 .alert {

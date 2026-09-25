@@ -24,14 +24,6 @@
   margin-bottom: var(--space-4);
 }
 
-.calendar__title {
-  margin: 0;
-  font-size: 1.125rem;
-  /* US-49. Headings tighten a little; body text stays at zero. */
-  letter-spacing: -0.01em;
-  font-weight: 600;
-}
-
 .calendar__moves {
   display: flex;
   gap: var(--space-2);

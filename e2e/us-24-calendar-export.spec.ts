@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { isoDate } from './helpers';
+import { isoDate, openData } from './helpers';
 
 async function addItem(page: Page, title: string, time = '17:00') {
   await page.getByLabel('Title', { exact: true }).fill(title);
@@ -20,6 +20,7 @@ function octets(text: string): number {
  * Node types and the project needs no new dependency to typecheck them.
  */
 async function exported(page: Page): Promise<{ name: string; text: string }> {
+  await openData(page);
   const wait = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export calendar' }).click();
   const download = await wait;

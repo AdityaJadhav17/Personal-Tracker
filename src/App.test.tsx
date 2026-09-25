@@ -166,6 +166,24 @@ function onlyRow() {
   return done!.closest('li')!;
 }
 
+/** US-58. Export, import and the calendar tools live in the Data view. */
+async function openData() {
+  await userEvent.setup().click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Data',
+    }),
+  );
+}
+
+/** Back to the list, to read what an import brought in. */
+async function openHome() {
+  await userEvent.setup().click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Home',
+    }),
+  );
+}
+
 function todayIso() {
   const d = new Date();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -415,6 +433,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
   await addItem('Rent', todayIso());
   await addItem('Midterm', todayIso());
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(blobs).toHaveLength(1);
@@ -432,6 +451,7 @@ test('AC-09.1 the exported file is offered as JSON', async () => {
 
   render(<App />);
   await addItem('Rent', todayIso());
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(blobs[0]!.type).toBe('application/json');
@@ -445,6 +465,7 @@ test('AC-09.1 items already marked done are included in the export', async () =>
   await addItem('Rent', todayIso());
   await user.click(screen.getByRole('button', { name: 'Mark Rent done' }));
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   const parsed = JSON.parse(await readBlob(blobs[0]!)) as {
@@ -461,6 +482,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   render(<App />);
   expect(screen.getByText('Nothing due yet.')).toBeVisible();
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
@@ -474,8 +496,9 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   });
 });
 
-test('AC-09.2 export is offered even when there is nothing to export', () => {
+test('AC-09.2 export is offered even when there is nothing to export', async () => {
   render(<App />);
+  await openData();
   expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled();
 });
 
@@ -485,6 +508,7 @@ function jsonFile(text: string, name = 'personal-tracker-2026-09-15.json') {
 
 async function importFile(file: File) {
   const user = userEvent.setup();
+  await openData();
   await user.upload(screen.getByLabelText('Import'), file);
 }
 
@@ -508,6 +532,7 @@ test('AC-10.1 exporting and importing into an empty database restores it exactly
   await user.tab();
   await user.click(screen.getByRole('button', { name: 'Mark Midterm done' }));
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
   const exported = await readBlob(blobs[0]!);
   const before = localStorage.getItem('personal-tracker/v1');
@@ -517,6 +542,7 @@ test('AC-10.1 exporting and importing into an empty database restores it exactly
   render(<App />);
   await importFile(jsonFile(exported));
 
+  await openHome();
   await screen.findByText('Rent');
   expect(JSON.parse(localStorage.getItem('personal-tracker/v1')!)).toEqual(
     JSON.parse(before!),
@@ -531,6 +557,7 @@ test('AC-10.2 a file that is not JSON changes nothing and says why', async () =>
 
   expect(await screen.findByRole('alert')).toHaveTextContent(/not valid JSON/i);
   expect(storedItems()).toHaveLength(1);
+  await openHome();
   expect(screen.getByText('Rent')).toBeVisible();
 });
 
@@ -621,6 +648,7 @@ test('AC-10.4 merging your own export twice does not duplicate anything', async 
 
   render(<App />);
   await addItem('Rent', todayIso());
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
   const exported = await readBlob(blobs[0]!);
 
@@ -762,6 +790,7 @@ test('AC-10.4 importing into an empty database does not ask', async () => {
   };
   await importFile(jsonFile(JSON.stringify(incoming)));
 
+  await openHome();
   expect(await screen.findByText('Imported thing')).toBeVisible();
   expect(
     screen.queryByRole('button', { name: 'Replace' }),
@@ -1424,6 +1453,7 @@ test('AC-24.1 the calendar export writes a real .ics file', async () => {
   render(<App />);
   await addIn('CSE 110 midterm', todayIso(), 'academic');
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export calendar' }));
 
   const text = await readBlob(blobs[0]!);
@@ -1593,6 +1623,7 @@ test('AC-40.2 items that were never exported say they are not backed up', async 
   expect(screen.queryByText('Not backed up yet.')).toBeNull();
 
   await addItem('Rent', todayIso());
+  await openData();
 
   expect(screen.getByText('Not backed up yet.')).toBeVisible();
 });
@@ -1603,6 +1634,7 @@ test('AC-40.4 Export records the backup, and the reminder stays gone after a rel
   const first = render(<App />);
   await addItem('Rent', todayIso());
 
+  await openData();
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(screen.queryByText('Not backed up yet.')).toBeNull();
@@ -1775,4 +1807,67 @@ test('AC-45.1 a step cannot have steps of its own', async () => {
   await openItem(user, 'Design doc');
 
   expect(screen.queryByLabelText('New step for Design doc')).toBeNull();
+});
+
+describe('US-58 one place for data, and a title on every view', () => {
+  async function goTo(name: string) {
+    await userEvent
+      .setup()
+      .click(
+        within(screen.getByRole('navigation')).getByRole('button', { name }),
+      );
+  }
+
+  test('AC-58.1 the data tools live in the Data view, not at the foot of Home', async () => {
+    render(<App />);
+
+    expect(screen.queryByRole('button', { name: 'Export' })).toBeNull();
+    await goTo('Data');
+
+    for (const name of ['Export', 'Export calendar', 'Paste a list']) {
+      expect(screen.getByRole('button', { name })).toBeVisible();
+    }
+    expect(screen.getByLabelText('Import')).toHaveAttribute('type', 'file');
+    expect(screen.getByLabelText('Add from calendar file')).toHaveAttribute(
+      'type',
+      'file',
+    );
+  });
+
+  test('AC-58.2 a backup that is due shows on Data in the sidebar, and on the view', async () => {
+    render(<App />);
+    const data = () =>
+      within(screen.getByRole('navigation')).getByRole('button', {
+        name: 'Data',
+      });
+    expect(data()).not.toHaveAccessibleDescription();
+
+    await addItem('Rent', todayIso());
+
+    expect(data()).toHaveAccessibleDescription('Backup due');
+    await goTo('Data');
+    expect(screen.getByText('Not backed up yet.')).toBeVisible();
+  });
+
+  test('AC-58.3 every view opens with one level-one heading that names it', async () => {
+    render(<App />);
+    const titles: [string, RegExp][] = [
+      ['Home', /^\w+day, \w+ \d+$/],
+      ['Calendar', /^\w+ \d{4}$/],
+      ['Goals', /^Goals$/],
+      ['Courses', /^Courses$/],
+      ['Reflections', /^Reflections$/],
+      ['Trends', /^Trends$/],
+      ['Data', /^Data$/],
+    ];
+
+    for (const [view, title] of titles) {
+      await goTo(view);
+      const main = within(screen.getByRole('main'));
+      expect(main.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+      expect(main.getByRole('heading', { level: 1 })).toHaveAccessibleName(
+        title,
+      );
+    }
+  });
 });
