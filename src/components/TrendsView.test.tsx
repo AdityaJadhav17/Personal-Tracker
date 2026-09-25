@@ -64,7 +64,8 @@ test('AC-18.4 the same numbers are available as a table', () => {
 
   const table = screen.getByRole('table');
   expect(table).toBeVisible();
-  expect(screen.getByRole('row', { name: /2026-09-15/ })).toHaveTextContent(
+  // AC-61.1. The day reads as a date.
+  expect(screen.getByRole('row', { name: /Tue, Sep 15/ })).toHaveTextContent(
     '5',
   );
 });
@@ -80,7 +81,7 @@ test('AC-18.4 a day with no reflection reads as no entry, not as zero', () => {
     />,
   );
 
-  expect(screen.getByRole('row', { name: /2026-09-15/ })).toHaveTextContent(
+  expect(screen.getByRole('row', { name: /Tue, Sep 15/ })).toHaveTextContent(
     'No entry',
   );
 });

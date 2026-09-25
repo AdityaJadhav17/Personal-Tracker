@@ -8,22 +8,24 @@
   font-weight: 600;
 }
 
+/* AC-61.2. One segmented control: joined, sharing borders, rounded only at
+   the ends. */
 .scores {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
   margin-bottom: var(--space-4);
 }
 
 .score {
-  flex: 1 1 100px;
+  flex: 1 1 0;
+  min-width: 0;
+  margin-left: -1px;
   padding: var(--space-3) var(--space-2);
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   transition:
     border-color var(--speed) ease,
     background var(--speed) ease,
@@ -37,6 +39,8 @@
 
 @media (hover: hover) and (pointer: fine) {
   .score:hover {
+    position: relative;
+    z-index: 1;
     border-color: var(--accent);
   }
 }
@@ -45,7 +49,20 @@
  * Filled, not tinted. The tinted version was legible but not obvious at a
  * glance, and the whole control exists to be read at a glance.
  */
+.score:first-child {
+  margin-left: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.score:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* The chosen or hovered segment sits over its neighbours, so its whole
+   border shows where the borders overlap. */
 .score--chosen {
+  position: relative;
+  z-index: 1;
   color: var(--on-accent);
   background: var(--accent);
   border-color: var(--accent);
@@ -90,6 +107,9 @@
 
 .reflection__day {
   flex: none;
+  /* AC-61.1. Wide enough for the longest date, "Wed, Sep 30", so the mood
+     and note line up down the list whatever the weekday. */
+  min-width: 5.75rem;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);

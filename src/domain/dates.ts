@@ -175,6 +175,25 @@ export function dayHeading(at: Date): string {
   });
 }
 
+/** US-61. A local calendar day in few words, "Wed, Sep 23". */
+export function shortDay(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year!, month! - 1, date!).toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/** US-61. A local calendar day as a chart's axis names it, "Sep 23". */
+export function monthDay(day: string): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year!, month! - 1, date!).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 /** US-57. A local calendar day's short weekday, "Sun". */
 export function weekdayOf(day: string): string {
   const [year, month, date] = day.split('-').map(Number);

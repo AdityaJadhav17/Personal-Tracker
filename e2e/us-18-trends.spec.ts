@@ -9,6 +9,17 @@ function dayKey(offset: number): string {
 }
 
 /** Put a database straight into storage; the UI only ever records today. */
+/** US-61. How the table names a day: "Wed, Sep 23". */
+function shortName(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 async function seed(
   page: Page,
   reflections: { day: string; score: number }[],
@@ -108,7 +119,7 @@ test('AC-18.4 the same numbers are in a table', async ({ page }) => {
   );
 
   await expect(page.getByRole('table')).toBeVisible();
-  const row = page.getByRole('row', { name: new RegExp(dayKey(-1)) });
+  const row = page.getByRole('row', { name: new RegExp(shortName(-1)) });
   await expect(row).toContainText('5');
   await expect(row).toContainText('2');
 });
@@ -124,7 +135,7 @@ test('AC-18.4 a day with no reflection reads as no entry', async ({ page }) => {
   );
 
   await expect(
-    page.getByRole('row', { name: new RegExp(dayKey(-2)) }),
+    page.getByRole('row', { name: new RegExp(shortName(-2)) }),
   ).toContainText('No entry');
 });
 

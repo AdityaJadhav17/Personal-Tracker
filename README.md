@@ -91,8 +91,9 @@ where it meets, your professor's address, when office hours are.
 **Reflections** asks how the day went, on a scale of five, with a note. One
 entry per day.
 
-**Trends** plots those scores and what you finished, one point per day, with
-the same numbers in a table underneath.
+**Trends** plots those scores and what you finished, one point per day, each
+chart with its scale and dates; hover to read a day. The same numbers are in a
+table underneath.
 
 **Data** holds everything that moves data in or out, each with a line saying
 what it is for. When a backup is due, a dot on Data in the sidebar says so

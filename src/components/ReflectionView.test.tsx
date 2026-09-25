@@ -141,3 +141,16 @@ test('AC-17.4 with no past days it says so rather than showing an empty list', (
 
   expect(screen.getByText('Nothing recorded yet.')).toBeVisible();
 });
+
+test('AC-61.1 a past day reads as a date, not as its stored form', () => {
+  render(
+    <ReflectionView
+      today={TODAY}
+      reflections={[aReflection('2026-09-14', 5, 'good tuesday')]}
+      onRecord={noop}
+    />,
+  );
+
+  expect(screen.getByText('Mon, Sep 14')).toBeVisible();
+  expect(screen.queryByText('2026-09-14')).toBeNull();
+});

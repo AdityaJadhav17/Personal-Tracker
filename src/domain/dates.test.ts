@@ -1,5 +1,6 @@
 import {
   dayHeading,
+  shortDay,
   dayLabel,
   daysBetween,
   formatDue,
@@ -499,5 +500,11 @@ describe('US-57 the words the timeline uses', () => {
 
     expect(lateBy(at(-1), NOW)).toBe('Yesterday');
     expect(lateBy(at(-3), NOW)).toBe('3 days ago');
+  });
+});
+
+describe('US-61 a day in few words', () => {
+  test('AC-61.1 a stored day reads as weekday, month and date', () => {
+    expect(shortDay('2026-09-23')).toBe('Wed, Sep 23');
   });
 });

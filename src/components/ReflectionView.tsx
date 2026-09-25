@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shortDay } from '../domain/dates';
 import { byNewest } from '../domain/reflections';
 import type { Reflection } from '../domain/types';
 
@@ -34,7 +35,9 @@ export default function ReflectionView({
     <section className="reflections">
       <h2 className="reflections__question">How did today go?</h2>
 
-      <div className="scores">
+      {/* AC-61.2. One segmented control: five joined buttons, each still a
+          toggle that says whether it is the day's answer. */}
+      <div className="scores" role="group" aria-label="How did today go?">
         {SCORES.map(({ score, label }) => (
           <button
             className={`score ${recorded?.score === score ? 'score--chosen' : ''}`}
@@ -73,7 +76,8 @@ export default function ReflectionView({
         <ul className="reflection-list">
           {past.map((entry) => (
             <li className="reflection" key={entry.id}>
-              <span className="reflection__day">{entry.day}</span>
+              {/* AC-61.1. A date, not the stored form of one. */}
+              <span className="reflection__day">{shortDay(entry.day)}</span>
               <span className="reflection__score">
                 {LABEL_OF.get(entry.score)}
               </span>

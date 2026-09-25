@@ -16,14 +16,98 @@
   color: var(--text-muted);
 }
 
+/*
+ * US-61. A chart is a figure: its title, the scale's two ends down the left,
+ * the plot, and the first and last days under it. The scale column sizes to
+ * its widest number and the dates line up under the plot, not the scale.
+ */
 .chart {
-  display: block;
-  width: 100%;
-  height: 90px;
-  padding: var(--space-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-2);
+  margin: 0;
+}
+
+.chart .trends__heading {
+  grid-column: 1 / -1;
+}
+
+.chart__plot {
+  display: contents;
+}
+
+.chart__scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.chart__area {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  height: 90px;
+}
+
+.chart__dates {
+  display: flex;
+  grid-column: 2;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* The day under the pointer: a hairline, a marker on the line, and what it
+   says. Instant, because it follows the pointer. */
+.chart__guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.chart__marker {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.chart__readout {
+  position: absolute;
+  top: var(--space-1);
+  margin: 0 0 0 var(--space-2);
+  padding: 2px var(--space-2);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* Past the middle it opens to the left, so it never runs off the chart. */
+.chart__readout--left {
+  translate: calc(-100% - 2 * var(--space-2)) 0;
 }
 
 /* Recessive: the data is the only thing meant to be read. */
