@@ -30,11 +30,20 @@
  */
 .status--toast {
   position: fixed;
+  /* AC-67.4. A popover, so it can sit above the calendar's open day; these
+     undo the browser's centred, bordered popover look. */
+  top: auto;
+  right: auto;
   bottom: var(--space-5);
   left: calc(50% + 105px);
   z-index: 3;
   min-height: 0;
   margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: none;
+  color: inherit;
   translate: -50% 0;
 }
 

@@ -139,6 +139,13 @@ describe('parseImport', () => {
     expect(result.ok && result.db).toEqual(db);
   });
 
+  test('AC-76.2 a backup with a work item imports', () => {
+    const db: Database = aDatabase([anItem({ id: 'w', category: 'work' })]);
+
+    const result = parseImport(serialize(db));
+    expect(result.ok && result.db).toEqual(db);
+  });
+
   test('AC-10.1 an empty database round trips', () => {
     const result = parseImport(serialize(aDatabase([])));
     expect(result.ok && result.db).toEqual(aDatabase([]));
@@ -198,8 +205,9 @@ describe('parseImport', () => {
     expect(reject(JSON.stringify({ version: 1, items }))).toMatch(/priority/i);
   });
 
-  test('an item with an unknown category is refused', () => {
-    const items = [{ ...anItem(), category: 'work' }];
+  test('AC-76.2 an item with an unknown category is still refused', () => {
+    // Work became a real category in US-76; this one is still made up.
+    const items = [{ ...anItem(), category: 'errands' }];
     expect(reject(JSON.stringify({ version: 1, items }))).toMatch(/category/i);
   });
 

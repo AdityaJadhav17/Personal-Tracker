@@ -53,6 +53,8 @@ describe('monthGrid', () => {
       items: [],
       goals: [],
       repeats: [],
+      // AC-75.1. Nothing finished there either.
+      done: [],
     });
   });
 
@@ -244,5 +246,30 @@ describe('weekLoad', () => {
 
   test('AC-45.6 a week of padding cells counts nothing', () => {
     expect(weekLoad([null, null, null])).toBe(0);
+  });
+});
+
+describe('US-75 finished items stay on their day', () => {
+  test('AC-75.1 a finished item is kept on its day, apart from the open ones', () => {
+    const finished = dueOn('2026-09-16', {
+      title: 'Essay',
+      status: 'done',
+      completedAt: '2026-09-16T12:00:00.000Z',
+    });
+    const open = dueOn('2026-09-16', { title: 'Quiz' });
+
+    const cell = cellFor('2026-09', '2026-09-16', [finished, open]);
+
+    expect(cell?.items.map((i) => i.title)).toEqual(['Quiz']);
+    expect(cell?.done.map((i) => i.title)).toEqual(['Essay']);
+  });
+
+  test('AC-75.3 finished items do not count toward the week', () => {
+    const grid = monthGrid('2026-09', [
+      dueOn('2026-09-16'),
+      dueOn('2026-09-16', { status: 'done' }),
+    ]);
+
+    expect(weekLoad(grid.slice(14, 21))).toBe(1);
   });
 });

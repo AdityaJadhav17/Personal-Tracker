@@ -119,10 +119,17 @@ test('AC-21.5 a month with nothing in it still draws a grid', async ({
   expect(await page.getByRole('cell').count()).toBeGreaterThanOrEqual(28);
 });
 
-test('AC-21.6 a finished item is not on the calendar', async ({ page }) => {
+test('AC-75.1 (replaces AC-21.6) a finished item stays on its day, marked done', async ({
+  page,
+}) => {
   await seed(page, [{ title: 'Already done', offset: 1, status: 'done' }]);
 
-  await expect(page.getByText('Already done')).toHaveCount(0);
+  await expect(
+    cell(page, 1).getByRole('button', {
+      name: 'Already done, done',
+      exact: true,
+    }),
+  ).toBeVisible();
 });
 
 test('the calendar survives a reload, opening on the current month', async ({

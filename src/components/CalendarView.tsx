@@ -304,6 +304,22 @@ export default function CalendarView({
               finish the one before it.
             </p>
           ))}
+          {/* AC-75.4. Under what is still due, and nothing to edit. */}
+          {openCell.done.length > 0 && (
+            <>
+              <h4 className="calendar__day-done-title" id="calendar-day-done">
+                Done
+              </h4>
+              <ul
+                className="calendar__day-done"
+                aria-labelledby="calendar-day-done"
+              >
+                {openCell.done.map((item) => (
+                  <li key={item.id}>{item.title}</li>
+                ))}
+              </ul>
+            </>
+          )}
           {openCell.items.length + openCell.repeats.length === 0 && (
             <p className="calendar__day-empty">Nothing due this day.</p>
           )}
@@ -378,7 +394,11 @@ function Cell({
 }) {
   const shown = cell.items.slice(0, SHOWN);
   const repeats = cell.repeats.slice(0, SHOWN - shown.length);
-  const extra = cell.items.length + cell.repeats.length - SHOWN;
+  // AC-75.3. Finished items only take places open work has left, so they
+  // never push something still due behind "more".
+  const done = cell.done.slice(0, SHOWN - shown.length - repeats.length);
+  const extra =
+    cell.items.length + cell.repeats.length + cell.done.length - SHOWN;
 
   return (
     <td
@@ -445,6 +465,20 @@ function Cell({
           type="button"
           // Starts with the visible title, so voice control still finds it.
           aria-label={`${item.title}, repeats ${item.repeat}`}
+        >
+          {item.title}
+        </button>
+      ))}
+
+      {/* AC-75.1 and AC-75.2. What was finished that day, marked done and
+          not draggable: it is history now. Its name says so for a screen
+          reader, since the strike-through is only seen. */}
+      {done.map((item) => (
+        <button
+          className={`calendar__item ${hueOf(item)} calendar__item--done`}
+          key={item.id}
+          type="button"
+          aria-label={`${item.title}, done`}
         >
           {item.title}
         </button>

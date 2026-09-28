@@ -232,7 +232,7 @@ test('AC-21.5 a month with nothing in it still draws the grid', () => {
   expect(screen.getByRole('heading', { name: 'September 2026' })).toBeVisible();
 });
 
-test('AC-21.6 a done item is not on the calendar', () => {
+test('AC-75.1 (replaces AC-21.6) a finished item stays on its day, marked done', () => {
   render(
     <CalendarView
       items={[
@@ -250,7 +250,42 @@ test('AC-21.6 a done item is not on the calendar', () => {
     />,
   );
 
-  expect(screen.queryByText('Finished')).toBeNull();
+  const finished = within(cell('September 16,')).getByRole('button', {
+    name: 'Finished, done',
+  });
+  expect(finished).toHaveTextContent('Finished');
+  // AC-75.2. Nothing to move: it is history.
+  expect(finished).not.toHaveAttribute('draggable', 'true');
+});
+
+test('AC-75.3 finished items never push an open one out of the cell', () => {
+  renderWith([
+    dueOn('2026-09-16', 'Done one', { status: 'done' }),
+    dueOn('2026-09-16', 'Done two', { status: 'done' }),
+    dueOn('2026-09-16', 'Still due'),
+  ]);
+
+  const day = within(cell('September 16,'));
+  expect(day.getByRole('button', { name: 'Still due' })).toBeVisible();
+  expect(day.getByRole('button', { name: 'Done one, done' })).toBeVisible();
+  expect(day.getByRole('button', { name: '1 more' })).toBeVisible();
+});
+
+test('AC-75.4 the open day lists finished items under the open ones', async () => {
+  const user = userEvent.setup();
+  renderWith([
+    dueOn('2026-09-16', 'Essay', { status: 'done' }),
+    dueOn('2026-09-16', 'Quiz'),
+  ]);
+
+  await user.click(
+    within(cell('September 16,')).getByRole('button', { name: 'Quiz' }),
+  );
+  const day = screen.getByRole('dialog', { name: 'September 16, 2026' });
+
+  expect(within(day).getByText('Quiz')).toBeVisible();
+  const done = within(day).getByRole('list', { name: 'Done' });
+  expect(done).toHaveTextContent('Essay');
 });
 
 test('the weekday headings name the columns', () => {

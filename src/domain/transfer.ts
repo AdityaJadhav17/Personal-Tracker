@@ -25,7 +25,7 @@ export function exportFilename(now: Date): string {
   return `personal-tracker-${now.getFullYear()}-${month}-${day}.json`;
 }
 
-const CATEGORIES = ['academic', 'personal'];
+const CATEGORIES = ['academic', 'personal', 'work'];
 const PRIORITIES = ['high', 'normal', 'low'];
 const STATUSES = ['open', 'done'];
 const REPEATS = ['none', 'weekly', 'monthly'];

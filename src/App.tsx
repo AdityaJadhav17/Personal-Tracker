@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
 import BulkAdd from './components/BulkAdd';
 import CalendarFileImport from './components/CalendarFileImport';
@@ -42,6 +42,19 @@ export default function App() {
   const [filter, setFilter] = useState<Filter>('all');
   const [courseFilter, setCourseFilter] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+
+  // AC-67.4. The undo message lives in the top layer, like the calendar's
+  // open day, and comes to the front whenever it changes. Otherwise a day
+  // opened near the foot of the grid covered it, and a delete made there
+  // could not be undone there.
+  const toastRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const toast = toastRef.current;
+    if (!toast) return;
+    toast.setAttribute('popover', 'manual');
+    toast.hidePopover();
+    toast.showPopover();
+  }, [undoMessage]);
 
   if (db === null) {
     return (
@@ -413,7 +426,7 @@ export default function App() {
           re-inserted per change so it enters (AC-48.2). AC-64.1: it floats at
           the foot of the window. AC-67.4: outside the views, so a delete from
           the calendar's day can be undone there too. */}
-      <div className="status status--toast" role="status">
+      <div className="status status--toast" role="status" ref={toastRef}>
         {undoMessage && (
           <span className="status__message toast" key={undoMessage}>
             {undoMessage}

@@ -5,10 +5,10 @@ import type { Filter } from './CategoryFilter';
 
 const noop = () => {};
 
-test('AC-08.1 every category is offered, plus everything', () => {
+test('AC-08.1 and AC-76.1 every category is offered, plus everything', () => {
   render(<CategoryFilter value="all" onChange={noop} />);
 
-  for (const label of ['All', 'Academic', 'Personal']) {
+  for (const label of ['All', 'Academic', 'Personal', 'Work']) {
     expect(screen.getByRole('button', { name: label })).toBeVisible();
   }
 });
@@ -46,7 +46,7 @@ test('AC-08.1 the one in force is the one marked, for a screen reader too', () =
   );
 });
 
-test('the control says what it is, rather than being three bare words', () => {
+test('the control says what it is, rather than being bare words', () => {
   render(<CategoryFilter value="all" onChange={noop} />);
 
   expect(screen.getByRole('group', { name: 'Show' })).toBeVisible();

@@ -1,5 +1,6 @@
 export type Priority = 'high' | 'normal' | 'low';
-export type Category = 'academic' | 'personal';
+// US-76 added work. A new value, not a new field: stored data is unchanged.
+export type Category = 'academic' | 'personal' | 'work';
 export type ItemStatus = 'open' | 'done';
 
 /** A thing with a date and a consequence. */

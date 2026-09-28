@@ -7,6 +7,7 @@ const OPTIONS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'academic', label: 'Academic' },
   { value: 'personal', label: 'Personal' },
+  { value: 'work', label: 'Work' },
 ];
 
 interface CategoryFilterProps {

@@ -387,3 +387,5 @@ passed 1,300 lines.
 - [US-72, Windows contrast themes](stories/US-72.md)
 - [US-73, Home's header collapses as you scroll](stories/US-73.md)
 - [US-74, the app is just there](stories/US-74.md)
+- [US-75, finished items stay on the calendar](stories/US-75.md)
+- [US-76, a work category](stories/US-76.md)

@@ -358,3 +358,49 @@
   color: var(--text-muted);
   cursor: default;
 }
+
+/*
+ * AC-75.1. Finished: a check, the text muted and struck through, the course
+ * colour kept on the bar but no fill, so it reads as done at a glance and
+ * never as one more thing due.
+ */
+.calendar__item--done {
+  background: none;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.calendar__item--done::before {
+  content: '✓ ';
+  text-decoration: none;
+  display: inline-block;
+  margin-right: 2px;
+}
+
+/* AC-75.4. The day's finished items, quietly under what is still due. */
+.calendar__day-done-title {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.calendar__day-done {
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.calendar__day-done li {
+  padding: 2px 0;
+  text-decoration: line-through;
+}
+
+.calendar__day-done li::before {
+  content: '✓ ';
+  display: inline-block;
+  margin-right: 4px;
+  text-decoration: none;
+}

@@ -174,6 +174,7 @@ export default function AddItemForm({
             >
               <option value="academic">Academic</option>
               <option value="personal">Personal</option>
+              <option value="work">Work</option>
             </select>
           </div>
 

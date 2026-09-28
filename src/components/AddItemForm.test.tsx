@@ -333,3 +333,20 @@ test('AC-66.3 two forms on one page each label their own fields', () => {
   // AC-66.3. The sheet's form starts on today, with every field showing.
   expect(screen.getAllByLabelText('Due')[1]).toHaveValue('2026-09-24');
 });
+
+test('AC-76.1 a new item can be filed under Work', async () => {
+  const user = userEvent.setup();
+  const onAdd = vi.fn(() => true);
+  render(<AddItemForm onAdd={onAdd} titleRef={{ current: null }} />);
+
+  await user.type(screen.getByLabelText('Title'), 'Shift at the library');
+  fireEvent.change(screen.getByLabelText('Due'), {
+    target: { value: '2026-10-02' },
+  });
+  await user.selectOptions(screen.getByLabelText('Category'), 'work');
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  expect(onAdd).toHaveBeenCalledWith(
+    expect.objectContaining({ category: 'work' }),
+  );
+});
