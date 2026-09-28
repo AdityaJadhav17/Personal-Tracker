@@ -1,6 +1,12 @@
 import { useId, useState } from 'react';
 import { toDueAt } from '../domain/dates';
-import type { Category, ItemDraft, Priority, Repeat } from '../domain/types';
+import type {
+  Category,
+  Course,
+  ItemDraft,
+  Priority,
+  Repeat,
+} from '../domain/types';
 
 const TITLE_REQUIRED = 'Give it a title.';
 const DUE_REQUIRED = 'Pick a date.';
@@ -26,6 +32,8 @@ interface AddItemFormProps {
    * add sheet, which is already a step you chose to take.
    */
   from?: string;
+  /** AC-78.1. Offered as Course once there are any; none, no field. */
+  courses?: Course[];
 }
 
 export default function AddItemForm({
@@ -34,6 +42,7 @@ export default function AddItemForm({
   day,
   quickFrom,
   from,
+  courses = [],
 }: AddItemFormProps) {
   // AC-66.3. Home's form and the phone's add sheet can share a page, so each
   // form's labels point at its own fields.
@@ -46,6 +55,8 @@ export default function AddItemForm({
   const [category, setCategory] = useState<Category>('academic');
   const [priority, setPriority] = useState<Priority>('normal');
   const [repeat, setRepeat] = useState<Repeat>('none');
+  // AC-78.1. No course until one is picked; a course is never guessed.
+  const [courseId, setCourseId] = useState('');
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
 
@@ -59,7 +70,18 @@ export default function AddItemForm({
     setDueError(dueAt ? '' : DUE_REQUIRED);
     if (!trimmed || !dueAt) return;
 
-    if (!onAdd({ title: trimmed, dueAt, category, priority, repeat })) return;
+    if (
+      !onAdd({
+        title: trimmed,
+        dueAt,
+        category,
+        priority,
+        repeat,
+        courseId: courseId || null,
+      })
+    ) {
+      return;
+    }
 
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.
@@ -68,6 +90,7 @@ export default function AddItemForm({
     setDueTime('');
     setCategory('academic');
     setRepeat('none');
+    setCourseId('');
     setPriority('normal');
     // AC-57.2. Done adding: fold back, so the panel stops covering the rows
     // below, the new one included.
@@ -177,6 +200,27 @@ export default function AddItemForm({
               <option value="work">Work</option>
             </select>
           </div>
+
+          {courses.length > 0 && (
+            <div className="form__field">
+              <label className="form__label" htmlFor={`${id}-course`}>
+                Course
+              </label>
+              <select
+                className="form__select"
+                id={`${id}-course`}
+                value={courseId}
+                onChange={(e) => setCourseId(e.target.value)}
+              >
+                <option value="">No course</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form__field">
             <label className="form__label" htmlFor={`${id}-priority`}>

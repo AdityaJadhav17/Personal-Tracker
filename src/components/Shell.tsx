@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { now, toDateValue } from '../domain/dates';
-import type { ItemDraft } from '../domain/types';
+import type { Course, ItemDraft } from '../domain/types';
 import AddItemForm from './AddItemForm';
 import ThemeToggle from './ThemeToggle';
 
@@ -76,6 +76,8 @@ interface ShellProps {
   backupDue?: boolean;
   /** AC-66.3. Adds from the phone's + button. Without it there is no +. */
   onAdd?: (draft: ItemDraft) => boolean;
+  /** AC-78.1. So the + sheet can offer Course, as Home's form does. */
+  courses?: Course[];
 }
 
 export default function Shell({
@@ -84,6 +86,7 @@ export default function Shell({
   children,
   backupDue = false,
   onAdd,
+  courses = [],
 }: ShellProps) {
   // AC-66.2 and AC-66.3. Which of the phone's two sheets is open, if any.
   const [sheet, setSheet] = useState<'more' | 'add' | null>(null);
@@ -213,6 +216,7 @@ export default function Shell({
               }}
               titleRef={titleRef}
               from={toDateValue(now())}
+              courses={courses}
             />
           )}
         </Sheet>

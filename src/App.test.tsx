@@ -1,5 +1,6 @@
 import {
   cleanup,
+  createEvent,
   fireEvent,
   render,
   screen,
@@ -1178,7 +1179,7 @@ async function attachToCourse(title: string, courseName: string) {
 /** Narrow the list to one course. */
 async function showCourse(name: string) {
   const user = userEvent.setup();
-  const filterSelect = screen.getByLabelText('Course');
+  const filterSelect = screen.getByLabelText('Filter by course');
   await user.selectOptions(filterSelect, [
     within(filterSelect).getByRole('option', { name }),
   ]);
@@ -1283,7 +1284,7 @@ test('AC-27.5 a reload clears the course filter too', async () => {
   cleanup();
   render(<App />);
 
-  expect(screen.getByLabelText('Course')).toHaveValue('');
+  expect(screen.getByLabelText('Filter by course')).toHaveValue('');
   expect(
     screen.getByRole('button', { name: 'MATH problem set' }),
   ).toBeVisible();
@@ -1926,4 +1927,94 @@ describe('US-58 one place for data, and a title on every view', () => {
       );
     }
   });
+});
+
+test('AC-77.2 an edited course keeps its new details and its items across a reload', async () => {
+  const user = userEvent.setup();
+  const first = render(<App />);
+  await goTo('Courses');
+  await addCourse('CSE 158R');
+  await goTo('Home');
+  await addItem('Homework 1', todayIso());
+  await user.click(screen.getByRole('button', { name: 'Homework 1' }));
+  await user.selectOptions(
+    screen.getByLabelText('Course for Homework 1'),
+    'CSE 158R',
+  );
+
+  await goTo('Courses');
+  await user.click(screen.getByRole('button', { name: 'More for CSE 158R' }));
+  await user.click(screen.getByRole('button', { name: 'Edit CSE 158R' }));
+  await user.type(screen.getByLabelText('Office hours'), 'Thu 1-2pm');
+  await user.click(screen.getByRole('button', { name: 'Save course' }));
+  first.unmount();
+
+  render(<App />);
+  await goTo('Courses');
+  expect(screen.getByText('Thu 1-2pm')).toBeVisible();
+  await goTo('Home');
+  await user.click(screen.getByRole('button', { name: 'Homework 1' }));
+  expect(screen.getByLabelText('Course for Homework 1')).toHaveDisplayValue(
+    'CSE 158R',
+  );
+});
+
+test('AC-78.2 an item added with a course is filed under it', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await goTo('Courses');
+  await addCourse('CSE 120');
+  await goTo('Home');
+
+  await user.click(screen.getByLabelText('Title'));
+  await user.type(screen.getByLabelText('Title'), 'Project 0');
+  await user.selectOptions(screen.getByLabelText('Course'), 'CSE 120');
+  await user.click(screen.getByRole('button', { name: 'Add' }));
+
+  const saved = JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+    items: { title: string; courseId: string | null }[];
+    courses: { id: string; name: string }[];
+  };
+  expect(saved.items[0]?.courseId).toBe(saved.courses[0]?.id);
+});
+
+test('AC-79.2 and AC-79.3 a copy keeps what matters, does not repeat, and Undo takes it back', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addRepeating('Lab report', '2026-10-06', 'weekly');
+  await goTo('Calendar');
+  await user.click(screen.getByRole('button', { name: 'Next month' }));
+
+  const data = new Map<string, string>();
+  const dataTransfer = {
+    dropEffect: 'none',
+    effectAllowed: 'all',
+    setData: (type: string, value: string) => data.set(type, value),
+    getData: (type: string) => data.get(type) ?? '',
+  };
+  fireEvent.dragStart(screen.getByRole('button', { name: 'Lab report' }), {
+    dataTransfer,
+  });
+  const target = screen.getByRole('cell', { name: /October 8, 2026/ });
+  // jsdom has no DragEvent: make the drop, then hold Ctrl on it.
+  const drop = createEvent.drop(target, { dataTransfer });
+  Object.defineProperty(drop, 'ctrlKey', { value: true });
+  fireEvent(target, drop);
+
+  const items = () =>
+    (
+      JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+        items: { id: string; title: string; dueAt: string; repeat: string }[];
+      }
+    ).items;
+  expect(items()).toHaveLength(2);
+  const [original, copy] = items();
+  expect(copy?.title).toBe('Lab report');
+  expect(copy?.id).not.toBe(original?.id);
+  expect(copy?.repeat).toBe('none');
+  expect(original?.repeat).toBe('weekly');
+  expect(new Date(copy!.dueAt).getDate()).toBe(8);
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(items().map((i) => i.id)).toEqual([original?.id]);
 });

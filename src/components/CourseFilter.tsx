@@ -29,7 +29,9 @@ export default function CourseFilter({
   return (
     <select
       className="filter__select"
-      aria-label="Course"
+      // US-78. Not just "Course": the add form beside it has a Course field
+      // now, and two controls with one name are one too many to tell apart.
+      aria-label="Filter by course"
       value={value ?? ''}
       onChange={(event) => onChange(event.target.value || null)}
     >

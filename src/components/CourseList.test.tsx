@@ -18,7 +18,9 @@ function aCourse(overrides: Partial<Course> = {}): Course {
 }
 
 test('AC-07.1 the form offers all four details', () => {
-  render(<CourseList courses={[]} onAdd={noop} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={noop} onDelete={noop} />,
+  );
 
   expect(screen.getByLabelText('Course name')).toBeVisible();
   expect(screen.getByLabelText('Location')).toBeVisible();
@@ -29,7 +31,9 @@ test('AC-07.1 the form offers all four details', () => {
 test('AC-07.1 saving reports all four values', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: CourseDraft) => void>();
-  render(<CourseList courses={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Course name'), 'CSE 100');
   await user.type(screen.getByLabelText('Location'), 'Center Hall 101');
@@ -46,7 +50,14 @@ test('AC-07.1 saving reports all four values', async () => {
 });
 
 test('AC-07.1 a saved course shows every detail back', () => {
-  render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={noop} />);
+  render(
+    <CourseList
+      onEdit={noop}
+      courses={[aCourse()]}
+      onAdd={noop}
+      onDelete={noop}
+    />,
+  );
 
   expect(screen.getByText('CSE 100')).toBeVisible();
   expect(screen.getByText('Center Hall 101')).toBeVisible();
@@ -57,7 +68,9 @@ test('AC-07.1 a saved course shows every detail back', () => {
 test('AC-07.1 a course with no name is refused, with a message', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: CourseDraft) => void>();
-  render(<CourseList courses={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Location'), 'Center Hall 101');
   await user.click(screen.getByRole('button', { name: 'Add course' }));
@@ -70,7 +83,9 @@ test('AC-07.1 a course with no name is refused, with a message', async () => {
 
 test('AC-07.1 the form clears after a course is saved', async () => {
   const user = userEvent.setup();
-  render(<CourseList courses={[]} onAdd={noop} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={noop} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Course name'), 'CSE 100');
   await user.type(screen.getByLabelText('Location'), 'Center Hall 101');
@@ -83,7 +98,9 @@ test('AC-07.1 the form clears after a course is saved', async () => {
 test('AC-07.1 a detail left blank is allowed, only the name is required', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: CourseDraft) => void>();
-  render(<CourseList courses={[]} onAdd={onAdd} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={onAdd} onDelete={noop} />,
+  );
 
   await user.type(screen.getByLabelText('Course name'), 'CSE 100');
   await user.click(screen.getByRole('button', { name: 'Add course' }));
@@ -96,7 +113,14 @@ test('AC-07.1 a detail left blank is allowed, only the name is required', async 
 test('AC-20.3 deleting asks before anything is removed', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
-  render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
+  render(
+    <CourseList
+      onEdit={noop}
+      courses={[aCourse()]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
+  );
 
   // US-60. Delete waits behind More, so a card you are reading cannot lose it.
   await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
@@ -109,7 +133,14 @@ test('AC-20.3 deleting asks before anything is removed', async () => {
 test('AC-20.3 confirming reports the course id', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
-  render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
+  render(
+    <CourseList
+      onEdit={noop}
+      courses={[aCourse()]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
+  );
 
   // US-60. Delete waits behind More, so a card you are reading cannot lose it.
   await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
@@ -122,7 +153,14 @@ test('AC-20.3 confirming reports the course id', async () => {
 test('AC-20.3 keeping it removes nothing and puts the question away', async () => {
   const user = userEvent.setup();
   const onDelete = vi.fn<(id: string) => void>();
-  render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={onDelete} />);
+  render(
+    <CourseList
+      onEdit={noop}
+      courses={[aCourse()]}
+      onAdd={noop}
+      onDelete={onDelete}
+    />,
+  );
 
   // US-60. Delete waits behind More, so a card you are reading cannot lose it.
   await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
@@ -139,6 +177,7 @@ test('AC-20.3 the question names the course, so you know which one', async () =>
   const user = userEvent.setup();
   render(
     <CourseList
+      onEdit={noop}
       courses={[aCourse(), aCourse({ id: 'c2', name: 'MATH 20C' })]}
       onAdd={noop}
       onDelete={noop}
@@ -154,7 +193,9 @@ test('AC-20.3 the question names the course, so you know which one', async () =>
 });
 
 test('with no courses an empty state explains what this is for', () => {
-  render(<CourseList courses={[]} onAdd={noop} onDelete={noop} />);
+  render(
+    <CourseList onEdit={noop} courses={[]} onAdd={noop} onDelete={noop} />,
+  );
 
   expect(screen.getByText('No courses yet.')).toBeVisible();
 });
@@ -164,7 +205,12 @@ describe('US-60 the list first', () => {
     const user = userEvent.setup();
     const onAdd = vi.fn<(draft: CourseDraft) => void>();
     const { rerender } = render(
-      <CourseList courses={[aCourse()]} onAdd={onAdd} onDelete={noop} />,
+      <CourseList
+        onEdit={noop}
+        courses={[aCourse()]}
+        onAdd={onAdd}
+        onDelete={noop}
+      />,
     );
 
     expect(screen.getByText('CSE 100')).toBeVisible();
@@ -175,6 +221,7 @@ describe('US-60 the list first', () => {
     await user.click(screen.getByRole('button', { name: 'Add course' }));
     rerender(
       <CourseList
+        onEdit={noop}
         courses={[aCourse(), aCourse({ id: 'c2', name: 'CSE 120' })]}
         onAdd={onAdd}
         onDelete={noop}
@@ -188,7 +235,14 @@ describe('US-60 the list first', () => {
   test('AC-60.1 Cancel puts the form away without adding', async () => {
     const user = userEvent.setup();
     const onAdd = vi.fn<(draft: CourseDraft) => void>();
-    render(<CourseList courses={[aCourse()]} onAdd={onAdd} onDelete={noop} />);
+    render(
+      <CourseList
+        onEdit={noop}
+        courses={[aCourse()]}
+        onAdd={onAdd}
+        onDelete={noop}
+      />,
+    );
 
     await user.click(screen.getByRole('button', { name: 'New course' }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -199,7 +253,14 @@ describe('US-60 the list first', () => {
 
   test('AC-60.2 a card offers no Delete until More is opened', async () => {
     const user = userEvent.setup();
-    render(<CourseList courses={[aCourse()]} onAdd={noop} onDelete={noop} />);
+    render(
+      <CourseList
+        onEdit={noop}
+        courses={[aCourse()]}
+        onAdd={noop}
+        onDelete={noop}
+      />,
+    );
 
     expect(screen.queryByRole('button', { name: 'Delete CSE 100' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
@@ -207,5 +268,98 @@ describe('US-60 the list first', () => {
     expect(
       screen.getByRole('button', { name: 'Delete CSE 100' }),
     ).toBeVisible();
+  });
+});
+
+describe('US-77 edit a course', () => {
+  async function openEdit(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: 'More for CSE 100' }));
+    await user.click(screen.getByRole('button', { name: 'Edit CSE 100' }));
+  }
+
+  test('AC-77.1 Edit turns the card into the form, holding what it says now', async () => {
+    const user = userEvent.setup();
+    render(
+      <CourseList
+        courses={[aCourse()]}
+        onAdd={noop}
+        onEdit={noop}
+        onDelete={noop}
+      />,
+    );
+
+    await openEdit(user);
+
+    expect(screen.getByLabelText('Course name')).toHaveValue('CSE 100');
+    expect(screen.getByLabelText('Location')).toHaveValue('Center Hall 101');
+    expect(screen.getByLabelText('Office hours')).toHaveValue(
+      'Tue 2-4pm, CSE 3108',
+    );
+  });
+
+  test('AC-77.2 saving reports the same course with its new details', async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn<(id: string, draft: CourseDraft) => void>();
+    render(
+      <CourseList
+        courses={[aCourse()]}
+        onAdd={noop}
+        onEdit={onEdit}
+        onDelete={noop}
+      />,
+    );
+
+    await openEdit(user);
+    await user.clear(screen.getByLabelText('Office hours'));
+    await user.type(screen.getByLabelText('Office hours'), 'Wed 3-4pm');
+    await user.click(screen.getByRole('button', { name: 'Save course' }));
+
+    expect(onEdit).toHaveBeenCalledWith('c1', {
+      name: 'CSE 100',
+      meetingLocation: 'Center Hall 101',
+      professorEmail: 'prof@ucsd.edu',
+      officeHours: 'Wed 3-4pm',
+    });
+    expect(screen.queryByLabelText('Course name')).not.toBeInTheDocument();
+  });
+
+  test('AC-77.2 Cancel changes nothing', async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+    render(
+      <CourseList
+        courses={[aCourse()]}
+        onAdd={noop}
+        onEdit={onEdit}
+        onDelete={noop}
+      />,
+    );
+
+    await openEdit(user);
+    await user.type(screen.getByLabelText('Location'), ' and online');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByText('Center Hall 101')).toBeVisible();
+  });
+
+  test('AC-77.3 a blank name saves nothing and says why', async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+    render(
+      <CourseList
+        courses={[aCourse()]}
+        onAdd={noop}
+        onEdit={onEdit}
+        onDelete={noop}
+      />,
+    );
+
+    await openEdit(user);
+    await user.clear(screen.getByLabelText('Course name'));
+    await user.click(screen.getByRole('button', { name: 'Save course' }));
+
+    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByText('Give the course a name.')).toBeVisible();
   });
 });

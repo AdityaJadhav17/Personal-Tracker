@@ -389,3 +389,6 @@ passed 1,300 lines.
 - [US-74, the app is just there](stories/US-74.md)
 - [US-75, finished items stay on the calendar](stories/US-75.md)
 - [US-76, a work category](stories/US-76.md)
+- [US-77, edit a course](stories/US-77.md)
+- [US-78, pick the course when adding](stories/US-78.md)
+- [US-79, copy an item by dragging with Ctrl](stories/US-79.md)

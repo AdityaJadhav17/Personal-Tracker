@@ -85,3 +85,16 @@
   background: var(--bg);
   color: var(--text);
 }
+
+/* AC-77.1. Edit and Delete, side by side, once More is open. */
+.card__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* AC-77.1. A card being edited holds the form, which drops its own card. */
+.course .form {
+  padding: 0;
+  border: 0;
+  background: none;
+}

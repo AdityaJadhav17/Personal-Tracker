@@ -21,7 +21,7 @@ const COURSES = [aCourse('c1', 'CSE 110'), aCourse('c2', 'MATH 20C')];
 test('AC-27.1 every recorded course is offered, plus all of them', () => {
   render(<CourseFilter courses={COURSES} value={null} onChange={noop} />);
 
-  const control = screen.getByLabelText('Course');
+  const control = screen.getByLabelText('Filter by course');
   expect(control).toBeVisible();
   expect(screen.getByRole('option', { name: 'All courses' })).toBeVisible();
   expect(screen.getByRole('option', { name: 'CSE 110' })).toBeVisible();
@@ -39,7 +39,7 @@ test('AC-27.1 choosing a course reports its id', async () => {
     />,
   );
 
-  await user.selectOptions(screen.getByLabelText('Course'), 'c1');
+  await user.selectOptions(screen.getByLabelText('Filter by course'), 'c1');
 
   expect(chosen).toEqual(['c1']);
 });
@@ -55,7 +55,7 @@ test('AC-27.1 going back to all courses reports null, not an empty string', asyn
     />,
   );
 
-  await user.selectOptions(screen.getByLabelText('Course'), '');
+  await user.selectOptions(screen.getByLabelText('Filter by course'), '');
 
   expect(chosen).toEqual([null]);
 });
@@ -63,7 +63,7 @@ test('AC-27.1 going back to all courses reports null, not an empty string', asyn
 test('AC-27.1 the course in force is the one selected', () => {
   render(<CourseFilter courses={COURSES} value="c2" onChange={noop} />);
 
-  expect(screen.getByLabelText('Course')).toHaveValue('c2');
+  expect(screen.getByLabelText('Filter by course')).toHaveValue('c2');
 });
 
 test('AC-27.2 with no courses recorded the control is not rendered at all', () => {

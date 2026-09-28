@@ -14,12 +14,15 @@ const EMPTY: CourseDraft = {
 interface CourseListProps {
   courses: Course[];
   onAdd: (draft: CourseDraft) => void;
+  /** AC-77.2. The same course, with new details; its items stay linked. */
+  onEdit: (id: string, draft: CourseDraft) => void;
   onDelete: (id: string) => void;
 }
 
 export default function CourseList({
   courses,
   onAdd,
+  onEdit,
   onDelete,
 }: CourseListProps) {
   const [draft, setDraft] = useState<CourseDraft>(EMPTY);
@@ -31,24 +34,122 @@ export default function CourseList({
   // US-60. The list comes first; the form waits behind a button, except when
   // there is nothing to list yet.
   const [adding, setAdding] = useState(false);
-  const showForm = adding || courses.length === 0;
+  // AC-77.1. The course whose card is the form right now, if any. One form
+  // at a time, so adding and editing never share the same fields.
+  const [editing, setEditing] = useState<string | null>(null);
+  const showForm = editing === null && (adding || courses.length === 0);
 
   function set(field: keyof CourseDraft, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function startEdit(course: Course) {
+    setDraft({
+      name: course.name,
+      meetingLocation: course.meetingLocation,
+      professorEmail: course.professorEmail,
+      officeHours: course.officeHours,
+    });
+    setNameError('');
+    setMore(null);
+    setAdding(false);
+    setEditing(course.id);
+  }
+
+  function close() {
+    setDraft(EMPTY);
+    setNameError('');
+    setAdding(false);
+    setEditing(null);
   }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
     const name = draft.name.trim();
+    // AC-77.3. Editing keeps the one rule adding has.
     setNameError(name ? '' : NAME_REQUIRED);
     if (!name) return;
 
     // Only the name is required. The rest is what you happen to know today.
-    onAdd({ ...draft, name });
-    setDraft(EMPTY);
-    setAdding(false);
+    if (editing) onEdit(editing, { ...draft, name });
+    else onAdd({ ...draft, name });
+    close();
   }
+
+  // The course form, for adding at the top of the page or editing inside a
+  // card. Only one is ever on screen, so the field ids never repeat.
+  const form = (submit: string, canCancel: boolean) => (
+    <form className="form" onSubmit={handleSubmit}>
+      <div className="form__field form__field--title">
+        <label className="form__label" htmlFor="course-name">
+          Course name
+        </label>
+        <input
+          className="form__input"
+          id="course-name"
+          value={draft.name}
+          onChange={(e) => set('name', e.target.value)}
+          aria-describedby={nameError ? 'course-name-error' : undefined}
+        />
+        {nameError && (
+          <p className="form__error" id="course-name-error">
+            {nameError}
+          </p>
+        )}
+      </div>
+
+      <div className="form__field form__field--title">
+        <label className="form__label" htmlFor="course-location">
+          Location
+        </label>
+        <input
+          className="form__input"
+          id="course-location"
+          value={draft.meetingLocation}
+          onChange={(e) => set('meetingLocation', e.target.value)}
+        />
+      </div>
+
+      <div className="form__field form__field--title">
+        <label className="form__label" htmlFor="course-email">
+          Professor email
+        </label>
+        <input
+          className="form__input"
+          id="course-email"
+          type="email"
+          value={draft.professorEmail}
+          onChange={(e) => set('professorEmail', e.target.value)}
+        />
+      </div>
+
+      <div className="form__field form__field--title">
+        <label className="form__label" htmlFor="course-hours">
+          Office hours
+        </label>
+        <input
+          className="form__input"
+          id="course-hours"
+          value={draft.officeHours}
+          onChange={(e) => set('officeHours', e.target.value)}
+        />
+      </div>
+
+      <button className="form__submit" type="submit">
+        {submit}
+      </button>
+      {canCancel && (
+        <button
+          className="prompt__button prompt__button--quiet"
+          type="button"
+          onClick={close}
+        >
+          Cancel
+        </button>
+      )}
+    </form>
+  );
 
   const pending = courses.find((course) => course.id === confirming);
 
@@ -63,84 +164,17 @@ export default function CourseList({
           <button
             className="page-head__action"
             type="button"
-            onClick={() => setAdding(true)}
+            onClick={() => {
+              close();
+              setAdding(true);
+            }}
           >
             New course
           </button>
         )}
       </div>
 
-      {showForm && (
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="form__field form__field--title">
-            <label className="form__label" htmlFor="course-name">
-              Course name
-            </label>
-            <input
-              className="form__input"
-              id="course-name"
-              value={draft.name}
-              onChange={(e) => set('name', e.target.value)}
-              aria-describedby={nameError ? 'course-name-error' : undefined}
-            />
-            {nameError && (
-              <p className="form__error" id="course-name-error">
-                {nameError}
-              </p>
-            )}
-          </div>
-
-          <div className="form__field form__field--title">
-            <label className="form__label" htmlFor="course-location">
-              Location
-            </label>
-            <input
-              className="form__input"
-              id="course-location"
-              value={draft.meetingLocation}
-              onChange={(e) => set('meetingLocation', e.target.value)}
-            />
-          </div>
-
-          <div className="form__field form__field--title">
-            <label className="form__label" htmlFor="course-email">
-              Professor email
-            </label>
-            <input
-              className="form__input"
-              id="course-email"
-              type="email"
-              value={draft.professorEmail}
-              onChange={(e) => set('professorEmail', e.target.value)}
-            />
-          </div>
-
-          <div className="form__field form__field--title">
-            <label className="form__label" htmlFor="course-hours">
-              Office hours
-            </label>
-            <input
-              className="form__input"
-              id="course-hours"
-              value={draft.officeHours}
-              onChange={(e) => set('officeHours', e.target.value)}
-            />
-          </div>
-
-          <button className="form__submit" type="submit">
-            Add course
-          </button>
-          {courses.length > 0 && (
-            <button
-              className="prompt__button prompt__button--quiet"
-              type="button"
-              onClick={() => setAdding(false)}
-            >
-              Cancel
-            </button>
-          )}
-        </form>
-      )}
+      {showForm && form('Add course', courses.length > 0)}
 
       <p className="status" role="status">
         {pending ? `Delete ${pending.name}? Its items stay.` : ''}
@@ -181,40 +215,59 @@ export default function CourseList({
         <ul className="course-list">
           {courses.map((course) => (
             <li className="course" key={course.id}>
-              <div className="card__head">
-                <h3 className="course__name">
-                  {/* AC-60.3. The colour it has on Home and the calendar. */}
-                  <span
-                    className={`item__dot item__dot--${(courses.indexOf(course) % 4) + 1}`}
-                    aria-hidden="true"
-                  />
-                  {course.name}
-                </h3>
-                <MoreButton
-                  name={course.name}
-                  open={more === course.id}
-                  onToggle={() =>
-                    setMore(more === course.id ? null : course.id)
-                  }
-                />
-              </div>
-              <dl className="course__details">
-                <dt>Location</dt>
-                <dd>{course.meetingLocation || '—'}</dd>
-                <dt>Professor</dt>
-                <dd>{course.professorEmail || '—'}</dd>
-                <dt>Office hours</dt>
-                <dd>{course.officeHours || '—'}</dd>
-              </dl>
-              {more === course.id && (
-                <button
-                  className="data__button"
-                  type="button"
-                  aria-label={`Delete ${course.name}`}
-                  onClick={() => setConfirming(course.id)}
-                >
-                  Delete
-                </button>
+              {editing === course.id ? (
+                // AC-77.1. The card becomes its form, so it is plain which
+                // course is changing.
+                form('Save course', true)
+              ) : (
+                <>
+                  <div className="card__head">
+                    <h3 className="course__name">
+                      {/* AC-60.3. The colour it has on Home and the calendar. */}
+                      <span
+                        className={`item__dot item__dot--${(courses.indexOf(course) % 4) + 1}`}
+                        aria-hidden="true"
+                      />
+                      {course.name}
+                    </h3>
+                    <MoreButton
+                      name={course.name}
+                      open={more === course.id}
+                      onToggle={() =>
+                        setMore(more === course.id ? null : course.id)
+                      }
+                    />
+                  </div>
+                  <dl className="course__details">
+                    <dt>Location</dt>
+                    <dd>{course.meetingLocation || '—'}</dd>
+                    <dt>Professor</dt>
+                    <dd>{course.professorEmail || '—'}</dd>
+                    <dt>Office hours</dt>
+                    <dd>{course.officeHours || '—'}</dd>
+                  </dl>
+                  {more === course.id && (
+                    <div className="card__actions">
+                      {/* AC-77.1. Edit first: the everyday one. */}
+                      <button
+                        className="data__button"
+                        type="button"
+                        aria-label={`Edit ${course.name}`}
+                        onClick={() => startEdit(course)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="data__button"
+                        type="button"
+                        aria-label={`Delete ${course.name}`}
+                        onClick={() => setConfirming(course.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </li>
           ))}

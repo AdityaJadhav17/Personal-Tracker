@@ -108,4 +108,6 @@ export interface ItemDraft {
   category: Category;
   priority: Priority;
   repeat: Repeat;
+  /** AC-78.2. The course it is for, picked while adding; none if left out. */
+  courseId?: string | null;
 }

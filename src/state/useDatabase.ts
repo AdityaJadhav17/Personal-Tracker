@@ -29,11 +29,15 @@ export interface DatabaseActions {
   /** US-25. Gone for good; goal progress is derived, so it corrects itself.
       US-45: its steps go with it. */
   removeItem: (id: string) => void;
+  /** AC-79.2. A new, open, one-off copy of an item, due at `dueAt`. */
+  copyItem: (id: string, dueAt: string) => void;
   /** US-45. A dated step under an item, inheriting its course, goal and kind. */
   addStep: (parentId: string, title: string, dueAt: string) => void;
   setCourse: (id: string, courseId: string | null) => void;
   setGoal: (id: string, goalId: string | null) => void;
   addCourse: (draft: CourseDraft) => void;
+  /** AC-77.2. New details for the same course: same id, so same items. */
+  editCourse: (id: string, draft: CourseDraft) => void;
   removeCourse: (id: string) => void;
   addGoal: (draft: GoalDraft) => void;
   removeGoal: (id: string) => void;
@@ -60,7 +64,7 @@ function itemFrom(draft: ItemDraft): Item {
     createdAt: now().toISOString(),
     completedAt: null,
     goalId: null,
-    courseId: null,
+    courseId: draft.courseId ?? null,
     repeatDay: null,
     parentId: null,
   };
@@ -127,6 +131,7 @@ export function useDatabase(): {
   const [undoable, setUndoable] = useState<
     | { kind: 'done'; title: string; doneId: string; spawnedId: string | null }
     | { kind: 'deleted'; title: string; removed: Item[] }
+    | { kind: 'copied'; title: string; copyId: string }
     | null
   >(null);
 
@@ -169,6 +174,14 @@ export function useDatabase(): {
 
     if (undoable.kind === 'deleted') {
       commit({ ...db, items: [...db.items, ...undoable.removed] });
+      setUndoable(null);
+      return;
+    }
+
+    // AC-79.3. A copy's inverse is simply to be gone again.
+    if (undoable.kind === 'copied') {
+      const { copyId } = undoable;
+      commit({ ...db, items: db.items.filter((item) => item.id !== copyId) });
       setUndoable(null);
       return;
     }
@@ -285,6 +298,27 @@ export function useDatabase(): {
       }));
     },
 
+    copyItem(id, dueAt) {
+      if (!db) return;
+      const source = db.items.find((item) => item.id === id);
+      if (!source) return;
+      // AC-79.2. Everything that says what it is, on a new day. Open, since
+      // it is a new piece of work, and never repeating, or copying a weekly
+      // item would start a second series. Its steps stay with the original.
+      const copy: Item = {
+        ...source,
+        id: crypto.randomUUID(),
+        dueAt,
+        repeat: 'none',
+        repeatDay: null,
+        status: 'open',
+        completedAt: null,
+        createdAt: now().toISOString(),
+      };
+      if (!commit({ ...db, items: [...db.items, copy] })) return;
+      setUndoable({ kind: 'copied', title: source.title, copyId: copy.id });
+    },
+
     removeItem(id) {
       if (!db) return;
       // AC-45.4. A step without its project has nothing to be a step of.
@@ -337,6 +371,15 @@ export function useDatabase(): {
       update((current) => ({
         ...current,
         courses: [...current.courses, course],
+      }));
+    },
+
+    editCourse(id, draft) {
+      update((current) => ({
+        ...current,
+        courses: current.courses.map((course) =>
+          course.id === id ? { ...course, ...draft } : course,
+        ),
       }));
     },
 
@@ -400,7 +443,9 @@ export function useDatabase(): {
         ? null
         : undoable.kind === 'done'
           ? `Marked ${undoable.title} done.`
-          : `Deleted ${undoable.title}.`,
+          : undoable.kind === 'copied'
+            ? `Copied ${undoable.title}.`
+            : `Deleted ${undoable.title}.`,
     undo,
     actions,
   };

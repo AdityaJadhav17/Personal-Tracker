@@ -168,6 +168,7 @@ export default function App() {
       onNavigate={setView}
       backupDue={backup !== null}
       onAdd={actions.addItem}
+      courses={db.courses}
     >
       {view === 'calendar' ? (
         <CalendarView
@@ -176,6 +177,7 @@ export default function App() {
           onMove={(item, dueAt) =>
             actions.editItem(item.id, item.title, dueAt, item.repeat)
           }
+          onCopy={(item, dueAt) => actions.copyItem(item.id, dueAt)}
           goals={db.goals}
           onAdd={actions.addItem}
           courses={db.courses}
@@ -228,6 +230,7 @@ export default function App() {
         <CourseList
           courses={db.courses}
           onAdd={actions.addCourse}
+          onEdit={actions.editCourse}
           onDelete={actions.removeCourse}
         />
       ) : view === 'data' ? (
@@ -382,6 +385,7 @@ export default function App() {
             onAdd={actions.addItem}
             titleRef={titleRef}
             quickFrom={toDateValue(current)}
+            courses={db.courses}
           />
 
           {hiddenByFilter ? (

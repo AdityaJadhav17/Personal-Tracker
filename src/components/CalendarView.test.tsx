@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CalendarView from './CalendarView';
 import type { Goal, Item, ItemDraft } from '../domain/types';
@@ -56,6 +62,7 @@ test('AC-21.1 an item shows in the cell for the day it is due', () => {
       items={[dueOn('2026-09-16', 'CSE 110 midterm')]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -74,6 +81,7 @@ test('AC-21.1 an item due another day is not in this day', () => {
       items={[dueOn('2026-09-16', 'Midterm')]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -90,6 +98,7 @@ test('AC-21.2 today is marked as today', () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -107,6 +116,7 @@ test('AC-21.3 the calendar opens on the current month', () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -124,6 +134,7 @@ test('AC-21.3 moving to the next month shows that month and its items', async ()
       items={[dueOn('2026-09-16', 'Midterm'), dueOn('2026-10-01', 'Rent')]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -145,6 +156,7 @@ test('AC-21.3 moving back returns to the month you came from', async () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -165,6 +177,7 @@ test('AC-21.2 today is only marked in the month it falls in', async () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -188,6 +201,7 @@ test('AC-21.4 a day with more items than fit says how many more', () => {
       ]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -204,6 +218,7 @@ test('AC-21.4 a day that fits says nothing about more', () => {
       items={[dueOn('2026-09-16', 'First'), dueOn('2026-09-16', 'Second')]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -220,6 +235,7 @@ test('AC-21.5 a month with nothing in it still draws the grid', () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -243,6 +259,7 @@ test('AC-75.1 (replaces AC-21.6) a finished item stays on its day, marked done',
       ]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -294,6 +311,7 @@ test('the weekday headings name the columns', () => {
       items={[]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -325,6 +343,7 @@ test('AC-39.1 dropping an item on another day moves it there at the same time', 
       items={[homework]}
       now={NOW}
       onMove={onMove}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -346,6 +365,7 @@ test('AC-39.3 a line says what moved and where it went', () => {
       items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -367,6 +387,7 @@ test('AC-39.4 dropping an item back on its own day changes nothing', () => {
       items={[dueOn('2026-09-16', 'CSE 123 HW 1')]}
       now={NOW}
       onMove={onMove}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -388,6 +409,7 @@ test('AC-39.6 dragging over Next month turns the page, and the drop lands there'
       items={[booking]}
       now={NOW}
       onMove={onMove}
+      onCopy={() => {}}
       onAdd={() => true}
       courses={[]}
       goals={[]}
@@ -428,6 +450,7 @@ function renderWith(
       items={items}
       now={NOW}
       onMove={() => {}}
+      onCopy={() => {}}
       onAdd={onAdd}
       courses={[]}
       goals={goals}
@@ -574,6 +597,8 @@ describe('US-53 adding from the calendar', () => {
       category: 'academic',
       priority: 'normal',
       repeat: 'none',
+      // AC-78.1. A draft says its course now; none was picked.
+      courseId: null,
     });
   });
 
@@ -598,6 +623,7 @@ describe('US-53 adding from the calendar', () => {
       category: 'personal',
       priority: 'high',
       repeat: 'monthly',
+      courseId: null,
     });
   });
 
@@ -667,4 +693,81 @@ test('AC-68.2 a neighbouring day is not a cell you can open', () => {
 
   expect(screen.queryByRole('cell', { name: /August 31/ })).toBeNull();
   expect(screen.queryByRole('button', { name: /August 31/ })).toBeNull();
+});
+
+/**
+ * US-79. jsdom has no DragEvent, so a modifier passed to fireEvent is dropped;
+ * the event is made first and Ctrl set on it, as a browser would have it.
+ */
+function withCtrl(
+  kind: 'dragOver' | 'drop',
+  target: Element,
+  dataTransfer: object,
+) {
+  const event = createEvent[kind](target, { dataTransfer });
+  Object.defineProperty(event, 'ctrlKey', { value: true });
+  fireEvent(target, event);
+}
+
+describe('US-79 copy by dragging with Ctrl', () => {
+  function renderCopying(onMove = vi.fn(), onCopy = vi.fn()) {
+    const homework = dueOn('2026-09-16', 'CSE 123 HW 1');
+    render(
+      <CalendarView
+        items={[homework]}
+        now={NOW}
+        onMove={onMove}
+        onCopy={onCopy}
+        onAdd={() => true}
+        courses={[]}
+        goals={[]}
+        renderDay={listTitles}
+      />,
+    );
+    return homework;
+  }
+
+  function ctrlDrag(title: string, day: string) {
+    const data = new Map<string, string>();
+    const dataTransfer = {
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      setData: (type: string, value: string) => data.set(type, value),
+      getData: (type: string) => data.get(type) ?? '',
+    };
+    fireEvent.dragStart(screen.getByText(title), { dataTransfer });
+    withCtrl('dragOver', cell(day), dataTransfer);
+    const shown = dataTransfer.dropEffect;
+    withCtrl('drop', cell(day), dataTransfer);
+    return shown;
+  }
+
+  test('AC-79.1 Ctrl while dropping copies to that day, and moves nothing', () => {
+    const onMove = vi.fn();
+    const onCopy = vi.fn();
+    const homework = renderCopying(onMove, onCopy);
+
+    const shown = ctrlDrag('CSE 123 HW 1', 'September 18, 2026');
+
+    expect(shown).toBe('copy');
+    expect(onCopy).toHaveBeenCalledWith(
+      homework,
+      new Date(2026, 8, 18, 12).toISOString(),
+    );
+    expect(onMove).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'CSE 123 HW 1 copied to September 18, 2026',
+    );
+  });
+
+  test('AC-79.4 an item that can be dragged says how to move and copy it', () => {
+    renderCopying();
+
+    expect(
+      screen.getByRole('button', { name: 'CSE 123 HW 1' }),
+    ).toHaveAttribute(
+      'title',
+      expect.stringContaining('hold Ctrl as you drop to copy'),
+    );
+  });
 });

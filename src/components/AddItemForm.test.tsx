@@ -350,3 +350,67 @@ test('AC-76.1 a new item can be filed under Work', async () => {
     expect.objectContaining({ category: 'work' }),
   );
 });
+
+describe('US-78 the course, when adding', () => {
+  const courses = [
+    {
+      id: 'c120',
+      name: 'CSE 120',
+      meetingLocation: '',
+      professorEmail: '',
+      officeHours: '',
+      createdAt: '2026-09-01T00:00:00.000Z',
+    },
+  ];
+
+  test('AC-78.1 with courses, Course is offered and starts on No course', () => {
+    render(
+      <AddItemForm
+        onAdd={() => true}
+        titleRef={{ current: null }}
+        courses={courses}
+      />,
+    );
+
+    const course = screen.getByLabelText('Course');
+    expect(course).toHaveValue('');
+    expect(course).toHaveDisplayValue('No course');
+  });
+
+  test('AC-78.1 with no courses there is no Course to pick', () => {
+    render(
+      <AddItemForm
+        onAdd={() => true}
+        titleRef={{ current: null }}
+        courses={[]}
+      />,
+    );
+
+    expect(screen.queryByLabelText('Course')).not.toBeInTheDocument();
+  });
+
+  test('AC-78.2 the course picked goes with the new item', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn(() => true);
+    render(
+      <AddItemForm
+        onAdd={onAdd}
+        titleRef={{ current: null }}
+        courses={courses}
+      />,
+    );
+
+    await user.type(screen.getByLabelText('Title'), 'Project 1');
+    fireEvent.change(screen.getByLabelText('Due'), {
+      target: { value: '2026-10-14' },
+    });
+    await user.selectOptions(screen.getByLabelText('Course'), 'c120');
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Project 1', courseId: 'c120' }),
+    );
+    // And the next one starts clean again.
+    expect(screen.getByLabelText('Course')).toHaveValue('');
+  });
+});

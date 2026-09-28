@@ -39,6 +39,8 @@ interface CalendarViewProps {
   now: Date;
   /** US-39. An item was dropped on another day; `dueAt` is its new deadline. */
   onMove: (item: Item, dueAt: string) => void;
+  /** AC-79.1. Dropped with Ctrl held: a copy on that day, the item unmoved. */
+  onCopy: (item: Item, dueAt: string) => void;
   /** AC-41.1. Shown on their target day. */
   goals: Goal[];
   /**
@@ -68,6 +70,7 @@ export default function CalendarView({
   items,
   now,
   onMove,
+  onCopy,
   goals,
   renderDay,
   onAdd,
@@ -141,11 +144,17 @@ export default function CalendarView({
     };
   }, [opened]);
 
-  function drop(id: string, day: string) {
+  function drop(id: string, day: string, copy: boolean) {
     clearTarget();
     const item = items.find((one) => one.id === id);
     if (!item) return;
     const dueAt = moveToDay(item.dueAt, day);
+    // AC-79.1. Ctrl as it drops: a copy, even onto its own day.
+    if (copy) {
+      onCopy(item, dueAt);
+      setMoved(`${item.title} copied to ${dayLabel(day)}`);
+      return;
+    }
     // AC-39.4. Back where it started is not a move.
     if (dueAt === item.dueAt) return;
     onMove(item, dueAt);
@@ -323,7 +332,12 @@ export default function CalendarView({
           {openCell.items.length + openCell.repeats.length === 0 && (
             <p className="calendar__day-empty">Nothing due this day.</p>
           )}
-          <AddItemForm onAdd={onAdd} titleRef={titleRef} day={openCell.day} />
+          <AddItemForm
+            onAdd={onAdd}
+            titleRef={titleRef}
+            day={openCell.day}
+            courses={courses}
+          />
         </section>
       )}
     </section>
@@ -385,7 +399,7 @@ function Cell({
   cell: DayCell;
   isToday: boolean;
   isOpen: boolean;
-  onDrop: (id: string, day: string) => void;
+  onDrop: (id: string, day: string, copy: boolean) => void;
   onOpen: (day: string) => void;
   isTarget: boolean;
   onTarget: (day: string) => void;
@@ -414,6 +428,8 @@ function Cell({
       // continuously, and setting the same day again renders nothing.
       onDragOver={(event) => {
         event.preventDefault();
+        // AC-79.1. The pointer says which it will be, before you let go.
+        event.dataTransfer.dropEffect = event.ctrlKey ? 'copy' : 'move';
         onTarget(cell.day);
       }}
       // Entering fires before the first dragover, so the day lights up the
@@ -421,7 +437,11 @@ function Cell({
       onDragEnter={() => onTarget(cell.day)}
       onDrop={(event) => {
         event.preventDefault();
-        onDrop(event.dataTransfer.getData('text/plain'), cell.day);
+        onDrop(
+          event.dataTransfer.getData('text/plain'),
+          cell.day,
+          event.ctrlKey,
+        );
       }}
     >
       {/* The full date is read, the bare number is seen. Without it a screen
@@ -446,9 +466,12 @@ function Cell({
           key={item.id}
           type="button"
           draggable
-          onDragStart={(event) =>
-            event.dataTransfer.setData('text/plain', item.id)
-          }
+          // AC-79.4. Hover says what dragging does, and that Ctrl copies.
+          title={`${item.title}. Drag to another day to move it; hold Ctrl as you drop to copy.`}
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = 'copyMove';
+            event.dataTransfer.setData('text/plain', item.id);
+          }}
           // A drag cancelled with Escape, or dropped outside the grid.
           onDragEnd={onDragEnd}
         >

@@ -3,7 +3,7 @@ import { isoDate } from './helpers';
 
 /** The filter, which is the only select on Home labelled exactly "Course". */
 function courseFilter(page: Page) {
-  return page.getByLabel('Course', { exact: true });
+  return page.getByLabel('Filter by course', { exact: true });
 }
 
 function titled(page: Page, title: string) {
