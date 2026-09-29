@@ -6,7 +6,14 @@ import AddItemForm from './AddItemForm';
 import ThemeToggle from './ThemeToggle';
 
 export type View =
-  'home' | 'calendar' | 'goals' | 'courses' | 'reflections' | 'trends' | 'data';
+  | 'home'
+  | 'calendar'
+  | 'goals'
+  | 'courses'
+  | 'reflections'
+  | 'notes'
+  | 'trends'
+  | 'data';
 
 /**
  * Every destination the sidebar offers.
@@ -43,6 +50,12 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
     label: 'Reflections',
     icon: 'M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01',
   },
+  // US-80. Beside Reflections: the other view you write in.
+  {
+    id: 'notes',
+    label: 'Notes',
+    icon: 'M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 10h6M9 14h6M9 18h3',
+  },
   {
     id: 'trends',
     label: 'Trends',
@@ -60,7 +73,7 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
  * AC-66.1. The views a phone's tab bar has no room for. They stay in the
  * sidebar on a wide screen and move behind More on a phone.
  */
-const TUCKED: View[] = ['courses', 'reflections', 'trends', 'data'];
+const TUCKED: View[] = ['courses', 'reflections', 'notes', 'trends', 'data'];
 
 const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
 const PLUS = 'M12 5v14M5 12h14';
@@ -226,7 +239,7 @@ export default function Shell({
 }
 
 /** A 24px-grid icon, drawn inline so nothing is fetched. Decorative. */
-function Icon({
+export function Icon({
   path,
   size = 16,
   weight = 1.8,

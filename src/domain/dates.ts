@@ -381,3 +381,40 @@ export function dayOfMonth(iso: string): number {
 export function daysBetween(iso: string, now: Date): number {
   return localDaysBetween(new Date(iso), now);
 }
+
+/**
+ * US-80. When a note was last edited, as its row in the list says it: the
+ * time today, "Yesterday", the weekday within the week, then the short date.
+ * Apple Notes' own ladder.
+ */
+export function editedWhen(iso: string, now: Date): string {
+  const at = new Date(iso);
+  const days = localDaysBetween(at, now);
+  if (days === 0) {
+    return at.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return at.toLocaleString('en-US', { weekday: 'long' });
+  return at.toLocaleString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    year: '2-digit',
+  });
+}
+
+/** US-80. The editor's stamp, "September 15, 2026 at 3:42 PM". */
+export function editedLong(iso: string): string {
+  return new Date(iso).toLocaleString('en-US', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  });
+}
+
+/** US-80. A month's heading in the notes list: "March", or "March 2025". */
+export function noteMonth(iso: string, now: Date): string {
+  const at = new Date(iso);
+  if (at.getFullYear() !== now.getFullYear()) {
+    return monthLabel(monthValue(at));
+  }
+  return at.toLocaleString('en-US', { month: 'long' });
+}

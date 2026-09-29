@@ -23,11 +23,12 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 5,
+    version: 6,
     items,
     goals: [],
     courses: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 }
@@ -120,7 +121,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(5);
+    expect(load().version).toBe(6);
   });
 });
 
@@ -140,11 +141,12 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 5 as const,
+    version: 6 as const,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 
@@ -168,5 +170,35 @@ describe('when the browser refuses to store', () => {
     });
 
     expect(localStorage.getItem('personal-tracker/v1')).toBe(before);
+  });
+});
+
+describe('US-80 notes in storage', () => {
+  const note = {
+    id: 'n1',
+    body: 'Groceries\nmilk',
+    createdAt: '2026-09-28T17:00:00.000Z',
+    updatedAt: '2026-09-28T17:05:00.000Z',
+  };
+
+  test('AC-80.7 notes survive a save and a load', () => {
+    save({ ...aDatabase([]), notes: [note] });
+    expect(load().notes).toEqual([note]);
+  });
+
+  test('AC-80.7 a stored version 5 database opens with no notes', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...aDatabase([]), version: 5, notes: undefined }),
+    );
+    expect(load()).toMatchObject({ version: 6, notes: [] });
+  });
+
+  test('AC-80.7 notes of the wrong shape come back empty', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...aDatabase([]), notes: 'nope' }),
+    );
+    expect(load().notes).toEqual([]);
   });
 });

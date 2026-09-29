@@ -1,5 +1,5 @@
 import { upgrade } from './migrate';
-import type { Course, Database, Goal, Item, Reflection } from './types';
+import type { Course, Database, Goal, Item, Note, Reflection } from './types';
 
 /**
  * Turn the whole database into the export file.
@@ -47,6 +47,15 @@ const KEYS: Record<number, string[]> = {
   3: ['version', 'items', 'goals', 'courses', 'reflections'],
   4: ['version', 'items', 'goals', 'courses', 'reflections', 'lastBackupAt'],
   5: ['version', 'items', 'goals', 'courses', 'reflections', 'lastBackupAt'],
+  6: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+  ],
 };
 
 export type ParseResult =
@@ -163,6 +172,18 @@ function reflectionProblem(value: unknown): string | null {
   return null;
 }
 
+/** AC-80.7. A note is text, so it is checked as text and never read as HTML. */
+function noteProblem(value: unknown): string | null {
+  const raw = fields(value);
+  if (!raw) return 'it is not an object';
+
+  if (!isText(raw.id) || raw.id === '') return 'it has no id';
+  if (!isText(raw.body)) return 'its body must be text';
+  if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  if (!isInstant(raw.updatedAt)) return 'its edited date is not a date';
+  return null;
+}
+
 /** Copy across only the fields we know about, so nothing else rides along. */
 function toItem(value: unknown): Item {
   const raw = value as Record<string, unknown>;
@@ -217,6 +238,16 @@ function toReflection(value: unknown): Reflection {
     score: raw.score as Reflection['score'],
     note: raw.note as string,
     createdAt: raw.createdAt as string,
+  };
+}
+
+function toNote(value: unknown): Note {
+  const raw = value as Record<string, unknown>;
+  return {
+    id: raw.id as string,
+    body: raw.body as string,
+    createdAt: raw.createdAt as string,
+    updatedAt: raw.updatedAt as string,
   };
 }
 
@@ -280,7 +311,8 @@ export function parseImport(text: string): ParseResult {
     version !== 2 &&
     version !== 3 &&
     version !== 4 &&
-    version !== 5
+    version !== 5 &&
+    version !== 6
   ) {
     return {
       ok: false,
@@ -323,6 +355,15 @@ export function parseImport(text: string): ParseResult {
     if (problem) return { ok: false, error: problem };
   }
 
+  // Version 6 is the first to carry notes, and must carry them.
+  if (version === 6) {
+    if (!Array.isArray(raw.notes)) {
+      return { ok: false, error: 'That file has no notes list.' };
+    }
+    const problem = collectionProblem(raw.notes, 'Note', noteProblem);
+    if (problem) return { ok: false, error: problem };
+  }
+
   if (
     raw.lastBackupAt !== undefined &&
     raw.lastBackupAt !== null &&
@@ -350,6 +391,7 @@ export function parseImport(text: string): ParseResult {
       goals: (raw.goals as unknown[]).map(toGoal),
       courses: (raw.courses as unknown[]).map(toCourse),
       reflections: (raw.reflections as unknown[]).map(toReflection),
+      notes: version === 6 ? (raw.notes as unknown[]).map(toNote) : [],
       lastBackupAt: (raw.lastBackupAt as string | null | undefined) ?? null,
     }),
   };

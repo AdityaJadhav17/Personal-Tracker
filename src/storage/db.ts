@@ -1,15 +1,23 @@
 import { upgrade } from '../domain/migrate';
-import type { Course, Database, Goal, Item, Reflection } from '../domain/types';
+import type {
+  Course,
+  Database,
+  Goal,
+  Item,
+  Note,
+  Reflection,
+} from '../domain/types';
 
 export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
   return {
-    version: 5,
+    version: 6,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 }
@@ -66,13 +74,15 @@ export function load(): Database {
     reflections: Array.isArray(stored.reflections)
       ? (stored.reflections as Reflection[])
       : [],
+    notes: Array.isArray(stored.notes) ? (stored.notes as Note[]) : [],
     lastBackupAt:
       typeof stored.lastBackupAt === 'string' ? stored.lastBackupAt : null,
   });
 }
 
 /**
- * Write the whole database. Called on submit and on blur, never per keystroke.
+ * Write the whole database. Called on submit and on blur, and by a note as you
+ * type (AC-80.3), which is a few kilobytes of JSON per keystroke.
  *
  * Returns whether it worked instead of throwing. A write can fail for a reason
  * the person cannot be expected to predict: the quota is a few megabytes, an

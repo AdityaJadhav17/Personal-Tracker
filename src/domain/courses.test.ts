@@ -33,11 +33,12 @@ function aCourse(id: string, name = id): Course {
 
 function aDatabase(courses: Course[], items: Item[]): Database {
   return {
-    version: 5,
+    version: 6,
     items,
     courses,
     goals: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 }
@@ -96,7 +97,7 @@ test('the other collections are carried through untouched', () => {
 
   const next = deleteCourse(db, 'c1');
 
-  expect(next.version).toBe(5);
+  expect(next.version).toBe(6);
   expect(next.goals).toEqual([]);
   expect(next.reflections).toEqual([]);
 });

@@ -24,11 +24,12 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 5,
+    version: 6,
     items,
     goals: [],
     courses: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 }
@@ -66,7 +67,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(5);
+    expect(parsed.version).toBe(6);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -180,8 +181,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 5 is current since US-45, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 6, "items": []}')).toMatch(/version/i);
+    // 6 is current since US-80, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 7, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -284,7 +285,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(5);
+    expect(result.ok && result.db.version).toBe(6);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -641,7 +642,7 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(5);
+    expect(result.ok && result.db.version).toBe(6);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });
@@ -677,5 +678,55 @@ describe('version 5 files', () => {
     );
 
     expect(!result.ok && result.error).toMatch(/parent/i);
+  });
+});
+
+describe('US-80 notes', () => {
+  const note = {
+    id: 'n1',
+    body: 'Groceries\nmilk',
+    createdAt: '2026-09-28T17:00:00.000Z',
+    updatedAt: '2026-09-28T17:05:00.000Z',
+  };
+
+  test('AC-80.7 notes go into the export and come back on import', () => {
+    const result = parseImport(serialize({ ...aDatabase(), notes: [note] }));
+    expect(result.ok && result.db.notes).toEqual([note]);
+  });
+
+  test('AC-80.7 a note whose body is not text is refused', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: [{ ...note, body: 42 }] }),
+    );
+    expect(!result.ok && result.error).toMatch(/Note 1 .*text/);
+  });
+
+  test('AC-80.7 a note with no edit date is refused', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: [{ ...note, updatedAt: 'x' }] }),
+    );
+    expect(!result.ok && result.error).toMatch(/Note 1/);
+  });
+
+  test('AC-80.7 a version 6 file with no notes list is refused', () => {
+    // JSON leaves out a key whose value is undefined.
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: undefined }),
+    );
+    expect(!result.ok && result.error).toMatch(/notes/);
+  });
+
+  test('AC-80.7 a version 5 file still opens, with no notes', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), version: 5, notes: undefined }),
+    );
+    expect(result.ok && result.db).toMatchObject({ version: 6, notes: [] });
+  });
+
+  test('AC-80.7 fields a note should not have are dropped', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: [{ ...note, html: '<b>' }] }),
+    );
+    expect(result.ok && result.db.notes[0]).toEqual(note);
   });
 });

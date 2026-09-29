@@ -72,14 +72,28 @@ export interface Reflection {
   createdAt: string;
 }
 
+/**
+ * US-80. A plain note. No title field: the first line is the title, as in
+ * Apple Notes. Text only, never rendered as HTML.
+ */
+export interface Note {
+  id: string;
+  body: string;
+  createdAt: string;
+  /** UTC instant of the last edit. The list sorts and groups by it. */
+  updatedAt: string;
+}
+
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 5;
+  version: 6;
   items: Item[];
   goals: Goal[];
   courses: Course[];
   reflections: Reflection[];
+  /** Added in version 6, US-80. */
+  notes: Note[];
   /** When the last export was taken, or null for never. Added in version 4. */
   lastBackupAt: string | null;
 }

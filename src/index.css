@@ -22,6 +22,7 @@
 @import './components/GoalList.css';
 @import './components/StatRow.css';
 @import './components/ReflectionView.css';
+@import './components/NotesView.css';
 @import './components/TrendsView.css';
 @import './components/CalendarView.css';
 @import './components/ItemRow.panel.css';

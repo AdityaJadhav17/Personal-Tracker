@@ -7,6 +7,7 @@ interface Partial {
   goals?: unknown[];
   courses?: unknown[];
   reflections?: unknown[];
+  notes?: unknown[];
   lastBackupAt?: string | null;
 }
 
@@ -16,7 +17,8 @@ interface Partial {
  * Version 1 had only `items`, and items had no goal or course. Version 2 adds
  * goals, courses and reflections, and a null link on every item. Version 3
  * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
- * database. Version 5 adds `parentId`, for steps. Anything already current is
+ * database. Version 5 adds `parentId`, for steps. Version 6 adds `notes`.
+ * Anything already current is
  * handed straight back.
  *
  * Written as steps rather than one branch per starting version, so adding
@@ -76,6 +78,10 @@ export function upgrade(db: Partial): Database {
         ...(item as object),
       })),
     };
+  }
+
+  if (current.version < 6) {
+    current = { ...current, version: 6, notes: current.notes ?? [] };
   }
 
   return current as unknown as Database;

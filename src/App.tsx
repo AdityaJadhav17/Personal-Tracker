@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
 import GoalList from './components/GoalList';
+import NotesView from './components/NotesView';
 import ItemRow from './components/ItemRow';
 import { stepsOf } from './domain/steps';
 import ReflectionView from './components/ReflectionView';
@@ -119,7 +120,8 @@ export default function App() {
       }
       setImportError('');
       // AC-10.4. Nothing is written while there is data that could be lost.
-      if (data.items.length > 0) setPendingImport(result.db);
+      // AC-80.7: notes are that data too.
+      if (saved > 0) setPendingImport(result.db);
       else actions.replaceAll(result.db);
     };
     reader.onerror = () => setImportError('That file could not be read.');
@@ -127,7 +129,9 @@ export default function App() {
   }
 
   const current = now();
-  const backup = backupNotice(db.lastBackupAt, db.items.length > 0, current);
+  // AC-80.7. What an import could overwrite and a backup protects.
+  const saved = db.items.length + db.notes.length;
+  const backup = backupNotice(db.lastBackupAt, saved > 0, current);
 
   // Based on open items rather than on the array being empty, so finishing
   // everything shows the empty state instead of a blank page.
@@ -218,6 +222,14 @@ export default function App() {
             onRecord={actions.recordToday}
           />
         </>
+      ) : view === 'notes' ? (
+        <NotesView
+          notes={db.notes}
+          now={current}
+          onAdd={actions.addNote}
+          onChange={actions.editNote}
+          onDelete={actions.removeNote}
+        />
       ) : view === 'goals' ? (
         <GoalList
           now={current}
@@ -327,8 +339,8 @@ export default function App() {
             {pendingImport && (
               <section className="prompt">
                 <p>
-                  You already have {db.items.length} saved. Replace everything
-                  with the file, or keep both?
+                  You already have {saved} saved. Replace everything with the
+                  file, or keep both?
                 </p>
                 <div className="prompt__actions">
                   <button

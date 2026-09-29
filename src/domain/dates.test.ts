@@ -3,6 +3,8 @@ import {
   shortDay,
   dayLabel,
   daysBetween,
+  editedLong,
+  editedWhen,
   formatDue,
   groupOf,
   lateBy,
@@ -10,6 +12,7 @@ import {
   gridDate,
   monthLabel,
   monthValue,
+  noteMonth,
   moveToDay,
   nextOccurrence,
   shiftMinutes,
@@ -526,5 +529,40 @@ describe('US-68 the date at a grid position', () => {
   test('AC-68.1 the day before March in a leap year is the 29th', () => {
     // March 2028 starts on a Wednesday: three blanks, the last is Feb 29.
     expect(gridDate('2028-03', 2)).toBe(29);
+  });
+});
+
+describe('US-80 when a note was edited', () => {
+  // NOW is Tuesday 15 September 2026, 10am.
+  test('AC-80.4 today shows the time', () => {
+    const at = new Date(2026, 8, 15, 8, 5).toISOString();
+    expect(editedWhen(at, NOW)).toBe('8:05 AM');
+  });
+
+  test('AC-80.4 yesterday says so', () => {
+    const at = new Date(2026, 8, 14, 23, 0).toISOString();
+    expect(editedWhen(at, NOW)).toBe('Yesterday');
+  });
+
+  test('AC-80.4 this week shows the weekday', () => {
+    const at = new Date(2026, 8, 10, 9, 0).toISOString();
+    expect(editedWhen(at, NOW)).toBe('Thursday');
+  });
+
+  test('AC-80.4 older shows the date', () => {
+    const at = new Date(2026, 7, 2, 9, 0).toISOString();
+    expect(editedWhen(at, NOW)).toBe('8/2/26');
+  });
+
+  test('AC-80.3 the editor names the moment in full', () => {
+    const at = new Date(2026, 8, 15, 15, 42).toISOString();
+    expect(editedLong(at)).toBe('September 15, 2026 at 3:42 PM');
+  });
+
+  test('AC-80.4 a month this year is named alone, an older one with its year', () => {
+    expect(noteMonth(new Date(2026, 2, 3).toISOString(), NOW)).toBe('March');
+    expect(noteMonth(new Date(2025, 11, 1).toISOString(), NOW)).toBe(
+      'December 2025',
+    );
   });
 });

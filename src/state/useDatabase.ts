@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
 import { dayOfMonth, nextOccurrence, now, toDateValue } from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
+import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
 import type {
   Course,
@@ -11,6 +12,7 @@ import type {
   GoalDraft,
   Item,
   ItemDraft,
+  Note,
   Reflection,
   Repeat,
 } from '../domain/types';
@@ -42,6 +44,12 @@ export interface DatabaseActions {
   addGoal: (draft: GoalDraft) => void;
   removeGoal: (id: string) => void;
   recordToday: (score: Reflection['score'], note: string) => void;
+  /** AC-80.2. A note from its first text: its id, or null if not stored. */
+  addNote: (body: string) => string | null;
+  /** AC-80.3. Called per keystroke; the edit time moves with it. */
+  editNote: (id: string, body: string) => void;
+  /** AC-80.6. Gone, with Undo to bring it back. */
+  removeNote: (id: string) => void;
   /** US-40. An export was just taken at this instant. */
   recordBackup: (at: string) => void;
   /** Import chose to replace. */
@@ -88,6 +96,8 @@ function keepBoth<T>(
 /** Undo is a plain letter, so it must not fire while you are typing. */
 function isTyping(element: Element | null): boolean {
   if (!element) return false;
+  // AC-80.3. A note's editor is an editable element, not a form field.
+  if (element.closest('[contenteditable]')) return true;
   return ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
 }
 
@@ -132,6 +142,7 @@ export function useDatabase(): {
     | { kind: 'done'; title: string; doneId: string; spawnedId: string | null }
     | { kind: 'deleted'; title: string; removed: Item[] }
     | { kind: 'copied'; title: string; copyId: string }
+    | { kind: 'note'; title: string; note: Note }
     | null
   >(null);
 
@@ -174,6 +185,13 @@ export function useDatabase(): {
 
     if (undoable.kind === 'deleted') {
       commit({ ...db, items: [...db.items, ...undoable.removed] });
+      setUndoable(null);
+      return;
+    }
+
+    // AC-80.6. A deleted note goes back as it was, edit time included.
+    if (undoable.kind === 'note') {
+      commit({ ...db, notes: [...db.notes, undoable.note] });
       setUndoable(null);
       return;
     }
@@ -406,6 +424,42 @@ export function useDatabase(): {
       );
     },
 
+    addNote(body) {
+      const at = now().toISOString();
+      const note: Note = {
+        id: crypto.randomUUID(),
+        body,
+        createdAt: at,
+        updatedAt: at,
+      };
+      const stored = update((current) => ({
+        ...current,
+        notes: [...current.notes, note],
+      }));
+      return stored ? note.id : null;
+    },
+
+    editNote(id, body) {
+      update((current) => ({
+        ...current,
+        notes: current.notes.map((note) =>
+          note.id === id
+            ? { ...note, body, updatedAt: now().toISOString() }
+            : note,
+        ),
+      }));
+    },
+
+    removeNote(id) {
+      if (!db) return;
+      const note = db.notes.find((one) => one.id === id);
+      if (!note) return;
+      if (!commit({ ...db, notes: db.notes.filter((one) => one !== note) })) {
+        return;
+      }
+      setUndoable({ kind: 'note', title: titleOf(note.body), note });
+    },
+
     recordBackup(at) {
       update((current) => ({ ...current, lastBackupAt: at }));
     },
@@ -430,6 +484,7 @@ export function useDatabase(): {
           next.reflections,
           (r) => r.day,
         ),
+        notes: keepBoth(current.notes, next.notes, (note) => note.id),
       }));
       setUndoable(null);
     },

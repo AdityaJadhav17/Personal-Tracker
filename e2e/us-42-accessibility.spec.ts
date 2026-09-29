@@ -15,6 +15,7 @@ const VIEWS = [
   'Goals',
   'Courses',
   'Reflections',
+  'Notes',
   'Trends',
   'Data',
 ];
@@ -76,6 +77,21 @@ async function seed(page: Page) {
             score: 4,
             note: 'Good',
             createdAt: day(-1),
+          },
+        ],
+        // US-80. Stored as version 4 wrote it; load carries these through.
+        notes: [
+          {
+            id: 'n1',
+            body: 'Groceries\nOat milk, eggs',
+            createdAt: day(0, 9, 0),
+            updatedAt: day(0, 9, 0),
+          },
+          {
+            id: 'n2',
+            body: 'Ask landlord\nKitchen sink',
+            createdAt: day(-12, 9, 0),
+            updatedAt: day(-12, 9, 0),
           },
         ],
         items: [

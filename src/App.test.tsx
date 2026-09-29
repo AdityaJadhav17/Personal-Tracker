@@ -459,7 +459,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(5);
+  expect(parsed.version).toBe(6);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -504,11 +504,12 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 5,
+    version: 6,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
+    notes: [],
     // AC-40.4. The file records its own export.
     lastBackupAt: expect.any(String) as unknown,
   });
@@ -2017,4 +2018,123 @@ test('AC-79.2 and AC-79.3 a copy keeps what matters, does not repeat, and Undo t
 
   await user.click(screen.getByRole('button', { name: 'Undo' }));
   expect(items().map((i) => i.id)).toEqual([original?.id]);
+});
+
+/** US-80. To Notes, and a first note written in it. */
+async function writeNote(body: string) {
+  const user = userEvent.setup();
+  await user.click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Notes',
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: 'New note' }));
+  const editor = screen.getByRole('textbox', { name: 'Note' });
+  editor.textContent = body;
+  fireEvent.input(editor);
+}
+
+function storedNotes() {
+  const raw = localStorage.getItem('personal-tracker/v1') ?? '{"notes":[]}';
+  return (JSON.parse(raw) as { notes: { body: string }[] }).notes;
+}
+
+test('AC-80.1 Notes is in the sidebar, after Reflections', () => {
+  render(<App />);
+
+  const names = within(screen.getByRole('navigation'))
+    .getAllByRole('button')
+    .map((button) => button.textContent);
+  expect(names.indexOf('Notes')).toBe(names.indexOf('Reflections') + 1);
+});
+
+test('AC-80.7 a note is stored as you type and is there after a reload', async () => {
+  render(<App />);
+  await writeNote('Groceries\nmilk');
+
+  expect(storedNotes()).toEqual([
+    expect.objectContaining({ body: 'Groceries\nmilk' }),
+  ]);
+
+  cleanup();
+  render(<App />);
+  await userEvent.setup().click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Notes',
+    }),
+  );
+  expect(screen.getByRole('button', { name: /^Groceries/ })).toBeVisible();
+});
+
+test('AC-80.6 deleting a note offers Undo, which brings it back', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await writeNote('Groceries\nmilk');
+
+  await user.click(screen.getByRole('button', { name: 'Delete note' }));
+  expect(storedNotes()).toEqual([]);
+  expect(screen.getByRole('status')).toHaveTextContent('Deleted Groceries.');
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(storedNotes()).toEqual([
+    expect.objectContaining({ body: 'Groceries\nmilk' }),
+  ]);
+});
+
+test('AC-80.3 typing u in a note is a letter, not Undo', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await writeNote('Groceries');
+  await user.click(screen.getByRole('button', { name: 'Delete note' }));
+  await writeNote('Ideas');
+
+  // The editor has focus, so u belongs to it.
+  fireEvent.keyDown(screen.getByRole('textbox', { name: 'Note' }), {
+    key: 'u',
+  });
+
+  expect(storedNotes().map((note) => note.body)).toEqual(['Ideas']);
+});
+
+test('AC-80.7 importing over notes alone still asks first', async () => {
+  render(<App />);
+  await writeNote('Groceries');
+
+  await importFile(jsonFile('{"version": 1, "items": []}'));
+
+  expect(await screen.findByRole('button', { name: 'Replace' })).toBeVisible();
+  expect(storedNotes()).toHaveLength(1);
+});
+
+test("AC-80.7 Merge keeps the notes here and adds the file's", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await writeNote('Groceries');
+
+  await importFile(
+    jsonFile(
+      JSON.stringify({
+        version: 6,
+        items: [],
+        goals: [],
+        courses: [],
+        reflections: [],
+        notes: [
+          {
+            id: 'from-file',
+            body: 'Landlord',
+            createdAt: '2026-09-20T17:00:00.000Z',
+            updatedAt: '2026-09-20T17:00:00.000Z',
+          },
+        ],
+        lastBackupAt: null,
+      }),
+    ),
+  );
+  await user.click(await screen.findByRole('button', { name: 'Merge' }));
+
+  expect(storedNotes().map((note) => note.body)).toEqual([
+    'Groceries',
+    'Landlord',
+  ]);
 });

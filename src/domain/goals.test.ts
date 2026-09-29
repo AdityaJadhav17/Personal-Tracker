@@ -32,11 +32,12 @@ function aGoal(id: string, name = id): Goal {
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
   return {
-    version: 5,
+    version: 6,
     items,
     goals,
     courses: [],
     reflections: [],
+    notes: [],
     lastBackupAt: null,
   };
 }
@@ -136,7 +137,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(5);
+    expect(next.version).toBe(6);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

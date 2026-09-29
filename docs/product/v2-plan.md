@@ -392,3 +392,4 @@ passed 1,300 lines.
 - [US-77, edit a course](stories/US-77.md)
 - [US-78, pick the course when adding](stories/US-78.md)
 - [US-79, copy an item by dragging with Ctrl](stories/US-79.md)
+- [US-80, notes](stories/US-80.md)

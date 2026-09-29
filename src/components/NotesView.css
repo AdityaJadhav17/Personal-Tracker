@@ -1,0 +1,292 @@
+/* ---------- Notes (US-80) ---------- */
+
+/* Apple Notes' split: the list, then the page. One card, so the two read as
+   one tool, each pane scrolling on its own. */
+.notes__panes {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  height: calc(100dvh - 9rem);
+  min-height: 24rem;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+/* The list is a shade off the page, the way a sidebar sits behind content. */
+.notes__list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3) var(--space-2);
+  background: color-mix(in srgb, var(--bg) 60%, var(--surface));
+  border-right: 1px solid var(--border);
+}
+
+.notes__search {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--control-small);
+  margin-bottom: var(--space-3);
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.notes__search::placeholder {
+  color: var(--text-muted);
+}
+
+.notes__group + .notes__group {
+  margin-top: var(--space-4);
+}
+
+.notes__group-name {
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-3);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.notes__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note-row {
+  display: grid;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  transition:
+    background var(--speed) ease,
+    scale 160ms var(--ease-out);
+}
+
+.note-row:active {
+  scale: 0.99;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .note-row:hover {
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+  }
+}
+
+.note-row[aria-current='true'] {
+  background: var(--accent-soft);
+}
+
+.note-row__title {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Apple's second line: when, in ink, then the preview, quieter. */
+.note-row__meta {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.note-row__meta time {
+  flex: none;
+  color: var(--text);
+}
+
+.note-row__preview {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.notes__empty {
+  margin: 0;
+  padding: var(--space-5) var(--space-3);
+  font-size: 0.875rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.notes__page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.notes__bar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3) 0;
+  background: var(--surface);
+}
+
+/* A wide screen has both panes, so there is nothing to go back to. */
+.notes__back {
+  display: none;
+}
+
+.notes__tool {
+  display: inline-grid;
+  place-items: center;
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  transition:
+    color var(--speed) ease,
+    background var(--speed) ease,
+    scale 160ms var(--ease-out);
+}
+
+/* The one action on the page, in the accent, as Apple's compose button is. */
+.notes__head .notes__tool {
+  color: var(--accent);
+}
+
+.notes__tool:active {
+  scale: var(--press-scale);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .notes__tool:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+
+  .notes__head .notes__tool:hover {
+    color: var(--accent);
+  }
+}
+
+.notes__stamp {
+  margin: 0;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* AC-80.3. The first line is the title: set large, like Apple's. */
+.notes__editor {
+  flex: 1;
+  padding: var(--space-3) var(--space-5) var(--space-5);
+  font-size: 1rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  caret-color: var(--accent);
+}
+
+.notes__editor::first-line {
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+/* The caret marks where you are, as in any text field; a ring round the
+   whole page would frame the note instead. */
+.notes__editor:focus-visible {
+  outline: none;
+}
+
+/* AC-80.8. A phone shows one pane at a time: the list, or the open note with
+   a way back, as Notes on an iPhone does. */
+@media (max-width: 700px) {
+  .notes__panes {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .notes__list {
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+  }
+
+  .notes__search {
+    min-height: var(--control);
+    /* AC-66.6. iOS zooms into any field under 16px. */
+    font-size: 1rem;
+  }
+
+  .note-row {
+    padding-block: var(--space-3);
+  }
+
+  .notes--reading .notes__list,
+  .notes:not(.notes--reading) .notes__page {
+    display: none;
+  }
+
+  .notes__page {
+    min-height: 60dvh;
+    overflow: visible;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
+
+  .notes__bar {
+    justify-content: space-between;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+  }
+
+  .notes__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-height: var(--control);
+    padding: 0 var(--space-2) 0 0;
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: 0;
+  }
+
+  .notes__editor {
+    padding-inline: var(--space-4);
+  }
+}
+
+/* apple-design: the note arrives from the side it goes back to. */
+@media (max-width: 700px) and (prefers-reduced-motion: no-preference) {
+  .notes--reading .notes__page {
+    animation: notes-push 350ms var(--drawer);
+  }
+}
+
+@keyframes notes-push {
+  from {
+    opacity: 0;
+    translate: 2rem 0;
+  }
+}

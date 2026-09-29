@@ -7,6 +7,7 @@ const VIEWS = [
   'Goals',
   'Courses',
   'Reflections',
+  'Notes',
   'Trends',
   'Data',
 ];

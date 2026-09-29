@@ -17,7 +17,8 @@
   .score--chosen,
   .calendar__cell--today .calendar__date,
   .item--finishing .item__done,
-  .sheet__link[aria-current='page'] {
+  .sheet__link[aria-current='page'],
+  .note-row[aria-current='true'] {
     forced-color-adjust: none;
     border-color: Highlight;
     background: Highlight;
