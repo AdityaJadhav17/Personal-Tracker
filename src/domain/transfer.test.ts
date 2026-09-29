@@ -24,13 +24,14 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 7,
+    version: 8,
     items,
     goals: [],
     courses: [],
     reflections: [],
     notes: [],
     lastBackupAt: null,
+    lock: null,
   };
 }
 
@@ -67,7 +68,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(7);
+    expect(parsed.version).toBe(8);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -181,8 +182,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 7 is current since US-81, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 8, "items": []}')).toMatch(/version/i);
+    // 8 is current since US-82, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 9, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -285,7 +286,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(7);
+    expect(result.ok && result.db.version).toBe(8);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -642,7 +643,7 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(7);
+    expect(result.ok && result.db.version).toBe(8);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });
@@ -688,6 +689,7 @@ describe('US-80 notes', () => {
     createdAt: '2026-09-28T17:00:00.000Z',
     updatedAt: '2026-09-28T17:05:00.000Z',
     pinned: false,
+    sealed: null,
   };
 
   test('AC-80.7 notes go into the export and come back on import', () => {
@@ -719,9 +721,14 @@ describe('US-80 notes', () => {
 
   test('AC-80.7 a version 5 file still opens, with no notes', () => {
     const result = parseImport(
-      JSON.stringify({ ...aDatabase(), version: 5, notes: undefined }),
+      JSON.stringify({
+        ...aDatabase(),
+        version: 5,
+        notes: undefined,
+        lock: undefined,
+      }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 7, notes: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 8, notes: [] });
   });
 
   test('AC-81.4 a pin survives an export and an import', () => {
@@ -741,7 +748,12 @@ describe('US-80 notes', () => {
     // JSON leaves out a key whose value is undefined, as version 6 had none.
     const unpinned = { ...note, pinned: undefined };
     const result = parseImport(
-      JSON.stringify({ ...aDatabase(), version: 6, notes: [unpinned] }),
+      JSON.stringify({
+        ...aDatabase(),
+        version: 6,
+        notes: [{ ...unpinned, sealed: undefined }],
+        lock: undefined,
+      }),
     );
     expect(result.ok && result.db.notes[0]?.pinned).toBe(false);
   });
@@ -751,5 +763,60 @@ describe('US-80 notes', () => {
       JSON.stringify({ ...aDatabase(), notes: [{ ...note, html: '<b>' }] }),
     );
     expect(result.ok && result.db.notes[0]).toEqual(note);
+  });
+});
+
+describe('US-82 locked notes', () => {
+  const sealed = { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVkIHRleHQ=' };
+  const lock = { salt: 'AAAAAAAAAAAAAAAAAAAAAA==', check: sealed };
+  const locked = {
+    id: 'n1',
+    body: 'Bank details',
+    createdAt: '2026-09-28T17:00:00.000Z',
+    updatedAt: '2026-09-28T17:05:00.000Z',
+    pinned: false,
+    sealed,
+  };
+
+  test('AC-82.7 a lock and a locked note survive an export and an import', () => {
+    const db = { ...aDatabase(), notes: [locked], lock };
+    const result = parseImport(serialize(db));
+    expect(result.ok && result.db.lock).toEqual(lock);
+    expect(result.ok && result.db.notes).toEqual([locked]);
+  });
+
+  test('AC-82.7 a sealed note that is not base64 is refused', () => {
+    const bad = { ...locked, sealed: { iv: '<script>', data: 'x' } };
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: [bad], lock }),
+    );
+    expect(!result.ok && result.error).toMatch(/Note 1 .*lock/);
+  });
+
+  test('AC-82.7 a locked note with no lock to open it is refused', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), notes: [locked], lock: null }),
+    );
+    expect(!result.ok && result.error).toMatch(/locked/i);
+  });
+
+  test('AC-82.7 a malformed lock is refused', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), lock: { salt: 42, check: sealed } }),
+    );
+    expect(!result.ok && result.error).toMatch(/lock/i);
+  });
+
+  test('AC-82.7 a version 7 file opens with nothing locked', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        version: 7,
+        notes: [{ ...locked, sealed: undefined }],
+        lock: undefined,
+      }),
+    );
+    expect(result.ok && result.db.lock).toBeNull();
+    expect(result.ok && result.db.notes[0]?.sealed).toBeNull();
   });
 });

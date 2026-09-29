@@ -23,13 +23,14 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 7,
+    version: 8,
     items,
     goals: [],
     courses: [],
     reflections: [],
     notes: [],
     lastBackupAt: null,
+    lock: null,
   };
 }
 
@@ -121,7 +122,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(7);
+    expect(load().version).toBe(8);
   });
 });
 
@@ -141,13 +142,14 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 7 as const,
+    version: 8 as const,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
     notes: [],
     lastBackupAt: null,
+    lock: null,
   };
 
   test('save reports the failure rather than throwing out of the caller', () => {
@@ -180,6 +182,7 @@ describe('US-80 notes in storage', () => {
     createdAt: '2026-09-28T17:00:00.000Z',
     updatedAt: '2026-09-28T17:05:00.000Z',
     pinned: false,
+    sealed: null,
   };
 
   test('AC-80.7 notes survive a save and a load', () => {
@@ -192,7 +195,7 @@ describe('US-80 notes in storage', () => {
       STORAGE_KEY,
       JSON.stringify({ ...aDatabase([]), version: 5, notes: undefined }),
     );
-    expect(load()).toMatchObject({ version: 7, notes: [] });
+    expect(load()).toMatchObject({ version: 8, notes: [] });
   });
 
   test('AC-80.7 notes of the wrong shape come back empty', () => {
@@ -201,5 +204,16 @@ describe('US-80 notes in storage', () => {
       JSON.stringify({ ...aDatabase([]), notes: 'nope' }),
     );
     expect(load().notes).toEqual([]);
+  });
+});
+
+describe('US-82 the lock in storage', () => {
+  test('AC-82.7 the lock survives a save and a load', () => {
+    const lock = {
+      salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
+      check: { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVk' },
+    };
+    save({ ...aDatabase([]), lock });
+    expect(load().lock).toEqual(lock);
   });
 });

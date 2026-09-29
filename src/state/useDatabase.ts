@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
 import { dayOfMonth, nextOccurrence, now, toDateValue } from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
@@ -12,8 +12,10 @@ import type {
   GoalDraft,
   Item,
   ItemDraft,
+  Lock,
   Note,
   Reflection,
+  Sealed,
   Repeat,
 } from '../domain/types';
 import { load, save } from '../storage/db';
@@ -46,8 +48,13 @@ export interface DatabaseActions {
   recordToday: (score: Reflection['score'], note: string) => void;
   /** AC-80.2. A note from its first text: its id, or null if not stored. */
   addNote: (body: string) => string | null;
-  /** AC-80.3. Called per keystroke; the edit time moves with it. */
-  editNote: (id: string, body: string) => void;
+  /** AC-80.3. Called per keystroke; the edit time moves with it. AC-82.4:
+      a locked note passes its title as `body` and its text sealed. */
+  editNote: (id: string, body: string, sealed?: Sealed | null) => void;
+  /** AC-82.1. Locks a note, and sets the lock on the first. Not an edit. */
+  lockNote: (id: string, title: string, sealed: Sealed, lock?: Lock) => void;
+  /** AC-82.5. The note made ordinary, its text back. Not an edit. */
+  unlockNote: (id: string, body: string) => void;
   /** AC-80.6. Gone, with Undo to bring it back. */
   removeNote: (id: string) => void;
   /** AC-81.1. Pinned, or not; not an edit, so the edit time stays. */
@@ -135,6 +142,13 @@ export function useDatabase(): {
   });
   const [storageError, setStorageError] = useState('');
   /**
+   * AC-82.4. The database as last written, for changes that finish after an
+   * await. A locked note is sealed asynchronously, so its save can land after
+   * a newer render; building on the render's `db` would drop what came in
+   * between.
+   */
+  const latest = useRef(db);
+  /**
    * What the last done or delete did, so `u` can be its exact inverse. US-28
    * made finishing something able to create a second item, and undo that
    * only reopens the first would leave a duplicate behind. AC-67.3 added a
@@ -159,6 +173,7 @@ export function useDatabase(): {
       return false;
     }
     setStorageError('');
+    latest.current = next;
     setDb(next);
     return true;
   }
@@ -168,8 +183,8 @@ export function useDatabase(): {
    * so none of them repeats the check and none of them can forget it.
    */
   function update(change: (current: Database) => Database): boolean {
-    if (!db) return false;
-    return commit(change(db));
+    if (!latest.current) return false;
+    return commit(change(latest.current));
   }
 
   function mapItems(id: string, change: (item: Item) => Item) {
@@ -434,6 +449,7 @@ export function useDatabase(): {
         createdAt: at,
         updatedAt: at,
         pinned: false,
+        sealed: null,
       };
       const stored = update((current) => ({
         ...current,
@@ -442,13 +458,32 @@ export function useDatabase(): {
       return stored ? note.id : null;
     },
 
-    editNote(id, body) {
+    editNote(id, body, sealed = null) {
       update((current) => ({
         ...current,
         notes: current.notes.map((note) =>
           note.id === id
-            ? { ...note, body, updatedAt: now().toISOString() }
+            ? { ...note, body, sealed, updatedAt: now().toISOString() }
             : note,
+        ),
+      }));
+    },
+
+    lockNote(id, title, sealed, lock) {
+      update((current) => ({
+        ...current,
+        lock: lock ?? current.lock,
+        notes: current.notes.map((note) =>
+          note.id === id ? { ...note, body: title, sealed } : note,
+        ),
+      }));
+    },
+
+    unlockNote(id, body) {
+      update((current) => ({
+        ...current,
+        notes: current.notes.map((note) =>
+          note.id === id ? { ...note, body, sealed: null } : note,
         ),
       }));
     },
@@ -497,6 +532,10 @@ export function useDatabase(): {
           (r) => r.day,
         ),
         notes: keepBoth(current.notes, next.notes, (note) => note.id),
+        // AC-82.7. The lock held wins, as everything held does.
+        // ponytail: a file locked under a different passcode brings notes
+        // this lock cannot open; Replace, not Merge, is the way to take them.
+        lock: current.lock ?? next.lock,
       }));
       setUndoable(null);
     },

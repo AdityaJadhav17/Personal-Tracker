@@ -1,5 +1,13 @@
 import { upgrade } from './migrate';
-import type { Course, Database, Goal, Item, Note, Reflection } from './types';
+import type {
+  Course,
+  Database,
+  Goal,
+  Item,
+  Note,
+  Reflection,
+  Sealed,
+} from './types';
 
 /**
  * Turn the whole database into the export file.
@@ -64,6 +72,16 @@ const KEYS: Record<number, string[]> = {
     'reflections',
     'notes',
     'lastBackupAt',
+  ],
+  8: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+    'lock',
   ],
 };
 
@@ -181,6 +199,16 @@ function reflectionProblem(value: unknown): string | null {
   return null;
 }
 
+/** AC-82.7. Base64 and nothing else: sealed text is never read as text. */
+function isBase64(value: unknown): value is string {
+  return isText(value) && /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+}
+
+function isSealed(value: unknown): boolean {
+  const raw = fields(value);
+  return raw !== null && isBase64(raw.iv) && isBase64(raw.data);
+}
+
 /** AC-80.7. A note is text, so it is checked as text and never read as HTML. */
 function noteProblem(value: unknown): string | null {
   const raw = fields(value);
@@ -193,6 +221,14 @@ function noteProblem(value: unknown): string | null {
   // Absent before version 7.
   if (raw.pinned !== undefined && typeof raw.pinned !== 'boolean') {
     return 'its pin must be true or false';
+  }
+  // Absent before version 8.
+  if (
+    raw.sealed !== undefined &&
+    raw.sealed !== null &&
+    !isSealed(raw.sealed)
+  ) {
+    return 'its locked text is not what a lock writes';
   }
   return null;
 }
@@ -262,6 +298,7 @@ function toNote(value: unknown): Note {
     createdAt: raw.createdAt as string,
     updatedAt: raw.updatedAt as string,
     pinned: (raw.pinned as boolean | undefined) ?? false,
+    sealed: (raw.sealed as Sealed | null | undefined) ?? null,
   };
 }
 
@@ -327,7 +364,8 @@ export function parseImport(text: string): ParseResult {
     version !== 4 &&
     version !== 5 &&
     version !== 6 &&
-    version !== 7
+    version !== 7 &&
+    version !== 8
   ) {
     return {
       ok: false,
@@ -379,6 +417,28 @@ export function parseImport(text: string): ParseResult {
     if (problem) return { ok: false, error: problem };
   }
 
+  // AC-82.7. The lock, and no locked note without one to open it.
+  const lock = fields(raw.lock);
+  if (
+    raw.lock !== undefined &&
+    raw.lock !== null &&
+    !(lock && isBase64(lock.salt) && isSealed(lock.check))
+  ) {
+    return {
+      ok: false,
+      error: 'The lock in that file is not what a lock writes.',
+    };
+  }
+  const anyLocked = ((raw.notes ?? []) as Record<string, unknown>[]).some(
+    (note) => note.sealed !== undefined && note.sealed !== null,
+  );
+  if (anyLocked && !lock) {
+    return {
+      ok: false,
+      error: 'That file has locked notes but no lock to open them.',
+    };
+  }
+
   if (
     raw.lastBackupAt !== undefined &&
     raw.lastBackupAt !== null &&
@@ -408,6 +468,15 @@ export function parseImport(text: string): ParseResult {
       reflections: (raw.reflections as unknown[]).map(toReflection),
       notes: version >= 6 ? (raw.notes as unknown[]).map(toNote) : [],
       lastBackupAt: (raw.lastBackupAt as string | null | undefined) ?? null,
+      lock: lock
+        ? {
+            salt: lock.salt as string,
+            check: {
+              iv: (lock.check as Sealed).iv,
+              data: (lock.check as Sealed).data,
+            },
+          }
+        : null,
     }),
   };
 }

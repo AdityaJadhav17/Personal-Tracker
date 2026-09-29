@@ -11,6 +11,7 @@ function aNote(id: string, body: string, updated: Date, pinned = false): Note {
     createdAt: updated.toISOString(),
     updatedAt: updated.toISOString(),
     pinned,
+    sealed: null,
   };
 }
 

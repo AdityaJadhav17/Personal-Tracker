@@ -337,3 +337,42 @@ is what keeps AC-02.4 passing at 23:59 local.
 it was typed, with no per-item override. If someone tells you a deadline in a
 zone you are not currently in, you do that conversion yourself. A per-item zone
 picker would fix it and is not worth the field and the form control today.
+
+---
+
+## 2026-09-29: locked notes are encrypted, one note at a time
+
+**Context.** Aditya asked to lock sensitive notes behind a code. The decision
+of 2026-09-15 turned down encryption at rest and said to revisit it "when the
+app starts holding something Aditya would not want a person at his unlocked
+laptop to read." Locked notes are exactly that.
+
+**Options considered.**
+
+1. A passcode screen over notes stored as they are.
+2. Encrypt only the notes he locks, under a passcode asked for when one is
+   opened.
+3. Encrypt the whole database under a passcode asked for at launch.
+
+**Choice.** Option 2.
+
+**Why.** Option 1 protects nothing: the text sits readable in localStorage
+and in every export, one DevTools panel away. Option 3 is the prompt on every
+launch that the first decision rejected, for an app whose value is being fast
+to check. Option 2 costs a passcode only for what he chose to hide.
+
+**How.** Web Crypto, built into the browser, so no dependency: PBKDF2-SHA256
+at 600,000 iterations makes an AES-GCM key from the passcode, and each note is
+sealed under a fresh IV. The key lives in memory in the Notes view and is
+dropped on leaving it, on reload, and after five minutes without typing. The
+passcode is never stored. A known value sealed under the key checks a
+passcode even when no note is locked.
+
+**Accepted limitations.** A forgotten passcode loses the locked notes; there
+is no server to hold a recovery key, and the app says so before the first
+lock. A locked note's first line stays readable as its title, as in Apple
+Notes. A passcode is at least 6 characters, and a short or common one can
+still be guessed from a copied file; Aditya chose a passcode over a 4 to 6
+digit PIN for that reason. Merging a file locked under a different passcode
+keeps the lock already here, so that file's locked notes will not open; Replace
+takes them whole.

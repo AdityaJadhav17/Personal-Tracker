@@ -230,6 +230,9 @@ export default function App() {
           onChange={actions.editNote}
           onDelete={actions.removeNote}
           onPin={actions.togglePin}
+          lock={db.lock}
+          onLock={actions.lockNote}
+          onUnlock={actions.unlockNote}
         />
       ) : view === 'goals' ? (
         <GoalList

@@ -14,6 +14,7 @@ function aNote(id: string, body: string, updated: Date, pinned = false): Note {
     createdAt: updated.toISOString(),
     updatedAt: updated.toISOString(),
     pinned,
+    sealed: null,
   };
 }
 
@@ -31,6 +32,9 @@ function renderNotes(overrides: Partial<Parameters<typeof NotesView>[0]> = {}) {
       onChange={noop}
       onDelete={noop}
       onPin={noop}
+      lock={null}
+      onLock={noop}
+      onUnlock={noop}
       {...overrides}
     />,
   );
@@ -113,7 +117,16 @@ test('AC-80.2 the new note is made by the first thing typed, then edited', async
   const user = userEvent.setup();
   const onAdd = vi.fn<(body: string) => string | null>(() => 'made');
   const onChange = vi.fn<(id: string, body: string) => void>();
-  const props = { now: NOW, onAdd, onChange, onDelete: noop, onPin: noop };
+  const props = {
+    now: NOW,
+    onAdd,
+    onChange,
+    onDelete: noop,
+    onPin: noop,
+    lock: null,
+    onLock: noop,
+    onUnlock: noop,
+  };
   const { rerender } = render(<NotesView notes={NOTES} {...props} />);
 
   await user.click(screen.getByRole('button', { name: 'New note' }));

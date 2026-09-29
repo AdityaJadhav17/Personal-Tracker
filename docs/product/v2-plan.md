@@ -394,3 +394,4 @@ passed 1,300 lines.
 - [US-79, copy an item by dragging with Ctrl](stories/US-79.md)
 - [US-80, notes](stories/US-80.md)
 - [US-81, pin a note](stories/US-81.md)
+- [US-82, lock a note](stories/US-82.md)

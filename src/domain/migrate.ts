@@ -1,4 +1,4 @@
-import type { Database } from './types';
+import type { Database, Lock } from './types';
 
 /** What a database looks like on its way through, before the last hop. */
 interface Partial {
@@ -9,6 +9,7 @@ interface Partial {
   reflections?: unknown[];
   notes?: unknown[];
   lastBackupAt?: string | null;
+  lock?: Lock | null;
 }
 
 /**
@@ -18,7 +19,8 @@ interface Partial {
  * goals, courses and reflections, and a null link on every item. Version 3
  * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
  * database. Version 5 adds `parentId`, for steps. Version 6 adds `notes`,
- * and version 7 `pinned` on each.
+ * and version 7 `pinned` on each. Version 8 adds `sealed` on each and a
+ * `lock` on the whole, for locked notes.
  * Anything already current is
  * handed straight back.
  *
@@ -93,6 +95,18 @@ export function upgrade(db: Partial): Database {
         pinned: false,
         ...(note as object),
       })),
+    };
+  }
+
+  if (current.version < 8) {
+    current = {
+      ...current,
+      version: 8,
+      notes: (current.notes ?? []).map((note) => ({
+        sealed: null,
+        ...(note as object),
+      })),
+      lock: current.lock ?? null,
     };
   }
 

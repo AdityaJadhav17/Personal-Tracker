@@ -84,12 +84,33 @@ export interface Note {
   updatedAt: string;
   /** Kept at the top of the list. Added in version 7, US-81. */
   pinned: boolean;
+  /**
+   * The whole text, encrypted, when the note is locked; then `body` holds
+   * only the title. Null for an ordinary note. Added in version 8, US-82.
+   */
+  sealed: Sealed | null;
+}
+
+/** US-82. AES-GCM output, base64: the IV it used and the ciphertext. */
+export interface Sealed {
+  iv: string;
+  data: string;
+}
+
+/**
+ * US-82. What checks a passcode. The salt makes its key; `check` is a known
+ * value sealed under that key, so a wrong passcode is caught even when no
+ * note is locked. The passcode itself is never stored.
+ */
+export interface Lock {
+  salt: string;
+  check: Sealed;
 }
 
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 7;
+  version: 8;
   items: Item[];
   goals: Goal[];
   courses: Course[];
@@ -98,6 +119,8 @@ export interface Database {
   notes: Note[];
   /** When the last export was taken, or null for never. Added in version 4. */
   lastBackupAt: string | null;
+  /** US-82. Null until the first note is locked. Added in version 8. */
+  lock: Lock | null;
 }
 
 /** What the goal form produces, before the app assigns identity and time. */

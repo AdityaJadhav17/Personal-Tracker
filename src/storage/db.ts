@@ -4,6 +4,7 @@ import type {
   Database,
   Goal,
   Item,
+  Lock,
   Note,
   Reflection,
 } from '../domain/types';
@@ -12,13 +13,14 @@ export const STORAGE_KEY = 'personal-tracker/v1';
 
 function emptyDatabase(): Database {
   return {
-    version: 7,
+    version: 8,
     items: [],
     goals: [],
     courses: [],
     reflections: [],
     notes: [],
     lastBackupAt: null,
+    lock: null,
   };
 }
 
@@ -77,6 +79,10 @@ export function load(): Database {
     notes: Array.isArray(stored.notes) ? (stored.notes as Note[]) : [],
     lastBackupAt:
       typeof stored.lastBackupAt === 'string' ? stored.lastBackupAt : null,
+    lock:
+      typeof stored.lock === 'object' && stored.lock !== null
+        ? (stored.lock as Lock)
+        : null,
   });
 }
 

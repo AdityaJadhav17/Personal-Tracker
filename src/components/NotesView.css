@@ -222,6 +222,62 @@
   outline: none;
 }
 
+/* AC-82.5. A word, not an icon: there is no picture for "stop locking". */
+.notes__text-tool {
+  min-height: var(--control);
+  margin-right: auto;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  transition: scale 160ms var(--ease-out);
+}
+
+.notes__text-tool:active {
+  scale: var(--press-scale);
+}
+
+/* AC-82.1 and AC-82.3. The lock screen, centred in the page as Apple's is. */
+.notes__lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: min(20rem, 100% - 2 * var(--space-4));
+  margin: var(--space-5) auto;
+  text-align: center;
+}
+
+.notes__lock > .sidebar__icon {
+  color: var(--text-muted);
+}
+
+.notes__lock-intro {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.notes__lock .form__label,
+.notes__lock .form__input,
+.notes__lock .alert {
+  align-self: stretch;
+  text-align: left;
+}
+
+/* Stacked and full width: the pane can be narrower than the two side by
+   side, and the primary action then wrapped onto two lines. */
+.notes__lock-actions {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
 /* AC-80.8. A phone shows one pane at a time: the list, or the open note with
    a way back, as Notes on an iPhone does. */
 @media (max-width: 700px) {

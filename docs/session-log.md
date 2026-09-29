@@ -1627,3 +1627,47 @@ the app is static files, and the updater already deploys them.
 lint and the format check are clean; every view passes an accessibility scan
 in light, dark and more contrast. What is left is Aditya's: use it for a
 couple of weeks with a real term in it, and bring back what gets in the way.
+
+## 2026-09-26 to 29: an app that is just there, courses, copies and notes
+
+Aditya asked for the app to open from the taskbar with no server to start,
+then for a string of changes from using it: finished items kept on the
+calendar, a work category, editing courses, copying on the calendar, and a
+notes section done the way Apple does it.
+
+**Built, in order.** US-74 serves the deployed copy from a scheduled task at
+logon (`scripts/serve.mjs`, Node built-ins only, bound to 127.0.0.1:4180), so
+the pinned app works with nothing started by hand; always-on was picked over
+start-with-the-app after the trade-offs. US-75 keeps finished items on their
+calendar day, struck through. US-76 adds Work beside Academic and Personal.
+US-77 edits a course in its card, and US-78 picks the course while adding.
+US-79 copies an item by holding Ctrl as you drop it, with Undo; a Duplicate
+button was offered and turned down. US-80 is Notes: a list grouped Today,
+Previous 7 Days, Previous 30 Days, then by month, beside the open note, whose
+first line is its title, set large. It saves per keystroke, searches, and
+deletes with Undo. US-81 pins notes above the rest. The database went to
+version 6 for notes and 7 for pins.
+
+**Decided and not built.** No hint on the done circle ("dont add anything").
+A note is made by its first letter, so an empty one never needs cleaning up.
+
+**What went wrong, so it does not again.**
+
+- `u` is Undo's shortcut, and the notes editor is not a form field, so the
+  first draft would have undone something while you typed a word with a u in
+  it. The guard now covers any editable element, with a test.
+- Import only asked before replacing when there were items, so someone with
+  notes alone would have lost them without a question. It now counts notes.
+- CI failed on the day after US-80 shipped, in three calendar specs that put
+  things one or two days from today and expected them on this month's grid.
+  CI runs in UTC, where it was already the 29th, so those days were in
+  October. Local runs passed because it was still the 28th in California.
+  The specs now pin the page clock to mid-month. Running the suite locally
+  with the clock on UTC reproduced it exactly; that is the first thing to try
+  when CI fails and the laptop does not.
+- Heredoc edits turned `\n` inside test strings into real line breaks twice
+  more. Strings with escapes go through the editor.
+
+**Where it stands.** 849 unit tests and 296 Playwright specs pass, in the
+laptop's time zone and in UTC; typecheck, lint and the format check are
+clean; Notes passes the accessibility scan in all four schemes.
