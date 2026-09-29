@@ -459,7 +459,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(6);
+  expect(parsed.version).toBe(7);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -504,7 +504,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 6,
+    version: 7,
     items: [],
     goals: [],
     courses: [],
@@ -2137,4 +2137,25 @@ test("AC-80.7 Merge keeps the notes here and adds the file's", async () => {
     'Groceries',
     'Landlord',
   ]);
+});
+
+test('AC-81.3 and AC-81.4 a pin is stored, and is not an edit', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await writeNote('Groceries');
+  const before = (
+    JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+      notes: { updatedAt: string }[];
+    }
+  ).notes[0]!.updatedAt;
+
+  await user.click(screen.getByRole('button', { name: 'Pin note' }));
+
+  const stored = (
+    JSON.parse(localStorage.getItem('personal-tracker/v1')!) as {
+      notes: { pinned: boolean; updatedAt: string }[];
+    }
+  ).notes[0]!;
+  expect(stored).toMatchObject({ pinned: true, updatedAt: before });
+  expect(screen.getByRole('button', { name: 'Unpin note' })).toBeVisible();
 });

@@ -82,12 +82,14 @@ export interface Note {
   createdAt: string;
   /** UTC instant of the last edit. The list sorts and groups by it. */
   updatedAt: string;
+  /** Kept at the top of the list. Added in version 7, US-81. */
+  pinned: boolean;
 }
 
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 6;
+  version: 7;
   items: Item[];
   goals: Goal[];
   courses: Course[];

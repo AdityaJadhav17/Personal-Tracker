@@ -20,21 +20,25 @@ export function previewOf(body: string): string {
 
 /**
  * AC-80.4. Newest edit first, in Apple Notes' groups: Today, the previous
- * seven days, the previous thirty, then one group per month.
+ * seven days, the previous thirty, then one group per month. AC-81.2: pinned
+ * notes come first, in a group of their own.
  */
 export function groupNotes(
   notes: Note[],
   now: Date,
 ): { label: string; notes: Note[] }[] {
   const groups: { label: string; notes: Note[] }[] = [];
-  const newest = [...notes].sort((a, b) =>
-    b.updatedAt.localeCompare(a.updatedAt),
+  const newest = [...notes].sort(
+    (a, b) =>
+      Number(b.pinned) - Number(a.pinned) ||
+      b.updatedAt.localeCompare(a.updatedAt),
   );
 
   for (const note of newest) {
     const days = daysBetween(note.updatedAt, now);
-    const label =
-      days <= 0
+    const label = note.pinned
+      ? 'Pinned'
+      : days <= 0
         ? 'Today'
         : days <= 7
           ? 'Previous 7 Days'

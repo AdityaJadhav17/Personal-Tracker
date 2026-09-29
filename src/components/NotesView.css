@@ -96,6 +96,13 @@
   text-overflow: ellipsis;
 }
 
+/* AC-81.2. The pin before a pinned title, in the accent. */
+.note-row__title .sidebar__icon {
+  margin-right: var(--space-1);
+  vertical-align: -1px;
+  color: var(--accent);
+}
+
 /* Apple's second line: when, in ink, then the preview, quieter. */
 .note-row__meta {
   display: flex;
@@ -161,8 +168,10 @@
     scale 160ms var(--ease-out);
 }
 
-/* The one action on the page, in the accent, as Apple's compose button is. */
-.notes__head .notes__tool {
+/* The one action on the page, in the accent, as Apple's compose button is.
+   AC-81.1: a pinned note's pin is lit the same way. */
+.notes__head .notes__tool,
+.notes__tool--on {
   color: var(--accent);
 }
 
@@ -176,7 +185,8 @@
     background: color-mix(in srgb, var(--text) 6%, transparent);
   }
 
-  .notes__head .notes__tool:hover {
+  .notes__head .notes__tool:hover,
+  .notes__tool--on:hover {
     color: var(--accent);
   }
 }

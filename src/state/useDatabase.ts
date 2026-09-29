@@ -50,6 +50,8 @@ export interface DatabaseActions {
   editNote: (id: string, body: string) => void;
   /** AC-80.6. Gone, with Undo to bring it back. */
   removeNote: (id: string) => void;
+  /** AC-81.1. Pinned, or not; not an edit, so the edit time stays. */
+  togglePin: (id: string) => void;
   /** US-40. An export was just taken at this instant. */
   recordBackup: (at: string) => void;
   /** Import chose to replace. */
@@ -431,6 +433,7 @@ export function useDatabase(): {
         body,
         createdAt: at,
         updatedAt: at,
+        pinned: false,
       };
       const stored = update((current) => ({
         ...current,
@@ -458,6 +461,15 @@ export function useDatabase(): {
         return;
       }
       setUndoable({ kind: 'note', title: titleOf(note.body), note });
+    },
+
+    togglePin(id) {
+      update((current) => ({
+        ...current,
+        notes: current.notes.map((note) =>
+          note.id === id ? { ...note, pinned: !note.pinned } : note,
+        ),
+      }));
     },
 
     recordBackup(at) {

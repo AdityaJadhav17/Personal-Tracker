@@ -12,6 +12,7 @@ const COMPOSE =
 const TRASH =
   'M4 7h16M10 11v6M14 11v6M5 7l1 13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1l1-13M9 7V4h6v3';
 const BACK = 'M15 5l-7 7 7 7';
+const PIN = 'M9 4h6l-1 6 4 4H6l4-4zM12 14v7';
 
 interface NotesViewProps {
   notes: Note[];
@@ -20,6 +21,7 @@ interface NotesViewProps {
   onAdd: (body: string) => string | null;
   onChange: (id: string, body: string) => void;
   onDelete: (id: string) => void;
+  onPin: (id: string) => void;
 }
 
 /**
@@ -33,6 +35,7 @@ export default function NotesView({
   onAdd,
   onChange,
   onDelete,
+  onPin,
 }: NotesViewProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   // AC-80.8. A phone shows one pane at a time; this says which.
@@ -93,6 +96,7 @@ export default function NotesView({
           body: '',
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
+          pinned: false,
         },
         ...found,
       ]
@@ -147,6 +151,9 @@ export default function NotesView({
                         onClick={() => choose(note.id)}
                       >
                         <span className="note-row__title">
+                          {note.pinned && (
+                            <Icon path={PIN} size={12} weight={2.2} />
+                          )}
                           {titleOf(note.body)}
                         </span>
                         <span className="note-row__meta">
@@ -179,6 +186,18 @@ export default function NotesView({
                   <Icon path={BACK} size={20} weight={2.2} />
                   Notes
                 </button>
+                {/* AC-81.1. Only a stored note can be pinned. */}
+                {open && (
+                  <button
+                    className={`notes__tool ${open.pinned ? 'notes__tool--on' : ''}`}
+                    type="button"
+                    aria-label={open.pinned ? 'Unpin note' : 'Pin note'}
+                    title={open.pinned ? 'Unpin note' : 'Pin note'}
+                    onClick={() => onPin(open.id)}
+                  >
+                    <Icon path={PIN} size={20} />
+                  </button>
+                )}
                 <button
                   className="notes__tool"
                   type="button"

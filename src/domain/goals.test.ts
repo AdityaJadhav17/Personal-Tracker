@@ -32,7 +32,7 @@ function aGoal(id: string, name = id): Goal {
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
   return {
-    version: 6,
+    version: 7,
     items,
     goals,
     courses: [],
@@ -137,7 +137,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(6);
+    expect(next.version).toBe(7);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

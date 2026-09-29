@@ -17,7 +17,8 @@ interface Partial {
  * Version 1 had only `items`, and items had no goal or course. Version 2 adds
  * goals, courses and reflections, and a null link on every item. Version 3
  * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
- * database. Version 5 adds `parentId`, for steps. Version 6 adds `notes`.
+ * database. Version 5 adds `parentId`, for steps. Version 6 adds `notes`,
+ * and version 7 `pinned` on each.
  * Anything already current is
  * handed straight back.
  *
@@ -82,6 +83,17 @@ export function upgrade(db: Partial): Database {
 
   if (current.version < 6) {
     current = { ...current, version: 6, notes: current.notes ?? [] };
+  }
+
+  if (current.version < 7) {
+    current = {
+      ...current,
+      version: 7,
+      notes: (current.notes ?? []).map((note) => ({
+        pinned: false,
+        ...(note as object),
+      })),
+    };
   }
 
   return current as unknown as Database;

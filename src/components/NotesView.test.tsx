@@ -7,12 +7,13 @@ import type { Note } from '../domain/types';
 const NOW = new Date(2026, 8, 28, 15, 0, 0, 0);
 const noop = () => {};
 
-function aNote(id: string, body: string, updated: Date): Note {
+function aNote(id: string, body: string, updated: Date, pinned = false): Note {
   return {
     id,
     body,
     createdAt: updated.toISOString(),
     updatedAt: updated.toISOString(),
+    pinned,
   };
 }
 
@@ -29,6 +30,7 @@ function renderNotes(overrides: Partial<Parameters<typeof NotesView>[0]> = {}) {
       onAdd={() => 'made'}
       onChange={noop}
       onDelete={noop}
+      onPin={noop}
       {...overrides}
     />,
   );
@@ -111,7 +113,7 @@ test('AC-80.2 the new note is made by the first thing typed, then edited', async
   const user = userEvent.setup();
   const onAdd = vi.fn<(body: string) => string | null>(() => 'made');
   const onChange = vi.fn<(id: string, body: string) => void>();
-  const props = { now: NOW, onAdd, onChange, onDelete: noop };
+  const props = { now: NOW, onAdd, onChange, onDelete: noop, onPin: noop };
   const { rerender } = render(<NotesView notes={NOTES} {...props} />);
 
   await user.click(screen.getByRole('button', { name: 'New note' }));
@@ -172,6 +174,26 @@ test('AC-80.6 Delete removes the open note', async () => {
   await user.click(screen.getByRole('button', { name: 'Delete note' }));
 
   expect(onDelete).toHaveBeenCalledWith('new');
+});
+
+test('AC-81.1 Pin pins the open note', async () => {
+  const user = userEvent.setup();
+  const onPin = vi.fn<(id: string) => void>();
+  renderNotes({ onPin });
+
+  await user.click(screen.getByRole('button', { name: 'Pin note' }));
+
+  expect(onPin).toHaveBeenCalledWith('new');
+});
+
+test('AC-81.1 and AC-81.2 a pinned note offers Unpin, and sits under Pinned', () => {
+  renderNotes({
+    notes: [aNote('new', 'Groceries\nmilk', new Date(2026, 8, 28, 14), true)],
+  });
+
+  expect(screen.getByRole('button', { name: 'Unpin note' })).toBeVisible();
+  const pinned = screen.getByRole('list', { name: 'Pinned' });
+  expect(within(pinned).getByRole('button')).toHaveTextContent('Groceries');
 });
 
 test('AC-80.8 an open note has a way back to the list', () => {

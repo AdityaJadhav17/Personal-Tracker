@@ -56,6 +56,15 @@ const KEYS: Record<number, string[]> = {
     'notes',
     'lastBackupAt',
   ],
+  7: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+  ],
 };
 
 export type ParseResult =
@@ -181,6 +190,10 @@ function noteProblem(value: unknown): string | null {
   if (!isText(raw.body)) return 'its body must be text';
   if (!isInstant(raw.createdAt)) return 'its created date is not a date';
   if (!isInstant(raw.updatedAt)) return 'its edited date is not a date';
+  // Absent before version 7.
+  if (raw.pinned !== undefined && typeof raw.pinned !== 'boolean') {
+    return 'its pin must be true or false';
+  }
   return null;
 }
 
@@ -248,6 +261,7 @@ function toNote(value: unknown): Note {
     body: raw.body as string,
     createdAt: raw.createdAt as string,
     updatedAt: raw.updatedAt as string,
+    pinned: (raw.pinned as boolean | undefined) ?? false,
   };
 }
 
@@ -312,7 +326,8 @@ export function parseImport(text: string): ParseResult {
     version !== 3 &&
     version !== 4 &&
     version !== 5 &&
-    version !== 6
+    version !== 6 &&
+    version !== 7
   ) {
     return {
       ok: false,
@@ -355,8 +370,8 @@ export function parseImport(text: string): ParseResult {
     if (problem) return { ok: false, error: problem };
   }
 
-  // Version 6 is the first to carry notes, and must carry them.
-  if (version === 6) {
+  // Version 6 is the first to carry notes, and from then on must carry them.
+  if (version >= 6) {
     if (!Array.isArray(raw.notes)) {
       return { ok: false, error: 'That file has no notes list.' };
     }
@@ -391,7 +406,7 @@ export function parseImport(text: string): ParseResult {
       goals: (raw.goals as unknown[]).map(toGoal),
       courses: (raw.courses as unknown[]).map(toCourse),
       reflections: (raw.reflections as unknown[]).map(toReflection),
-      notes: version === 6 ? (raw.notes as unknown[]).map(toNote) : [],
+      notes: version >= 6 ? (raw.notes as unknown[]).map(toNote) : [],
       lastBackupAt: (raw.lastBackupAt as string | null | undefined) ?? null,
     }),
   };

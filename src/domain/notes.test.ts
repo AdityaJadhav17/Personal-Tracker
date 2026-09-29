@@ -4,12 +4,13 @@ import type { Note } from './types';
 // Monday 28 September 2026, 3pm local.
 const NOW = new Date(2026, 8, 28, 15, 0, 0, 0);
 
-function aNote(id: string, body: string, updated: Date): Note {
+function aNote(id: string, body: string, updated: Date, pinned = false): Note {
   return {
     id,
     body,
     createdAt: updated.toISOString(),
     updatedAt: updated.toISOString(),
+    pinned,
   };
 }
 
@@ -59,6 +60,24 @@ describe('groupNotes', () => {
       ['Previous 30 Days', ['month']],
       ['March', ['march']],
       ['December 2025', ['last-year']],
+    ]);
+  });
+
+  test('AC-81.2 pinned notes sit in their own group above Today, newest first', () => {
+    const groups = groupNotes(
+      [
+        aNote('today', 'Today', new Date(2026, 8, 28, 9)),
+        aNote('old-pin', 'Old', new Date(2026, 2, 3, 9), true),
+        aNote('new-pin', 'New', new Date(2026, 8, 28, 8), true),
+      ],
+      NOW,
+    );
+
+    expect(
+      groups.map((group) => [group.label, group.notes.map((n) => n.id)]),
+    ).toEqual([
+      ['Pinned', ['new-pin', 'old-pin']],
+      ['Today', ['today']],
     ]);
   });
 

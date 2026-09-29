@@ -229,6 +229,7 @@ export default function App() {
           onAdd={actions.addNote}
           onChange={actions.editNote}
           onDelete={actions.removeNote}
+          onPin={actions.togglePin}
         />
       ) : view === 'goals' ? (
         <GoalList
