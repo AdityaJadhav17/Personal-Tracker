@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
 
+# AC-83.7. CI only reads the code, so its token can only read. CodeQL's first
+# scan, 1 October 2026, flagged the default, which can also write.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
