@@ -183,3 +183,34 @@ network: `scripts/update.mjs`, run by a scheduled task every five minutes.
   24 September 2026. `npm ci` running dependency install scripts is the same
   exposure a manual deploy already had.
 - **The app is unchanged.** It still makes no network request after load.
+
+## Addendum, 30 September 2026: whole repo, after notes and locked notes (US-83)
+
+A full audit of the app, the 4180 server, the updater, CI, dependencies and
+both test suites. Nothing high or medium. Six low items, all fixed in US-83:
+
+- **The off-origin spec matched by prefix.** `http://localhost:5173@evil.example`
+  starts with the allowed text and goes to evil.example. It now compares
+  origins, watches WebSockets, runs through notes, import and the calendar
+  before checking, and a second spec asserts the CSP is on the page.
+- **The passcode fields invited the password manager** to save the locked
+  notes' passcode. They now say `autocomplete="off"`, which a browser may
+  still ignore.
+- **Import kept unknown keys inside `sealed`.** It is now rebuilt from `iv`
+  and `data`, like everything else in an import.
+- **serve.mjs did not check Host.** A rebinding page could load the app's
+  files under its own name; it could never read the data, which is keyed to
+  the `localhost:4180` origin. It now answers 403 to any other Host.
+- **The updater trusted any set of passing checks.** It now waits for the CI
+  job's own run, named `check`.
+- **Vitest 3.2 carried GHSA-82fw-gwwq-j7x9**, a test-time file read. It is on
+  4.1.11, which still runs on Node 20. `npm audit` is clean.
+
+Checked and found safe, briefly: `fileFor` against encoded, backslash, drive
+and stream paths; the updater's git calls take argument arrays and its one
+shell call takes nothing from the network; CI has no `pull_request_target`
+and no secrets; lock.ts uses PBKDF2-SHA256 at 600,000 iterations, a random
+salt, a fresh IV per seal and non-extractable keys, and never stores the
+passcode or the key; opened locked text never reaches storage, export, undo or
+search; no `innerHTML`, `eval` or `dangerouslySetInnerHTML`; no test touches
+4180; no secrets in the git history.

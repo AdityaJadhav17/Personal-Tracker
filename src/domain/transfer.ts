@@ -298,7 +298,10 @@ function toNote(value: unknown): Note {
     createdAt: raw.createdAt as string,
     updatedAt: raw.updatedAt as string,
     pinned: (raw.pinned as boolean | undefined) ?? false,
-    sealed: (raw.sealed as Sealed | null | undefined) ?? null,
+    // AC-83.3. Rebuilt, so nothing else inside it rides into storage.
+    sealed: raw.sealed
+      ? { iv: (raw.sealed as Sealed).iv, data: (raw.sealed as Sealed).data }
+      : null,
   };
 }
 

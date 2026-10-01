@@ -227,3 +227,19 @@ test('AC-82.6 search does not look inside a locked note', async () => {
 
   expect(screen.getByText('No Results')).toBeVisible();
 });
+
+test('AC-83.2 the passcode fields ask the browser not to save the passcode', async () => {
+  const user = userEvent.setup();
+  renderNotes();
+
+  await user.click(screen.getByRole('button', { name: 'Lock note' }));
+
+  expect(screen.getByLabelText('New passcode')).toHaveAttribute(
+    'autocomplete',
+    'off',
+  );
+  expect(screen.getByLabelText('Confirm passcode')).toHaveAttribute(
+    'autocomplete',
+    'off',
+  );
+});

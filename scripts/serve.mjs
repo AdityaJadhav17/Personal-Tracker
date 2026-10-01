@@ -61,8 +61,21 @@ export function fileFor(root, url) {
   return file.startsWith(base + sep) ? file : null;
 }
 
+/**
+ * AC-83.4. Whether a request was addressed to this server by its own name. A
+ * page that rebinds its domain to 127.0.0.1 reaches the port under that
+ * domain's name, so anything else is refused.
+ */
+export function hostAllowed(host, port) {
+  return host === `localhost:${port}` || host === `127.0.0.1:${port}`;
+}
+
 function serve(root, port) {
   const server = createServer((request, response) => {
+    if (!hostAllowed(request.headers.host, port)) {
+      response.writeHead(403).end();
+      return;
+    }
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       response.writeHead(405, { Allow: 'GET, HEAD' }).end();
       return;

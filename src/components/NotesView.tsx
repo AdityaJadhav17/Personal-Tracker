@@ -442,7 +442,8 @@ function Passcode({
         id={`${id}-first`}
         ref={firstRef}
         type="password"
-        autoComplete={setup ? 'new-password' : 'current-password'}
+        // AC-83.2. Never offered to the browser's password manager.
+        autoComplete="off"
         value={first}
         onChange={(event) => setFirst(event.target.value)}
       />
@@ -455,7 +456,7 @@ function Passcode({
             className="form__input"
             id={`${id}-second`}
             type="password"
-            autoComplete="new-password"
+            autoComplete="off"
             value={second}
             onChange={(event) => setSecond(event.target.value)}
           />

@@ -820,3 +820,25 @@ describe('US-82 locked notes', () => {
     expect(result.ok && result.db.notes[0]?.sealed).toBeNull();
   });
 });
+
+test('AC-83.3 a locked note keeps only its IV and data from the file', () => {
+  const sealed = { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVk' };
+  const lock = { salt: 'AAAAAAAAAAAAAAAAAAAAAA==', check: sealed };
+  const result = parseImport(
+    JSON.stringify({
+      ...aDatabase(),
+      lock,
+      notes: [
+        {
+          id: 'n1',
+          body: 'Bank',
+          createdAt: '2026-09-28T17:00:00.000Z',
+          updatedAt: '2026-09-28T17:00:00.000Z',
+          pinned: false,
+          sealed: { ...sealed, extra: 'rides along' },
+        },
+      ],
+    }),
+  );
+  expect(result.ok && result.db.notes[0]?.sealed).toEqual(sealed);
+});

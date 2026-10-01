@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { join, resolve } from 'node:path';
-import { cacheFor, fileFor, typeOf } from './serve.mjs';
+import { cacheFor, fileFor, hostAllowed, typeOf } from './serve.mjs';
 
 // Resolved, so the same expectations hold on Windows here and Linux in CI.
 const ROOT = resolve('deployed');
@@ -40,4 +40,16 @@ test('AC-74.2 each file goes out with its own type', () => {
   expect(typeOf('a.svg')).toBe('image/svg+xml');
   expect(typeOf('deployed.txt')).toBe('text/plain; charset=utf-8');
   expect(typeOf('unknown.bin')).toBe('application/octet-stream');
+});
+
+test('AC-83.4 localhost and 127.0.0.1 on the server port are answered', () => {
+  expect(hostAllowed('localhost:4180', 4180)).toBe(true);
+  expect(hostAllowed('127.0.0.1:4180', 4180)).toBe(true);
+});
+
+test('AC-83.4 any other name, a rebound domain included, is refused', () => {
+  expect(hostAllowed('evil.example:4180', 4180)).toBe(false);
+  expect(hostAllowed('localhost.evil.example:4180', 4180)).toBe(false);
+  expect(hostAllowed('localhost:9999', 4180)).toBe(false);
+  expect(hostAllowed(undefined, 4180)).toBe(false);
 });

@@ -35,10 +35,14 @@ const marker = join(target, 'deployed.txt');
 /**
  * What CI says about one commit: deploy it, never deploy it, or wait.
  * Anything not finished means wait; anything finished and not a pass means
- * never.
+ * never. AC-83.5: until the CI job's own run, named `check`, is among them,
+ * wait, so another app's quick pass cannot deploy a commit CI never saw.
  */
 export function verdict(runs) {
-  if (runs.length === 0 || runs.some((run) => run.status !== 'completed')) {
+  if (
+    !runs.some((run) => run.name === 'check') ||
+    runs.some((run) => run.status !== 'completed')
+  ) {
     return 'pending';
   }
   const fine = ['success', 'skipped', 'neutral'];

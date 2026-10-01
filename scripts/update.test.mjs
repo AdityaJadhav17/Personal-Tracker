@@ -1,7 +1,12 @@
 import { expect, test } from 'vitest';
 import { verdict } from './update.mjs';
 
-const run = (status, conclusion = null) => ({ status, conclusion });
+// Named as GitHub names the CI job's run (AC-83.5).
+const run = (status, conclusion = null) => ({
+  name: 'check',
+  status,
+  conclusion,
+});
 
 test('AC-56.2 a finished run that passed means deploy', () => {
   expect(verdict([run('completed', 'success')])).toBe('passed');
@@ -32,6 +37,21 @@ test('AC-56.2 skipped and neutral runs do not block a deploy', () => {
       run('completed', 'success'),
       run('completed', 'skipped'),
       run('completed', 'neutral'),
+    ]),
+  ).toBe('passed');
+});
+
+test('AC-83.5 other checks passing is not enough until the CI run itself has', () => {
+  const named = (name, status, conclusion = null) => ({
+    name,
+    status,
+    conclusion,
+  });
+  expect(verdict([named('some-app', 'completed', 'success')])).toBe('pending');
+  expect(
+    verdict([
+      named('some-app', 'completed', 'success'),
+      named('check', 'completed', 'success'),
     ]),
   ).toBe('passed');
 });
