@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, open } from './helpers';
 
 test('AC-06.1 a note survives a real reload', async ({ page }) => {

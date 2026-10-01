@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 
 /** Every style rule in every stylesheet, with its size and tracking. */
 function rules(page: Page) {

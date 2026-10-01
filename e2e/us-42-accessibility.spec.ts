@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /**
  * US-42. An automated WCAG 2.2 AA scan of every view, in both colour schemes.
@@ -180,10 +181,6 @@ test('AC-42.2 the skip link takes a keyboard past the sidebar', async ({
 test('AC-42.3 a deadline can be moved from the calendar with the keyboard alone', async ({
   page,
 }) => {
-  // Mid-month, so Rent, two days out, is on this month's grid on any day
-  // the spec runs. The real clock failed it on the last days of a month.
-  const today = new Date(2026, 8, 15, 10, 0, 0, 0);
-  await page.clock.setFixedTime(today);
   await seed(page);
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
 
@@ -194,7 +191,7 @@ test('AC-42.3 a deadline can be moved from the calendar with the keyboard alone'
   await row.getByRole('button', { name: 'Rent', exact: true }).focus();
   await page.keyboard.press('Enter');
 
-  const target = new Date(today);
+  const target = new Date(TODAY);
   target.setDate(target.getDate() + 5);
   const value = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
   await row.getByLabel('Due for Rent').focus();

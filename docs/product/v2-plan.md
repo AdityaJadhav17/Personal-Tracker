@@ -396,3 +396,4 @@ passed 1,300 lines.
 - [US-81, pin a note](stories/US-81.md)
 - [US-82, lock a note](stories/US-82.md)
 - [US-83, the security audit of 30 September](stories/US-83.md)
+- [US-84, tests that pass on any day](stories/US-84.md)

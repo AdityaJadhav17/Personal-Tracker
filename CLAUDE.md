@@ -90,6 +90,11 @@ Layering:
   ARIA roles. Never query a CSS class, a test ID, or component internals.
 - Each story gets one thin Playwright spec covering its happy path and the one
   failure that would actually happen.
+- Every test runs on Tuesday 15 September 2026, 10:00 local (US-84).
+  `src/test-setup.ts` fakes Date for unit tests; Playwright specs import
+  `test`, `expect` and `TODAY` from `e2e/clock.ts`, never `test` from
+  `@playwright/test` (lint enforces it). Work out dates in Node from `TODAY`,
+  never from `new Date()`, or the spec fails on the last day of a month.
 - Playwright matches names by substring. Use `exact: true` in `getByRole` and
   `getByLabel` unless a partial match is the point, and before naming a new
   control, check no existing name contains it or is contained by it.

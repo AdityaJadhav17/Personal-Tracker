@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /** Two overdue items, due at 5pm two days ago. */
 async function seedOverdue(page: Page) {
@@ -60,7 +61,7 @@ test('AC-44.2 Tomorrow takes an item out of Overdue, due tomorrow at the same ti
 
   const lab = (await stored(page)).find((i) => i.id === 'lab')!;
   const due = new Date(lab.dueAt);
-  const tomorrow = new Date();
+  const tomorrow = new Date(TODAY);
   tomorrow.setDate(tomorrow.getDate() + 1);
   expect([due.getDate(), due.getHours()]).toEqual([tomorrow.getDate(), 17]);
   await expect(

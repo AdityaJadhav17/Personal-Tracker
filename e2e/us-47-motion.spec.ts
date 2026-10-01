@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { openData } from './helpers';
 
 /** Hold the mouse down on a button and read its scale once the press settles. */

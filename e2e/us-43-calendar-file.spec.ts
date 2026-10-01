@@ -1,9 +1,10 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { openData, openHome } from './helpers';
 
 /** A UTC iCalendar stamp `days` from now at 06:59Z, like Canvas writes. */
 function stamp(days: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setUTCDate(d.getUTCDate() + days);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T065900Z`;

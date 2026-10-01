@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { isoDate } from './helpers';
 
 test.use({ viewport: { width: 390, height: 844 }, colorScheme: 'light' });

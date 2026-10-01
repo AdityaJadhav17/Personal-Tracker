@@ -50,5 +50,26 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // AC-84.3. Every spec takes `test` from e2e/clock.ts, which starts the
+    // page on a fixed day. Taken straight from Playwright, a spec runs on the
+    // machine's date and fails on the last day of a month.
+    files: ['e2e/**/*.ts'],
+    ignores: ['e2e/clock.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@playwright/test',
+              importNames: ['test'],
+              message: "Import test from './clock', which pins the date.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

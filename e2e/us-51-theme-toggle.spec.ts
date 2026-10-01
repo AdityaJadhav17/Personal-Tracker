@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 
 const LIGHT_BG = 'rgb(245, 246, 248)';
 const DARK_BG = 'rgb(15, 23, 42)';

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 
 /** Two overdue items and twelve upcoming ones, one a day from tomorrow. */
 async function seed(page: Page) {

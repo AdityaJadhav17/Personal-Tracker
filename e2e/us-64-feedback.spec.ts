@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, doneControls, open, openData } from './helpers';
 
 test.use({ colorScheme: 'light' });

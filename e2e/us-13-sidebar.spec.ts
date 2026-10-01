@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 // Imported rather than hardcoded: adding a view must not break these.
 import { VIEWS } from '../src/components/Shell';
 

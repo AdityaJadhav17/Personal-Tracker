@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, doneControls, isoDate, open } from './helpers';
 
 test('AC-01.1 adding an item puts it in the list', async ({ page }) => {

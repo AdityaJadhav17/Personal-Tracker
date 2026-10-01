@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { isoDate, summary } from './helpers';
 
 async function goTo(page: Page, view: string) {

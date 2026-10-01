@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 import { add } from './helpers';
 
 test('AC-03.1 an overdue item is pinned above everything else', async ({

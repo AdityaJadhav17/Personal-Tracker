@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 
 /** Every view the sidebar offers, so a new one cannot be quietly dropped. */
 const VIEWS = [

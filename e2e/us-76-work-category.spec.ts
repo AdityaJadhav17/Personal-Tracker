@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { add } from './helpers';
 
 const chip = (page: Page, name: string) =>

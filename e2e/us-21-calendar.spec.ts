@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 interface Seed {
   title: string;
@@ -6,17 +7,6 @@ interface Seed {
   offset: number;
   status?: 'open' | 'done';
 }
-
-/**
- * Today, for this spec: mid-month, so a day or two either side is still on
- * the grid. With the real clock these failed on the last days of every month,
- * when "two days from today" is in the next one.
- */
-const TODAY = new Date(2026, 8, 15, 10, 0, 0, 0);
-
-test.beforeEach(async ({ page }) => {
-  await page.clock.setFixedTime(TODAY);
-});
 
 /** The local calendar day `offset` days from today, "2026-09-16". */
 function dayKey(offset: number): string {

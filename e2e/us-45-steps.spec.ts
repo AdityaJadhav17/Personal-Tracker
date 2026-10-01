@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { row } from './helpers';
 
 /** A local date `days` from today, as the date input wants it. */
 function inDays(days: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + days);
   const month = String(d.getMonth() + 1).padStart(2, '0');
   return `${d.getFullYear()}-${month}-${String(d.getDate()).padStart(2, '0')}`;

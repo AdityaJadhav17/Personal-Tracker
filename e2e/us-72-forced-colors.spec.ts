@@ -1,4 +1,5 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, isoDate } from './helpers';
 
 // Chromium repaints the page in the system's colours, as Windows does.

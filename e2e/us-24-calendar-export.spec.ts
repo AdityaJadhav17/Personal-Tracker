@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { isoDate, openData } from './helpers';
 
 async function addItem(page: Page, title: string, time = '17:00') {

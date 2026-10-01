@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { openData } from './helpers';
 
 function today(): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   const month = String(d.getMonth() + 1).padStart(2, '0');
   return `${d.getFullYear()}-${month}-${String(d.getDate()).padStart(2, '0')}`;
 }

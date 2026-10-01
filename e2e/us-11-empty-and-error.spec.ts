@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 test('AC-11.1 first launch shows the empty state and no group headings', async ({
   page,
@@ -37,7 +37,7 @@ test('AC-11.1 the empty state is replaced once an item exists', async ({
   await page.goto('/');
 
   await page.getByLabel('Title', { exact: true }).fill('Rent');
-  const today = new Date();
+  const today = new Date(TODAY);
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
   await page

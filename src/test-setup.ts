@@ -1,6 +1,23 @@
 import '@testing-library/jest-dom/vitest';
 
 /**
+ * AC-84.4. Every test runs on Tuesday 15 September 2026 at 10:00 local, the
+ * "today" the written-out dates in these tests assume. Without it the app's
+ * clock is the machine's, and a test adding a deadline for 3 October started
+ * failing once 3 October had passed. Only Date is faked: timers, user-event
+ * and Web Crypto stay real.
+ */
+export const TODAY = new Date(2026, 8, 15, 10, 0, 0, 0);
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: TODAY });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/**
  * jsdom has no matchMedia. US-51's theme toggle asks it which scheme the
  * system prefers; this answers "light" unless a test sets `systemDark`.
  */

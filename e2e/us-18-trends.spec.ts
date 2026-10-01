@@ -1,7 +1,8 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 function dayKey(offset: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + offset);
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -11,7 +12,7 @@ function dayKey(offset: number): string {
 /** Put a database straight into storage; the UI only ever records today. */
 /** US-61. How the table names a day: "Wed, Sep 23". */
 function shortName(offset: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + offset);
   return d.toLocaleDateString('en-US', {
     weekday: 'short',

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 test.use({ colorScheme: 'light' });
 
@@ -6,7 +7,7 @@ const ACCENT_SOFT = 'rgb(230, 244, 242)';
 
 /** A day in this month with room either side, as the calendar cell names it. */
 function dayName(date: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(date);
   return d.toLocaleString('en-US', {
     month: 'long',

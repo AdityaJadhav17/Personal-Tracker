@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { add, dayName } from './helpers';
 
 const calendar = (page: Page) =>
@@ -25,7 +26,7 @@ const stored = (page: Page) =>
 
 /** The next day in the same month, so both are on one page of the grid. */
 function neighbour() {
-  const today = new Date();
+  const today = new Date(TODAY);
   const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   return today.getDate() < last.getDate() ? 1 : -1;
 }

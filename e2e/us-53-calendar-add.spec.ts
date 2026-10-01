@@ -1,8 +1,9 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /** A day this month with room either side, whatever day the spec runs. */
 function base(): Date {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() > 20 ? 10 : 20);
   return d;
 }

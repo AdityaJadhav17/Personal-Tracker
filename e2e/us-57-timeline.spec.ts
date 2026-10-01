@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { dayName, row } from './helpers';
 
 test.use({ colorScheme: 'light' });
@@ -65,7 +66,7 @@ test('AC-57.1 to AC-57.4 Home opens on the date, overdue first, then days, and a
 }) => {
   await seed(page);
 
-  const today = new Date().toLocaleString('en-US', {
+  const today = new Date(TODAY).toLocaleString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -80,7 +81,7 @@ test('AC-57.1 to AC-57.4 Home opens on the date, overdue first, then days, and a
 
   await page.getByLabel('Title', { exact: true }).click();
   await expect(page.getByLabel('Due', { exact: true })).toHaveValue(
-    new Date().toLocaleDateString('en-CA'),
+    new Date(TODAY).toLocaleDateString('en-CA'),
   );
   await page.getByLabel('Title', { exact: true }).fill('Office hours');
   await page.keyboard.press('Enter');

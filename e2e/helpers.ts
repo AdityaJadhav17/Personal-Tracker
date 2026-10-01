@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { TODAY } from './clock';
 
 /**
  * Helpers that nineteen specs used to copy. A spec whose helper takes
@@ -7,7 +8,7 @@ import type { Page } from '@playwright/test';
 
 /** A local date `daysFromToday` away, as `<input type="date">` wants it. */
 export function isoDate(daysFromToday: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + daysFromToday);
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -62,7 +63,7 @@ export function row(page: Page, title: string) {
 
 /** US-57. A day's heading on Home, named in full: "September 29, 2026". */
 export function dayName(daysFromToday: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + daysFromToday);
   return d.toLocaleString('en-US', {
     month: 'long',

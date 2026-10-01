@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, dayName, doneControls } from './helpers';
 
 /** Item titles in page order. Only a title reports whether it is open. */

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 
 /** What the title bar would be painted, for each system scheme. */
 function themeColors(page: Page) {

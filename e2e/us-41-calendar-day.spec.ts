@@ -1,11 +1,12 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /**
  * A day in this month with room after it, so the spec does not depend on
  * which day of the month it runs: the 10th, or the 20th late in the month.
  */
 function base(): Date {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() > 20 ? 10 : 20);
   d.setHours(12, 0, 0, 0);
   return d;

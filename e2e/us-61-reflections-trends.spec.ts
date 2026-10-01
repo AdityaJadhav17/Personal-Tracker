@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /** Six days of reflections ending yesterday, so Trends has a shape to draw. */
 async function seed(page: Page) {
@@ -61,7 +62,7 @@ test('AC-61.3 a chart shows its scale and dates, and reads out the day under the
   const chart = page.getByRole('figure', { name: 'How the day went' });
   await expect(chart.getByText('5', { exact: true })).toBeVisible();
   await expect(chart.getByText('1', { exact: true })).toBeVisible();
-  const first = new Date();
+  const first = new Date(TODAY);
   first.setDate(first.getDate() - 6);
   await expect(
     chart.getByText(

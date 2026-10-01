@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, openData } from './helpers';
 
 test('AC-58.1 the data tools are in the Data view only, with the file pickers shown as buttons', async ({

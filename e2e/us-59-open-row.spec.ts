@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { add, isoDate, open } from './helpers';
 
 /** One item, opened, with a course and a goal so every control is there. */

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 import { add } from './helpers';
 
 test('AC-05.1 marking done removes the item from its group', async ({
@@ -72,7 +72,7 @@ test('AC-05.3 add an item and finish it without touching the mouse', async ({
 
   // A native date control takes locale-ordered digits, not an ISO string, so
   // this is what a keyboard user really presses: month, day, year.
-  const today = new Date();
+  const today = new Date(TODAY);
   const digits =
     String(today.getMonth() + 1).padStart(2, '0') +
     String(today.getDate()).padStart(2, '0') +

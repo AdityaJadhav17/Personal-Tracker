@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './clock';
 
 test('the app loads with no console errors', async ({ page }) => {
   const errors: string[] = [];

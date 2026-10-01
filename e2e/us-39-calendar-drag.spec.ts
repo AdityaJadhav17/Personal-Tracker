@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect, TODAY } from './clock';
 
 /**
  * The calendar's "moved to" line. AC-67.4 put the undo message on every
@@ -11,7 +12,7 @@ const moved = (page: Page) => page.getByRole('status').first();
  * day the spec runs: tomorrow, unless today is the last of the month.
  */
 function neighbour(): number {
-  const d = new Date();
+  const d = new Date(TODAY);
   const month = d.getMonth();
   d.setDate(d.getDate() + 1);
   return d.getMonth() === month ? 1 : -1;
@@ -19,7 +20,7 @@ function neighbour(): number {
 
 /** A day named the way a calendar cell reads it, "September 16, 2026". */
 function dayName(offset: number): string {
-  const d = new Date();
+  const d = new Date(TODAY);
   d.setDate(d.getDate() + offset);
   return d.toLocaleString('en-US', {
     month: 'long',
@@ -92,7 +93,7 @@ test('AC-39.2 a dragged item is on its new day after a reload, at the same time'
   await expect(cell(page, to)).toContainText('CSE 123 HW 1');
   await expect(cell(page, 0)).not.toContainText('CSE 123 HW 1');
 
-  const expected = new Date();
+  const expected = new Date(TODAY);
   expected.setDate(expected.getDate() + to);
   expect(await storedDue(page)).toEqual({
     day: expected.getDate(),
@@ -120,7 +121,7 @@ test('AC-39.6 an item dragged over Next month can be dropped in the next month',
   const heading = page.getByRole('main').getByRole('heading', { level: 1 });
   const thisMonth = await heading.textContent();
 
-  const next = new Date();
+  const next = new Date(TODAY);
   next.setDate(1);
   next.setMonth(next.getMonth() + 1);
   next.setDate(10);

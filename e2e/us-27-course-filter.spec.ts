@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './clock';
 import { isoDate } from './helpers';
 
 /** The filter, which is the only select on Home labelled exactly "Course". */
