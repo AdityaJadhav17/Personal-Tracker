@@ -2193,3 +2193,48 @@ test('AC-82.2 and AC-82.7 a locked note is stored encrypted and asks for the pas
     await screen.findByRole('textbox', { name: 'Note' }),
   ).toHaveTextContent('Bank details PIN 4412');
 });
+
+test('AC-86.3 a changed passcode is the only one that opens locked notes after a reload', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await writeNote('Bank details\nPIN 4412');
+  await user.click(screen.getByRole('button', { name: 'Lock note' }));
+  await user.type(screen.getByLabelText('New passcode'), 'hunter22');
+  await user.type(screen.getByLabelText('Confirm passcode'), 'hunter22');
+  await user.click(
+    screen.getByRole('button', { name: 'Lock with this passcode' }),
+  );
+  await screen.findByRole('button', { name: 'Remove lock' });
+  const before = localStorage.getItem('personal-tracker/v1')!;
+
+  await user.click(screen.getByRole('button', { name: 'Change passcode' }));
+  await user.type(screen.getByLabelText('Current passcode'), 'hunter22');
+  await user.type(screen.getByLabelText('New passcode'), 'sesame99');
+  await user.type(screen.getByLabelText('Confirm passcode'), 'sesame99');
+  await user.click(screen.getByRole('button', { name: 'Change' }));
+  await screen.findByText('Passcode changed.');
+
+  const after = localStorage.getItem('personal-tracker/v1')!;
+  expect(after).not.toBe(before);
+  expect(after).not.toMatch(/4412|hunter22|sesame99/);
+
+  cleanup();
+  render(<App />);
+  await user.click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Notes',
+    }),
+  );
+  await user.type(screen.getByLabelText('Passcode'), 'hunter22');
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'That passcode is not right.',
+  );
+
+  await user.clear(screen.getByLabelText('Passcode'));
+  await user.type(screen.getByLabelText('Passcode'), 'sesame99');
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  expect(
+    await screen.findByRole('textbox', { name: 'Note' }),
+  ).toHaveTextContent('Bank details PIN 4412');
+}, 30_000);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
 import { dayOfMonth, nextOccurrence, now, toDateValue } from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
+import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
 import type {
@@ -55,6 +56,9 @@ export interface DatabaseActions {
   lockNote: (id: string, title: string, sealed: Sealed, lock?: Lock) => void;
   /** AC-82.5. The note made ordinary, its text back. Not an edit. */
   unlockNote: (id: string, body: string) => void;
+  /** AC-86.3. A new lock and every locked note under it, in one write, or
+      nothing (false) if what is stored is not what was resealed. */
+  rekeyNotes: (lock: Lock, notes: Resealed[]) => boolean;
   /** AC-80.6. Gone, with Undo to bring it back. */
   removeNote: (id: string) => void;
   /** AC-81.1. Pinned, or not; not an edit, so the edit time stays. */
@@ -505,6 +509,28 @@ export function useDatabase(): {
           note.id === id ? { ...note, pinned: !note.pinned } : note,
         ),
       }));
+    },
+
+    rekeyNotes(lock, notes) {
+      const current = latest.current;
+      if (!current) return false;
+      // AC-86.4. Every locked note must be one that was resealed, unchanged
+      // since: an edit or a new lock in between would otherwise be lost, or
+      // left under the old passcode.
+      const byId = new Map(notes.map((note) => [note.id, note]));
+      const locked = current.notes.filter((note) => note.sealed);
+      const same =
+        locked.length === notes.length &&
+        locked.every((note) => byId.get(note.id)?.was.iv === note.sealed!.iv);
+      if (!same) return false;
+      return commit({
+        ...current,
+        lock,
+        notes: current.notes.map((note) => {
+          const resealed = byId.get(note.id);
+          return resealed ? { ...note, sealed: resealed.sealed } : note;
+        }),
+      });
     },
 
     recordBackup(at) {

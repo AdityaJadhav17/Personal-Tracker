@@ -94,3 +94,52 @@ export async function unlock(
     return null;
   }
 }
+
+/** AC-86.3. A note's new seal, beside the one it replaces. */
+export interface Resealed {
+  id: string;
+  was: Sealed;
+  sealed: Sealed;
+}
+
+/**
+ * AC-86.3. Every locked note sealed again under a new passcode, in memory.
+ * Nothing is written here: the caller stores the new lock and every note in
+ * one go, or nothing, so no note is ever left under the old key beside the
+ * rest under the new one.
+ */
+export async function changePasscode(
+  lock: Lock,
+  notes: { id: string; sealed: Sealed }[],
+  current: string,
+  next: string,
+): Promise<
+  | { ok: true; lock: Lock; key: CryptoKey; notes: Resealed[] }
+  | { ok: false; error: string }
+> {
+  const old = await unlock(lock, current);
+  if (!old) return { ok: false, error: 'That passcode is not right.' };
+
+  const texts: string[] = [];
+  try {
+    for (const note of notes) texts.push(await openSealed(old, note.sealed));
+  } catch {
+    // AC-86.4. Only a note merged in under another passcode does this.
+    return {
+      ok: false,
+      error:
+        'A locked note does not open with this passcode, so nothing was changed.',
+    };
+  }
+
+  const made = await createLock(next);
+  const resealed: Resealed[] = [];
+  for (const [index, note] of notes.entries()) {
+    resealed.push({
+      id: note.id,
+      was: note.sealed,
+      sealed: await seal(made.key, texts[index]!),
+    });
+  }
+  return { ok: true, lock: made.lock, key: made.key, notes: resealed };
+}

@@ -233,6 +233,7 @@ export default function App() {
           lock={db.lock}
           onLock={actions.lockNote}
           onUnlock={actions.unlockNote}
+          onRekey={actions.rekeyNotes}
         />
       ) : view === 'goals' ? (
         <GoalList

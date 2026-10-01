@@ -35,6 +35,7 @@ function renderNotes(overrides: Partial<Parameters<typeof NotesView>[0]> = {}) {
       lock={null}
       onLock={noop}
       onUnlock={noop}
+      onRekey={() => true}
       {...overrides}
     />,
   );
@@ -126,6 +127,7 @@ test('AC-80.2 the new note is made by the first thing typed, then edited', async
     lock: null,
     onLock: noop,
     onUnlock: noop,
+    onRekey: () => true,
   };
   const { rerender } = render(<NotesView notes={NOTES} {...props} />);
 

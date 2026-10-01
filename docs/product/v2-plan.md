@@ -398,3 +398,4 @@ passed 1,300 lines.
 - [US-83, the security audit of 30 September](stories/US-83.md)
 - [US-84, tests that pass on any day](stories/US-84.md)
 - [US-85, CI on Node 22](stories/US-85.md)
+- [US-86, change the passcode](stories/US-86.md)

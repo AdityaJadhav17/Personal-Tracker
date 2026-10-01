@@ -1,7 +1,14 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { editedLong, editedWhen } from '../domain/dates';
-import { createLock, openSealed, seal, unlock } from '../domain/lock';
+import {
+  changePasscode,
+  createLock,
+  openSealed,
+  seal,
+  unlock,
+} from '../domain/lock';
+import type { Resealed } from '../domain/lock';
 import { groupNotes, previewOf, searchNotes, titleOf } from '../domain/notes';
 import type { Lock, Note, Sealed } from '../domain/types';
 import { Icon } from './Shell';
@@ -33,6 +40,8 @@ interface NotesViewProps {
   /** AC-82.1. `made` is the new lock, on the first note ever locked. */
   onLock: (id: string, title: string, sealed: Sealed, made?: Lock) => void;
   onUnlock: (id: string, body: string) => void;
+  /** AC-86.3. Stores a new lock and every note under it; false if refused. */
+  onRekey: (lock: Lock, notes: Resealed[]) => boolean;
 }
 
 /**
@@ -54,6 +63,7 @@ export default function NotesView({
   lock,
   onLock,
   onUnlock,
+  onRekey,
 }: NotesViewProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   // AC-80.8. A phone shows one pane at a time; this says which.
@@ -64,7 +74,11 @@ export default function NotesView({
   const [opened, setOpened] = useState<{ id: string; text: string } | null>(
     null,
   );
-  const [asking, setAsking] = useState<'setup' | 'confirm' | null>(null);
+  const [asking, setAsking] = useState<'setup' | 'confirm' | 'change' | null>(
+    null,
+  );
+  // AC-86.3. Said once the passcode has changed, until the next thing done.
+  const [notice, setNotice] = useState('');
   const [activity, setActivity] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
   // Whose text the editor holds. The editor is not controlled by React, so
@@ -163,6 +177,7 @@ export default function NotesView({
   function choose(noteId: string) {
     setOpenId(noteId);
     setAsking(null);
+    setNotice('');
     setReading(true);
   }
 
@@ -185,19 +200,36 @@ export default function NotesView({
     <section className={`notes ${reading ? 'notes--reading' : ''}`}>
       <div className="page-head notes__head">
         <h1 className="page-title">Notes</h1>
-        <button
-          className="notes__tool"
-          type="button"
-          aria-label="New note"
-          title="New note"
-          onClick={() => {
-            setOpenId(DRAFT);
-            setAsking(null);
-            setReading(true);
-          }}
-        >
-          <Icon path={COMPOSE} size={20} />
-        </button>
+        <div className="notes__head-tools">
+          {/* AC-86.1. Only once there is a passcode to change. */}
+          {lock && (
+            <button
+              className="notes__text-tool"
+              type="button"
+              onClick={() => {
+                setAsking('change');
+                setNotice('');
+                setReading(true);
+              }}
+            >
+              Change passcode
+            </button>
+          )}
+          <button
+            className="notes__tool"
+            type="button"
+            aria-label="New note"
+            title="New note"
+            onClick={() => {
+              setOpenId(DRAFT);
+              setAsking(null);
+              setNotice('');
+              setReading(true);
+            }}
+          >
+            <Icon path={COMPOSE} size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="notes__panes">
@@ -257,129 +289,161 @@ export default function NotesView({
         </div>
 
         <div className="notes__page">
-          {openKey !== null && (
-            <>
-              <div className="notes__bar">
-                <button
-                  className="notes__back"
-                  type="button"
-                  aria-label="Back to notes"
-                  onClick={() => setReading(false)}
-                >
-                  <Icon path={BACK} size={20} weight={2.2} />
-                  Notes
-                </button>
-                {/* AC-82.5. Only once the passcode has opened it. */}
-                {open?.sealed && readable && (
+          {notice && (
+            <p className="notes__notice" role="status">
+              {notice}
+            </p>
+          )}
+          {asking === 'change' ? (
+            <Passcode
+              change
+              intro="Every locked note will be encrypted again under the new passcode. Backups taken before now still open with the old one."
+              action="Change"
+              onCancel={() => setAsking(null)}
+              onSubmit={async (next, current) => {
+                const result = await changePasscode(
+                  lock!,
+                  notes.flatMap((note) =>
+                    note.sealed ? [{ id: note.id, sealed: note.sealed }] : [],
+                  ),
+                  current,
+                  next,
+                );
+                if (!result.ok) return result.error;
+                if (!onRekey(result.lock, result.notes)) {
+                  return 'A note changed while the passcode was changing, so nothing was changed. Try again.';
+                }
+                setKey(result.key);
+                setAsking(null);
+                setNotice('Passcode changed.');
+                return null;
+              }}
+            />
+          ) : (
+            openKey !== null && (
+              <>
+                <div className="notes__bar">
                   <button
-                    className="notes__text-tool"
+                    className="notes__back"
                     type="button"
-                    onClick={() => onUnlock(open.id, opened!.text)}
+                    aria-label="Back to notes"
+                    onClick={() => setReading(false)}
                   >
-                    Remove lock
+                    <Icon path={BACK} size={20} weight={2.2} />
+                    Notes
                   </button>
-                )}
-                {open && readable && !asking && (
+                  {/* AC-82.5. Only once the passcode has opened it. */}
+                  {open?.sealed && readable && (
+                    <button
+                      className="notes__text-tool"
+                      type="button"
+                      onClick={() => onUnlock(open.id, opened!.text)}
+                    >
+                      Remove lock
+                    </button>
+                  )}
+                  {open && readable && !asking && (
+                    <button
+                      className={`notes__tool ${open.sealed ? 'notes__tool--on' : ''}`}
+                      type="button"
+                      aria-label={open.sealed ? 'Lock now' : 'Lock note'}
+                      title={open.sealed ? 'Lock now' : 'Lock note'}
+                      onClick={() => {
+                        if (open.sealed) relock();
+                        else if (!lock) setAsking('setup');
+                        else if (key) void lockOpen(key);
+                        else setAsking('confirm');
+                      }}
+                    >
+                      <Icon path={LOCK} size={20} />
+                    </button>
+                  )}
+                  {/* AC-81.1. Only a stored note can be pinned. */}
+                  {open && (
+                    <button
+                      className={`notes__tool ${open.pinned ? 'notes__tool--on' : ''}`}
+                      type="button"
+                      aria-label={open.pinned ? 'Unpin note' : 'Pin note'}
+                      title={open.pinned ? 'Unpin note' : 'Pin note'}
+                      onClick={() => onPin(open.id)}
+                    >
+                      <Icon path={PIN} size={20} />
+                    </button>
+                  )}
                   <button
-                    className={`notes__tool ${open.sealed ? 'notes__tool--on' : ''}`}
+                    className="notes__tool"
                     type="button"
-                    aria-label={open.sealed ? 'Lock now' : 'Lock note'}
-                    title={open.sealed ? 'Lock now' : 'Lock note'}
+                    aria-label="Delete note"
+                    title="Delete note"
                     onClick={() => {
-                      if (open.sealed) relock();
-                      else if (!lock) setAsking('setup');
-                      else if (key) void lockOpen(key);
-                      else setAsking('confirm');
+                      // AC-80.6. No question; the undo toast is the way back.
+                      if (open) onDelete(open.id);
+                      setOpenId(null);
+                      setReading(false);
                     }}
                   >
-                    <Icon path={LOCK} size={20} />
+                    <Icon path={TRASH} size={20} />
                   </button>
-                )}
-                {/* AC-81.1. Only a stored note can be pinned. */}
+                </div>
                 {open && (
-                  <button
-                    className={`notes__tool ${open.pinned ? 'notes__tool--on' : ''}`}
-                    type="button"
-                    aria-label={open.pinned ? 'Unpin note' : 'Pin note'}
-                    title={open.pinned ? 'Unpin note' : 'Pin note'}
-                    onClick={() => onPin(open.id)}
-                  >
-                    <Icon path={PIN} size={20} />
-                  </button>
+                  <p className="notes__stamp">{editedLong(open.updatedAt)}</p>
                 )}
-                <button
-                  className="notes__tool"
-                  type="button"
-                  aria-label="Delete note"
-                  title="Delete note"
-                  onClick={() => {
-                    // AC-80.6. No question; the undo toast is the way back.
-                    if (open) onDelete(open.id);
-                    setOpenId(null);
-                    setReading(false);
-                  }}
-                >
-                  <Icon path={TRASH} size={20} />
-                </button>
-              </div>
-              {open && (
-                <p className="notes__stamp">{editedLong(open.updatedAt)}</p>
-              )}
 
-              {asking === 'setup' ? (
-                <Passcode
-                  setup
-                  intro="Locked notes are encrypted with this passcode, and only it opens them. It cannot be recovered: forget it and the locked notes are lost for good."
-                  action="Lock with this passcode"
-                  onCancel={() => setAsking(null)}
-                  onSubmit={async (passcode) => {
-                    const made = await createLock(passcode);
-                    await lockOpen(made.key, made.lock);
-                    return null;
-                  }}
-                />
-              ) : asking === 'confirm' ? (
-                <Passcode
-                  intro="Enter your passcode to lock this note."
-                  action="Continue"
-                  onCancel={() => setAsking(null)}
-                  onSubmit={async (passcode) => {
-                    const opens = await unlock(lock!, passcode);
-                    if (!opens) return 'That passcode is not right.';
-                    await lockOpen(opens);
-                    return null;
-                  }}
-                />
-              ) : readable ? (
-                /* AC-80.3. Plain text only, read back as text, so
-                   ::first-line can make the title large without a second
-                   field. */
-                <div
-                  className="notes__editor"
-                  ref={editorRef}
-                  contentEditable="plaintext-only"
-                  role="textbox"
-                  aria-multiline="true"
-                  aria-label="Note"
-                  tabIndex={0}
-                  spellCheck
-                  onInput={input}
-                />
-              ) : (
-                !key && (
+                {asking === 'setup' ? (
                   <Passcode
-                    intro="This note is locked."
-                    action="Open"
+                    setup
+                    intro="Locked notes are encrypted with this passcode, and only it opens them. It cannot be recovered: forget it and the locked notes are lost for good."
+                    action="Lock with this passcode"
+                    onCancel={() => setAsking(null)}
                     onSubmit={async (passcode) => {
-                      const opens = await unlock(lock!, passcode);
-                      if (!opens) return 'That passcode is not right.';
-                      setKey(opens);
+                      const made = await createLock(passcode);
+                      await lockOpen(made.key, made.lock);
                       return null;
                     }}
                   />
-                )
-              )}
-            </>
+                ) : asking === 'confirm' ? (
+                  <Passcode
+                    intro="Enter your passcode to lock this note."
+                    action="Continue"
+                    onCancel={() => setAsking(null)}
+                    onSubmit={async (passcode) => {
+                      const opens = await unlock(lock!, passcode);
+                      if (!opens) return 'That passcode is not right.';
+                      await lockOpen(opens);
+                      return null;
+                    }}
+                  />
+                ) : readable ? (
+                  /* AC-80.3. Plain text only, read back as text, so
+                   ::first-line can make the title large without a second
+                   field. */
+                  <div
+                    className="notes__editor"
+                    ref={editorRef}
+                    contentEditable="plaintext-only"
+                    role="textbox"
+                    aria-multiline="true"
+                    aria-label="Note"
+                    tabIndex={0}
+                    spellCheck
+                    onInput={input}
+                  />
+                ) : (
+                  !key && (
+                    <Passcode
+                      intro="This note is locked."
+                      action="Open"
+                      onSubmit={async (passcode) => {
+                        const opens = await unlock(lock!, passcode);
+                        if (!opens) return 'That passcode is not right.';
+                        setKey(opens);
+                        return null;
+                      }}
+                    />
+                  )
+                )}
+              </>
+            )
           )}
         </div>
       </div>
@@ -395,37 +459,43 @@ function Passcode({
   intro,
   action,
   setup = false,
+  change = false,
   onSubmit,
   onCancel,
 }: {
   intro: string;
   action: string;
   setup?: boolean;
-  onSubmit: (passcode: string) => Promise<string | null>;
+  /** AC-86.1. The current passcode first, then a new one twice. */
+  change?: boolean;
+  onSubmit: (passcode: string, current: string) => Promise<string | null>;
   onCancel?: () => void;
 }) {
+  const [current, setCurrent] = useState('');
   const [first, setFirst] = useState('');
   const [second, setSecond] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const firstRef = useRef<HTMLInputElement>(null);
+  const currentRef = useRef<HTMLInputElement>(null);
   const id = useId();
+  const twice = setup || change;
 
-  useEffect(() => firstRef.current?.focus(), []);
+  useEffect(() => (currentRef.current ?? firstRef.current)?.focus(), []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (setup && first.length < 6) {
+    if (twice && first.length < 6) {
       setError('A passcode needs at least 6 characters.');
       return;
     }
-    if (setup && first !== second) {
+    if (twice && first !== second) {
       setError('The two passcodes do not match.');
       return;
     }
     // Making the key takes a moment, on purpose; see domain/lock.ts.
     setBusy(true);
-    const problem = await onSubmit(first);
+    const problem = await onSubmit(first, current);
     setBusy(false);
     setError(problem ?? '');
   }
@@ -434,8 +504,24 @@ function Passcode({
     <form className="notes__lock" onSubmit={(event) => void submit(event)}>
       <Icon path={LOCK} size={28} />
       <p className="notes__lock-intro">{intro}</p>
+      {change && (
+        <>
+          <label className="form__label" htmlFor={`${id}-current`}>
+            Current passcode
+          </label>
+          <input
+            className="form__input"
+            id={`${id}-current`}
+            ref={currentRef}
+            type="password"
+            autoComplete="off"
+            value={current}
+            onChange={(event) => setCurrent(event.target.value)}
+          />
+        </>
+      )}
       <label className="form__label" htmlFor={`${id}-first`}>
-        {setup ? 'New passcode' : 'Passcode'}
+        {twice ? 'New passcode' : 'Passcode'}
       </label>
       <input
         className="form__input"
@@ -447,7 +533,7 @@ function Passcode({
         value={first}
         onChange={(event) => setFirst(event.target.value)}
       />
-      {setup && (
+      {twice && (
         <>
           <label className="form__label" htmlFor={`${id}-second`}>
             Confirm passcode

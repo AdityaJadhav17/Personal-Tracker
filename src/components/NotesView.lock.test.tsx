@@ -8,6 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import NotesView from './NotesView';
 import { createLock, openSealed, seal, unlock } from '../domain/lock';
+import type { Resealed } from '../domain/lock';
 import type { Lock, Note, Sealed } from '../domain/types';
 
 // Monday 28 September 2026, 3pm local.
@@ -56,6 +57,7 @@ function renderNotes(overrides: Partial<Parameters<typeof NotesView>[0]> = {}) {
       lock={null}
       onLock={noop}
       onUnlock={noop}
+      onRekey={() => true}
       {...overrides}
     />,
   );
@@ -242,4 +244,77 @@ test('AC-83.2 the passcode fields ask the browser not to save the passcode', asy
     'autocomplete',
     'off',
   );
+});
+
+describe('US-86 changing the passcode', () => {
+  type OnRekey = (lock: Lock, notes: Resealed[]) => boolean;
+
+  async function fill(
+    user: ReturnType<typeof userEvent.setup>,
+    current: string,
+    next: string,
+  ) {
+    await user.click(screen.getByRole('button', { name: 'Change passcode' }));
+    await user.type(screen.getByLabelText('Current passcode'), current);
+    await user.type(screen.getByLabelText('New passcode'), next);
+    await user.type(screen.getByLabelText('Confirm passcode'), next);
+    await user.click(screen.getByRole('button', { name: 'Change' }));
+  }
+
+  test('AC-86.1 there is nothing to change until a passcode exists', () => {
+    renderNotes();
+    expect(
+      screen.queryByRole('button', { name: 'Change passcode' }),
+    ).toBeNull();
+  });
+
+  test('AC-86.1 and AC-86.5 it asks for the current passcode and warns about old backups', async () => {
+    const user = userEvent.setup();
+    renderNotes({ notes: [locked], lock });
+
+    await user.click(screen.getByRole('button', { name: 'Change passcode' }));
+
+    expect(screen.getByLabelText('Current passcode')).toBeVisible();
+    expect(screen.getByText(/Backups taken before now/)).toBeVisible();
+  });
+
+  test('AC-86.2 a wrong current passcode changes nothing', async () => {
+    const user = userEvent.setup();
+    const onRekey = vi.fn<OnRekey>(() => true);
+    renderNotes({ notes: [locked], lock, onRekey });
+
+    await fill(user, 'hunter23', 'sesame99');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'That passcode is not right.',
+    );
+    expect(onRekey).not.toHaveBeenCalled();
+  });
+
+  test('AC-86.3 the right one reseals every locked note under the new passcode', async () => {
+    const user = userEvent.setup();
+    const onRekey = vi.fn<OnRekey>(() => true);
+    renderNotes({ notes: [locked], lock, onRekey });
+
+    await fill(user, PASSCODE, 'sesame99');
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Passcode changed.',
+    );
+    const [made, resealed] = onRekey.mock.calls[0]!;
+    const key = await unlock(made, 'sesame99');
+    expect(resealed.map((note) => note.id)).toEqual(['bank']);
+    expect(await openSealed(key!, resealed[0]!.sealed)).toBe(SECRET);
+  });
+
+  test('AC-86.4 when storage refuses the change, it says nothing was changed', async () => {
+    const user = userEvent.setup();
+    renderNotes({ notes: [locked], lock, onRekey: () => false });
+
+    await fill(user, PASSCODE, 'sesame99');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /nothing was changed/,
+    );
+  });
 });

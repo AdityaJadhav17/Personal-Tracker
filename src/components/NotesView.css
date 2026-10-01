@@ -222,6 +222,25 @@
   outline: none;
 }
 
+/* AC-86.1. Change passcode beside the pencil, at the far end of the title. */
+.notes__head-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.notes__head-tools .notes__text-tool {
+  margin-right: 0;
+}
+
+/* AC-86.3. A quiet line in the page, where the form was. */
+.notes__notice {
+  margin: var(--space-4) var(--space-4) 0;
+  font-size: 0.875rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
 /* AC-82.5. A word, not an icon: there is no picture for "stop locking". */
 .notes__text-tool {
   min-height: var(--control);
