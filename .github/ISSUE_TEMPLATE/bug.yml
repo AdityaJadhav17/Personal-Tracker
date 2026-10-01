@@ -1,0 +1,42 @@
+name: Bug
+description: Something does not work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste real data: no exports, no screenshots of your deadlines or notes. Make up an example instead.
+        A security problem goes in a [private report](https://github.com/AdityaJadhav17/Personal-Tracker/security/advisories/new), not here.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: What you did, one step per line, from opening the app.
+      placeholder: |
+        1. Open Calendar
+        2. Drag "Reading quiz" to tomorrow
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Browser and screen
+      placeholder: Edge 140, laptop window, or phone width
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The commit the app is on, from deployed.txt in its folder, if you know it.
+      placeholder: db9362b

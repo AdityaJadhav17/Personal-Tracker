@@ -1,0 +1,30 @@
+name: Story
+description: Something new the app should do, written as a user story.
+labels: [story]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: Who wants it, what, and why.
+      value: |
+        As someone who ...
+        I want ...
+        so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: Each one something a test can check. They get IDs when the story is written up.
+      placeholder: |
+        - A locked note shows its title and a lock in the list.
+        - A wrong passcode says so and shows nothing.
+    validations:
+      required: true
+  - type: textarea
+    id: out
+    attributes:
+      label: Left out
+      description: What this deliberately does not do.

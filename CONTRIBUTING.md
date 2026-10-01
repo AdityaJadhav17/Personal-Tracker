@@ -45,7 +45,7 @@ npm run e2e
 npm run build
 ```
 
-CI runs the same five on Node 20 and fails on any lint warning.
+CI runs the same five on Node 22 and fails on any lint warning.
 
 ## Adding a dependency
 

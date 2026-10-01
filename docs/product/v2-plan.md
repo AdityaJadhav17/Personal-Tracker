@@ -399,3 +399,4 @@ passed 1,300 lines.
 - [US-84, tests that pass on any day](stories/US-84.md)
 - [US-85, CI on Node 22](stories/US-85.md)
 - [US-86, change the passcode](stories/US-86.md)
+- [US-87, community files](stories/US-87.md)
