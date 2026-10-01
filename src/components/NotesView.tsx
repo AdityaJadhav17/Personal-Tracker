@@ -79,6 +79,8 @@ export default function NotesView({
   );
   // AC-86.3. Said once the passcode has changed, until the next thing done.
   const [notice, setNotice] = useState('');
+  // AC-86.6. A locked note the key in hand does not open.
+  const [unopenable, setUnopenable] = useState<string | null>(null);
   const [activity, setActivity] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
   // Whose text the editor holds. The editor is not controlled by React, so
@@ -103,9 +105,16 @@ export default function NotesView({
   useEffect(() => {
     if (!key || !open?.sealed || opened?.id === open.id) return;
     let live = true;
-    void openSealed(key, open.sealed).then((text) => {
-      if (live) setOpened({ id: open.id, text });
-    });
+    openSealed(key, open.sealed).then(
+      (text) => {
+        if (live) setOpened({ id: open.id, text });
+      },
+      // AC-86.6. Sealed under another passcode, as a note merged in from such
+      // a backup is. Said, rather than left as a blank page and an error.
+      () => {
+        if (live) setUnopenable(open.id);
+      },
+    );
     return () => {
       live = false;
     };
@@ -428,19 +437,25 @@ export default function NotesView({
                     spellCheck
                     onInput={input}
                   />
-                ) : (
-                  !key && (
-                    <Passcode
-                      intro="This note is locked."
-                      action="Open"
-                      onSubmit={async (passcode) => {
-                        const opens = await unlock(lock!, passcode);
-                        if (!opens) return 'That passcode is not right.';
-                        setKey(opens);
-                        return null;
-                      }}
-                    />
+                ) : key ? (
+                  unopenable === open?.id && (
+                    <p className="notes__empty">
+                      This note does not open with your passcode. It was locked
+                      under a different one, most likely in a backup merged in
+                      from elsewhere.
+                    </p>
                   )
+                ) : (
+                  <Passcode
+                    intro="This note is locked."
+                    action="Open"
+                    onSubmit={async (passcode) => {
+                      const opens = await unlock(lock!, passcode);
+                      if (!opens) return 'That passcode is not right.';
+                      setKey(opens);
+                      return null;
+                    }}
+                  />
                 )}
               </>
             )

@@ -318,3 +318,22 @@ describe('US-86 changing the passcode', () => {
     );
   });
 });
+
+test('AC-86.6 a locked note the passcode cannot open says so, instead of staying blank', async () => {
+  const user = userEvent.setup();
+  // Locked under another passcode, as a note merged in from such a backup is.
+  const stranger = await createLock('another1');
+  const foreign: Note = {
+    ...aNote('merged', 'From the old laptop'),
+    sealed: await seal(stranger.key, 'secret'),
+  };
+  renderNotes({ notes: [foreign], lock });
+
+  await user.type(screen.getByLabelText('Passcode'), PASSCODE);
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+
+  expect(
+    await screen.findByText(/does not open with your passcode/),
+  ).toBeVisible();
+  expect(screen.queryByRole('textbox', { name: 'Note' })).toBeNull();
+});
