@@ -397,3 +397,4 @@ passed 1,300 lines.
 - [US-82, lock a note](stories/US-82.md)
 - [US-83, the security audit of 30 September](stories/US-83.md)
 - [US-84, tests that pass on any day](stories/US-84.md)
+- [US-85, CI on Node 22](stories/US-85.md)

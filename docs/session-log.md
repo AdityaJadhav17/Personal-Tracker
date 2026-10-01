@@ -1671,3 +1671,52 @@ A note is made by its first letter, so an empty one never needs cleaning up.
 **Where it stands.** 849 unit tests and 296 Playwright specs pass, in the
 laptop's time zone and in UTC; typecheck, lint and the format check are
 clean; Notes passes the accessibility scan in all four schemes.
+
+## 2026-09-29 to October 1: locked notes, an audit, and a suite that ignores the date
+
+Aditya asked to lock sensitive notes behind a passcode, then for a full
+security audit of the code, the production setup and the tests, then for
+every finding to be fixed, then for the tests to stop depending on the day,
+then for CI to move off Node 20.
+
+**Built, in order.** US-82 locks a note: its text is sealed with AES-GCM
+under a key PBKDF2 makes from a passcode, using the browser's own Web Crypto,
+and only the first line stays readable as the title. The key lives in memory
+in the Notes view and goes on leaving it, on reload, on Lock now, or after
+five minutes without typing. A passcode of 6 or more characters was picked
+over a 4 to 6 digit PIN, and showing the title over hiding it. The decision
+log's "no encryption at rest" named this as the moment to revisit; it stands
+for the database as a whole. US-83 fixed the audit's six low findings:
+an off-origin spec that matched by prefix, passcode fields offered to the
+password manager, extra keys kept inside an imported sealed note, no Host
+check on the 4180 server, an updater that trusted any passing check, and a
+Vitest advisory (3.2 to 4.1.11). US-84 pins every test to Tuesday
+15 September 2026, 10:00 local: Date only in the unit tests, the page clock
+in Playwright through `e2e/clock.ts`, with lint refusing a spec that skips
+it. US-85 moved CI to Node 22 and the actions to v7.
+
+**Decided and not built.** Changing the passcode, and Windows Hello. Vitest 5,
+which needed Node 22 when CI was on 20; it can come now.
+
+**What went wrong, so it does not again.**
+
+- The audit's own example of the prefix hole, `localhost:5173.evil.example`,
+  is not a valid URL. Checking it before writing the fix found the real one,
+  `http://localhost:5173@evil.example`. An audit finding is a claim to test,
+  not a fact to transcribe.
+- The month-end failure fixed by hand on the 29th came back on the 30th in
+  five other specs, as predicted. Fixing the two that failed, rather than the
+  cause, bought one day.
+- While planning that fix, running the unit tests with the clock moved to
+  10 October showed two would fail there: `App.test.tsx` writes out dates in
+  autumn 2026 against the real clock. CI went red on that within hours, on
+  1 October in UTC, before the fix was pushed. The pin closed both.
+- npm 10.9 crashed resolving Vitest 4's optional peers. The install ran once
+  under npm 11, and npm 10's `npm ci`, which CI and the updater use, was
+  checked against the new lockfile in a scratch folder.
+- A heredoc broke on a quote inside a test file. Large test bodies now go in
+  through the editor.
+
+**Where it stands.** 883 unit tests and 300 Playwright specs pass in the
+laptop's zone and in UTC, on any date; typecheck, lint, the format check and
+`npm audit` are clean. Notes, pins, locks and the audit fixes are deployed.

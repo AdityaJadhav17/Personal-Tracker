@@ -38,7 +38,7 @@ New stories go in `docs/product/stories/US-NN.md`, one file each.
 
 React 18 and TypeScript on Vite. Vitest with React Testing Library for unit and
 component tests, Playwright for end to end. ESLint and Prettier. GitHub Actions
-on Node 20.
+on Node 22 (US-85).
 
 Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
 There is no `StorageAdapter` interface and no IndexedDB. See the decision log
