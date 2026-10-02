@@ -168,7 +168,7 @@ test('AC-28.7 a version 1 export still imports, with nothing repeating', async (
   const db = await page.evaluate(() =>
     JSON.parse(localStorage.getItem('personal-tracker/v1') ?? '{}'),
   );
-  expect(db.version).toBe(8);
+  expect(db.version).toBe(9);
   expect(db.items[0].repeat).toBe('none');
   expect(db.items[0].note).toBe('from v1');
 });

@@ -459,7 +459,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(8);
+  expect(parsed.version).toBe(9);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -504,7 +504,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 8,
+    version: 9,
     items: [],
     goals: [],
     courses: [],
@@ -513,6 +513,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
     // AC-40.4. The file records its own export.
     lastBackupAt: expect.any(String) as unknown,
     lock: null,
+    tasks: [],
   });
 });
 
@@ -2238,3 +2239,80 @@ test('AC-86.3 a changed passcode is the only one that opens locked notes after a
     await screen.findByRole('textbox', { name: 'Note' }),
   ).toHaveTextContent('Bank details PIN 4412');
 }, 30_000);
+
+/** US-88. To Routine, and a first task typed in it. */
+async function addTask(title: string) {
+  const user = userEvent.setup();
+  await user.click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Routine',
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: 'New task' }));
+  await user.keyboard(title);
+}
+
+function storedTasks() {
+  const raw = localStorage.getItem('personal-tracker/v1') ?? '{"tasks":[]}';
+  return (
+    JSON.parse(raw) as { tasks: { title: string; doneOn: string | null }[] }
+  ).tasks;
+}
+
+test('AC-88.1 Routine is in the sidebar, after Notes', () => {
+  render(<App />);
+
+  const names = within(screen.getByRole('navigation'))
+    .getAllByRole('button')
+    .map((button) => button.textContent);
+  expect(names.indexOf('Routine')).toBe(names.indexOf('Notes') + 1);
+});
+
+test('AC-88.3 and AC-88.7 a task and its tick today survive a reload', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addTask('Gym');
+  await user.click(screen.getByRole('checkbox', { name: 'Gym' }));
+
+  expect(storedTasks()).toEqual([
+    expect.objectContaining({ title: 'Gym', doneOn: '2026-09-15' }),
+  ]);
+
+  cleanup();
+  render(<App />);
+  await user.click(
+    within(screen.getByRole('navigation')).getByRole('button', {
+      name: 'Routine',
+    }),
+  );
+  expect(screen.getByRole('checkbox', { name: 'Gym' })).toBeChecked();
+});
+
+test('AC-88.6 deleting a task offers Undo, which puts it back where it was', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addTask('Vitamins{Enter}Gym{Enter}Read');
+
+  await user.click(screen.getByRole('button', { name: 'Delete Gym' }));
+  expect(storedTasks().map((task) => task.title)).toEqual(['Vitamins', 'Read']);
+  expect(screen.getByRole('status')).toHaveTextContent('Deleted Gym.');
+
+  await user.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(storedTasks().map((task) => task.title)).toEqual([
+    'Vitamins',
+    'Gym',
+    'Read',
+  ]);
+});
+
+test('AC-88.2 typing u in a task is a letter, not Undo', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await addTask('Vitamins{Enter}Gym');
+  await user.click(screen.getByRole('button', { name: 'Delete Gym' }));
+  await user.click(screen.getAllByRole('textbox', { name: 'Task' })[0]!);
+
+  await user.keyboard('{End} u');
+
+  expect(storedTasks().map((task) => task.title)).toEqual(['Vitamins u']);
+});

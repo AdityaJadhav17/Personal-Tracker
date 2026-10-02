@@ -24,7 +24,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 8,
+    version: 9,
     items,
     goals: [],
     courses: [],
@@ -32,6 +32,7 @@ function aDatabase(items: Item[] = [anItem()]): Database {
     notes: [],
     lastBackupAt: null,
     lock: null,
+    tasks: [],
   };
 }
 
@@ -68,7 +69,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(8);
+    expect(parsed.version).toBe(9);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -182,8 +183,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 8 is current since US-82, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 9, "items": []}')).toMatch(/version/i);
+    // 9 is current since US-88, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 10, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -286,7 +287,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(8);
+    expect(result.ok && result.db.version).toBe(9);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -643,7 +644,7 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(8);
+    expect(result.ok && result.db.version).toBe(9);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });
@@ -726,9 +727,10 @@ describe('US-80 notes', () => {
         version: 5,
         notes: undefined,
         lock: undefined,
+        tasks: undefined,
       }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 8, notes: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 9, notes: [] });
   });
 
   test('AC-81.4 a pin survives an export and an import', () => {
@@ -753,6 +755,7 @@ describe('US-80 notes', () => {
         version: 6,
         notes: [{ ...unpinned, sealed: undefined }],
         lock: undefined,
+        tasks: undefined,
       }),
     );
     expect(result.ok && result.db.notes[0]?.pinned).toBe(false);
@@ -814,6 +817,7 @@ describe('US-82 locked notes', () => {
         version: 7,
         notes: [{ ...locked, sealed: undefined }],
         lock: undefined,
+        tasks: undefined,
       }),
     );
     expect(result.ok && result.db.lock).toBeNull();
@@ -841,4 +845,49 @@ test('AC-83.3 a locked note keeps only its IV and data from the file', () => {
     }),
   );
   expect(result.ok && result.db.notes[0]?.sealed).toEqual(sealed);
+});
+
+describe('US-88 routine tasks', () => {
+  const task = {
+    id: 't1',
+    title: 'Gym',
+    doneOn: '2026-09-15',
+    createdAt: '2026-09-14T17:00:00.000Z',
+  };
+
+  test('AC-88.7 tasks go into the export and come back on import', () => {
+    const result = parseImport(serialize({ ...aDatabase(), tasks: [task] }));
+    expect(result.ok && result.db.tasks).toEqual([task]);
+  });
+
+  test('AC-88.7 a task whose done day is not a day is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        tasks: [{ ...task, doneOn: 'yesterday' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/Task 1/);
+  });
+
+  test('AC-88.7 a task with no title text is refused', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), tasks: [{ ...task, title: 7 }] }),
+    );
+    expect(!result.ok && result.error).toMatch(/Task 1/);
+  });
+
+  test('AC-88.7 a version 8 file still opens, with no tasks', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), version: 8, tasks: undefined }),
+    );
+    expect(result.ok && result.db).toMatchObject({ version: 9, tasks: [] });
+  });
+
+  test('AC-88.7 fields a task should not have are dropped', () => {
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), tasks: [{ ...task, html: '<b>' }] }),
+    );
+    expect(result.ok && result.db.tasks[0]).toEqual(task);
+  });
 });

@@ -10,6 +10,7 @@ interface Partial {
   notes?: unknown[];
   lastBackupAt?: string | null;
   lock?: Lock | null;
+  tasks?: unknown[];
 }
 
 /**
@@ -20,7 +21,7 @@ interface Partial {
  * adds `repeat`. Version 4 adds `repeatDay` on items and `lastBackupAt` on the
  * database. Version 5 adds `parentId`, for steps. Version 6 adds `notes`,
  * and version 7 `pinned` on each. Version 8 adds `sealed` on each and a
- * `lock` on the whole, for locked notes.
+ * `lock` on the whole, for locked notes. Version 9 adds `tasks`, the routine.
  * Anything already current is
  * handed straight back.
  *
@@ -108,6 +109,10 @@ export function upgrade(db: Partial): Database {
       })),
       lock: current.lock ?? null,
     };
+  }
+
+  if (current.version < 9) {
+    current = { ...current, version: 9, tasks: current.tasks ?? [] };
   }
 
   return current as unknown as Database;

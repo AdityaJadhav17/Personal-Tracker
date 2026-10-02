@@ -1,0 +1,156 @@
+/* ---------- Routine (US-88) ---------- */
+
+/* The date under the title, as Home has it: which day these ticks are for. */
+.routine__day {
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+.routine__empty {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+}
+
+/* Notion's checkbox lines: no boxes around them, one line each. */
+.routine__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.5rem;
+  border-radius: var(--radius);
+  padding: 0 var(--space-2);
+  transition: background var(--speed) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .task:hover {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
+
+.task__box {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.task__title {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+/* AC-88.3. Done today: struck through where it stands, so the list never
+   reorders under you. */
+.task--done .task__title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* The line being typed in is the one with a soft wash; a ring round a line
+   of text would frame it rather than mark the cursor. */
+.task:focus-within {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.task__box:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.task__delete {
+  flex: none;
+  width: var(--control-small);
+  height: var(--control-small);
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  opacity: 0;
+  transition:
+    opacity var(--speed) ease,
+    background var(--speed) ease;
+}
+
+/* Delete shows on the line you are on, or point at; always on a touch
+   screen, which has no pointing. Pointing is gated (AC-47.3), so a tap
+   cannot leave it stuck. */
+.task:focus-within .task__delete,
+.task__delete:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .task:hover .task__delete {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .task__delete {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .task__delete:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+  }
+}
+
+.routine__new {
+  display: flex;
+  align-items: center;
+  /* A flex row drops the space after the +; the gap puts it back. */
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  margin-top: var(--space-1);
+  padding: 0 var(--space-2);
+  font: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  transition:
+    color var(--speed) ease,
+    background var(--speed) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .routine__new:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
+
+.routine__count {
+  margin: var(--space-4) 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 700px) {
+  /* AC-66.6. iOS zooms into any field under 16px. */
+  .task__title {
+    font-size: 1rem;
+  }
+}

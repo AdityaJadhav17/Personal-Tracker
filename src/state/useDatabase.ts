@@ -17,6 +17,7 @@ import type {
   Note,
   Reflection,
   Sealed,
+  Task,
   Repeat,
 } from '../domain/types';
 import { load, save } from '../storage/db';
@@ -59,6 +60,13 @@ export interface DatabaseActions {
   /** AC-86.3. A new lock and every locked note under it, in one write, or
       nothing (false) if what is stored is not what was resealed. */
   rekeyNotes: (lock: Lock, notes: Resealed[]) => boolean;
+  /** AC-88.2. A new, empty line after `after`, or at the end; its id. */
+  addTask: (after: string | null) => string | null;
+  renameTask: (id: string, title: string) => void;
+  /** AC-88.3. Done today, or not done today. */
+  toggleTask: (id: string) => void;
+  /** AC-88.6. Gone, with Undo when it had words in it. */
+  removeTask: (id: string) => void;
   /** AC-80.6. Gone, with Undo to bring it back. */
   removeNote: (id: string) => void;
   /** AC-81.1. Pinned, or not; not an edit, so the edit time stays. */
@@ -163,6 +171,7 @@ export function useDatabase(): {
     | { kind: 'deleted'; title: string; removed: Item[] }
     | { kind: 'copied'; title: string; copyId: string }
     | { kind: 'note'; title: string; note: Note }
+    | { kind: 'task'; title: string; task: Task; at: number }
     | null
   >(null);
 
@@ -206,6 +215,17 @@ export function useDatabase(): {
 
     if (undoable.kind === 'deleted') {
       commit({ ...db, items: [...db.items, ...undoable.removed] });
+      setUndoable(null);
+      return;
+    }
+
+    // AC-88.6. A task goes back to the line it was on.
+    if (undoable.kind === 'task') {
+      const { task, at } = undoable;
+      commit({
+        ...db,
+        tasks: [...db.tasks.slice(0, at), task, ...db.tasks.slice(at)],
+      });
       setUndoable(null);
       return;
     }
@@ -511,6 +531,65 @@ export function useDatabase(): {
       }));
     },
 
+    addTask(after) {
+      const task: Task = {
+        id: crypto.randomUUID(),
+        title: '',
+        doneOn: null,
+        createdAt: now().toISOString(),
+      };
+      const stored = update((current) => {
+        const at = after
+          ? current.tasks.findIndex((one) => one.id === after) + 1
+          : current.tasks.length;
+        return {
+          ...current,
+          tasks: [
+            ...current.tasks.slice(0, at),
+            task,
+            ...current.tasks.slice(at),
+          ],
+        };
+      });
+      return stored ? task.id : null;
+    },
+
+    renameTask(id, title) {
+      update((current) => ({
+        ...current,
+        tasks: current.tasks.map((task) =>
+          task.id === id ? { ...task, title } : task,
+        ),
+      }));
+    },
+
+    toggleTask(id) {
+      // AC-88.4. Today's day is the tick; tomorrow it no longer matches.
+      const today = toDateValue(now());
+      update((current) => ({
+        ...current,
+        tasks: current.tasks.map((task) =>
+          task.id === id
+            ? { ...task, doneOn: task.doneOn === today ? null : today }
+            : task,
+        ),
+      }));
+    },
+
+    removeTask(id) {
+      if (!db) return;
+      const at = db.tasks.findIndex((task) => task.id === id);
+      const task = db.tasks[at];
+      if (!task) return;
+      if (!commit({ ...db, tasks: db.tasks.filter((one) => one !== task) })) {
+        return;
+      }
+      // An empty line was never a task, so there is nothing to undo.
+      if (task.title.trim() !== '') {
+        setUndoable({ kind: 'task', title: task.title, task, at });
+      }
+    },
+
     rekeyNotes(lock, notes) {
       const current = latest.current;
       if (!current) return false;
@@ -558,6 +637,7 @@ export function useDatabase(): {
           (r) => r.day,
         ),
         notes: keepBoth(current.notes, next.notes, (note) => note.id),
+        tasks: keepBoth(current.tasks, next.tasks, (task) => task.id),
         // AC-82.7. The lock held wins, as everything held does.
         // ponytail: a file locked under a different passcode brings notes
         // this lock cannot open; Replace, not Merge, is the way to take them.

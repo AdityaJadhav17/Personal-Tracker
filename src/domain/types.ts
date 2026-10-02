@@ -107,10 +107,23 @@ export interface Lock {
   check: Sealed;
 }
 
+/**
+ * US-88. One line of the daily routine. Done today when `doneOn` is today, so
+ * the list starts fresh each morning with nothing to reset.
+ */
+export interface Task {
+  id: string;
+  /** May be empty while being typed, as a new line in Notion is. */
+  title: string;
+  /** The local day it was last ticked, "2026-09-15", or null. */
+  doneOn: string | null;
+  createdAt: string;
+}
+
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 8;
+  version: 9;
   items: Item[];
   goals: Goal[];
   courses: Course[];
@@ -121,6 +134,8 @@ export interface Database {
   lastBackupAt: string | null;
   /** US-82. Null until the first note is locked. Added in version 8. */
   lock: Lock | null;
+  /** US-88. The routine, in the order shown. Added in version 9. */
+  tasks: Task[];
 }
 
 /** What the goal form produces, before the app assigns identity and time. */

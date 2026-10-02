@@ -418,3 +418,37 @@ export function noteMonth(iso: string, now: Date): string {
   }
   return at.toLocaleString('en-US', { month: 'long' });
 }
+
+/**
+ * US-90. The nth given weekday (0 is Sunday) of a month (1 to 12), as a local
+ * day, "2026-11-26"; n of -1 is the last one. "The fourth Thursday of
+ * November" is nthWeekday(year, 11, 4, 4).
+ */
+export function nthWeekday(
+  year: number,
+  month: number,
+  weekday: number,
+  n: number,
+): string {
+  if (n > 0) {
+    const first = new Date(year, month - 1, 1).getDay();
+    const date = 1 + ((weekday - first + 7) % 7) + 7 * (n - 1);
+    return toDateValue(new Date(year, month - 1, date));
+  }
+  // Day zero of the next month is the last of this one.
+  const last = new Date(year, month, 0);
+  const back = (last.getDay() - weekday + 7) % 7;
+  return toDateValue(new Date(year, month - 1, last.getDate() - back));
+}
+
+/** US-90. The weekday of a local day, 0 for Sunday. */
+export function weekdayNumber(day: string): number {
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year!, month! - 1, date!).getDay();
+}
+
+/** US-90. The local day `by` days after `day`, or before it when negative. */
+export function shiftDay(day: string, by: number): string {
+  const [year, month, date] = day.split('-').map(Number);
+  return toDateValue(new Date(year!, month! - 1, date! + by));
+}

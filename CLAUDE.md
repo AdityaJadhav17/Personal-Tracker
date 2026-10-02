@@ -46,14 +46,15 @@ for why. The one other key, `personal-tracker/theme`, is a display setting for
 this browser (US-51), read by `public/theme.js` before paint and written by the
 theme toggle; it is not app data and is never exported.
 
-The database is at version 8: items, goals, courses, reflections and notes
-(US-80, pinnable since US-81, lockable since US-82), with a
+The database is at version 9: items, goals, courses, reflections, notes
+(US-80, pinnable since US-81, lockable since US-82) and routine tasks (US-88),
+with a
 `repeat`, a `repeatDay` and a `parentId` on every item and a `lastBackupAt`
 on the whole.
 Both `load` and `parseImport` route through
 `upgrade` in `src/domain/migrate.ts`, which applies one hop per version, so an
 export taken before goals existed still opens. Neither module branches on the
-version itself; adding version 9 means adding one hop there and nowhere else.
+version itself; adding version 10 means adding one hop there and nowhere else.
 
 ## How we work
 

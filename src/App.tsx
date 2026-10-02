@@ -15,6 +15,7 @@ import NotesView from './components/NotesView';
 import ItemRow from './components/ItemRow';
 import { stepsOf } from './domain/steps';
 import ReflectionView from './components/ReflectionView';
+import RoutineView from './components/RoutineView';
 import Shell from './components/Shell';
 import type { View } from './components/Shell';
 import StatRow from './components/StatRow';
@@ -130,7 +131,8 @@ export default function App() {
 
   const current = now();
   // AC-80.7. What an import could overwrite and a backup protects.
-  const saved = db.items.length + db.notes.length;
+  // AC-88.7: the routine is data too.
+  const saved = db.items.length + db.notes.length + db.tasks.length;
   const backup = backupNotice(db.lastBackupAt, saved > 0, current);
 
   // Based on open items rather than on the array being empty, so finishing
@@ -222,6 +224,15 @@ export default function App() {
             onRecord={actions.recordToday}
           />
         </>
+      ) : view === 'routine' ? (
+        <RoutineView
+          tasks={db.tasks}
+          now={current}
+          onAdd={actions.addTask}
+          onRename={actions.renameTask}
+          onToggle={actions.toggleTask}
+          onRemove={actions.removeTask}
+        />
       ) : view === 'notes' ? (
         <NotesView
           notes={db.notes}

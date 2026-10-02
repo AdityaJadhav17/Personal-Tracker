@@ -400,3 +400,6 @@ passed 1,300 lines.
 - [US-85, CI on Node 22](stories/US-85.md)
 - [US-86, change the passcode](stories/US-86.md)
 - [US-87, community files](stories/US-87.md)
+- [US-88, a daily routine checklist](stories/US-88.md)
+- [US-89, a deadline typed into a closing day is kept](stories/US-89.md)
+- [US-90, US holidays on the calendar](stories/US-90.md)

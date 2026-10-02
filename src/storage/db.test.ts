@@ -23,7 +23,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 8,
+    version: 9,
     items,
     goals: [],
     courses: [],
@@ -31,6 +31,7 @@ function aDatabase(items: Item[] = [anItem()]): Database {
     notes: [],
     lastBackupAt: null,
     lock: null,
+    tasks: [],
   };
 }
 
@@ -122,7 +123,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(8);
+    expect(load().version).toBe(9);
   });
 });
 
@@ -142,7 +143,7 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 8 as const,
+    version: 9 as const,
     items: [],
     goals: [],
     courses: [],
@@ -150,6 +151,7 @@ describe('when the browser refuses to store', () => {
     notes: [],
     lastBackupAt: null,
     lock: null,
+    tasks: [],
   };
 
   test('save reports the failure rather than throwing out of the caller', () => {
@@ -195,7 +197,7 @@ describe('US-80 notes in storage', () => {
       STORAGE_KEY,
       JSON.stringify({ ...aDatabase([]), version: 5, notes: undefined }),
     );
-    expect(load()).toMatchObject({ version: 8, notes: [] });
+    expect(load()).toMatchObject({ version: 9, notes: [] });
   });
 
   test('AC-80.7 notes of the wrong shape come back empty', () => {
@@ -215,5 +217,18 @@ describe('US-82 the lock in storage', () => {
     };
     save({ ...aDatabase([]), lock });
     expect(load().lock).toEqual(lock);
+  });
+});
+
+describe('US-88 tasks in storage', () => {
+  test('AC-88.7 tasks survive a save and a load', () => {
+    const task = {
+      id: 't1',
+      title: 'Gym',
+      doneOn: null,
+      createdAt: '2026-09-14T17:00:00.000Z',
+    };
+    save({ ...aDatabase([]), tasks: [task] });
+    expect(load().tasks).toEqual([task]);
   });
 });

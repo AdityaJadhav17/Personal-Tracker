@@ -12,6 +12,7 @@ export type View =
   | 'courses'
   | 'reflections'
   | 'notes'
+  | 'routine'
   | 'trends'
   | 'data';
 
@@ -56,6 +57,12 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
     label: 'Notes',
     icon: 'M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 10h6M9 14h6M9 18h3',
   },
+  // US-88. The daily checklist, beside the other views you write in.
+  {
+    id: 'routine',
+    label: 'Routine',
+    icon: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17',
+  },
   {
     id: 'trends',
     label: 'Trends',
@@ -73,7 +80,14 @@ export const VIEWS: { id: View; label: string; icon: string }[] = [
  * AC-66.1. The views a phone's tab bar has no room for. They stay in the
  * sidebar on a wide screen and move behind More on a phone.
  */
-const TUCKED: View[] = ['courses', 'reflections', 'notes', 'trends', 'data'];
+const TUCKED: View[] = [
+  'courses',
+  'reflections',
+  'notes',
+  'routine',
+  'trends',
+  'data',
+];
 
 const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
 const PLUS = 'M12 5v14M5 12h14';
@@ -230,6 +244,7 @@ export default function Shell({
               titleRef={titleRef}
               from={toDateValue(now())}
               courses={courses}
+              keepOnClose
             />
           )}
         </Sheet>

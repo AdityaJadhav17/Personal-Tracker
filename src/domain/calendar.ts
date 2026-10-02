@@ -1,4 +1,5 @@
 import { dayOfMonth, monthCells, nextOccurrence, toDateValue } from './dates';
+import { holidaysIn } from './holidays';
 import type { Goal, Item } from './types';
 
 export interface DayCell {
@@ -18,6 +19,8 @@ export interface DayCell {
   repeats: Item[];
   /** AC-75.1. Finished items that were due that day. */
   done: Item[];
+  /** AC-90.1. Holiday names that day. Labels only: nothing to tick. */
+  holidays: string[];
 }
 
 /**
@@ -81,6 +84,14 @@ export function monthGrid(
     list.sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   }
 
+  // AC-90.3. The next year's list too: its New Year's Day can be observed on
+  // this year's 31 December.
+  const year = Number(month.slice(0, 4));
+  const holidaysByDay = new Map<string, string[]>();
+  for (const { day, name } of [...holidaysIn(year), ...holidaysIn(year + 1)]) {
+    holidaysByDay.set(day, [...(holidaysByDay.get(day) ?? []), name]);
+  }
+
   return monthCells(month).map((day) =>
     day === null
       ? null
@@ -91,6 +102,7 @@ export function monthGrid(
           goals: goalsByDay.get(day) ?? [],
           repeats: repeatsByDay.get(day) ?? [],
           done: doneByDay.get(day) ?? [],
+          holidays: holidaysByDay.get(day) ?? [],
         },
   );
 }

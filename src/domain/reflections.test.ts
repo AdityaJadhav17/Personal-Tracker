@@ -15,7 +15,7 @@ function aReflection(day: string, score: Reflection['score'] = 3): Reflection {
 
 function aDatabase(reflections: Reflection[]): Database {
   return {
-    version: 8,
+    version: 9,
     items: [],
     goals: [],
     courses: [],
@@ -23,6 +23,7 @@ function aDatabase(reflections: Reflection[]): Database {
     notes: [],
     lastBackupAt: null,
     lock: null,
+    tasks: [],
   };
 }
 
@@ -76,7 +77,7 @@ describe('recordReflection', () => {
   test('the other collections are carried through', () => {
     const next = recordReflection(aDatabase([]), '2026-09-15', 3, '', NOW);
 
-    expect(next.version).toBe(8);
+    expect(next.version).toBe(9);
     expect(next.items).toEqual([]);
     expect(next.goals).toEqual([]);
     expect(next.courses).toEqual([]);

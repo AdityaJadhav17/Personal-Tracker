@@ -55,6 +55,8 @@ describe('monthGrid', () => {
       repeats: [],
       // AC-75.1. Nothing finished there either.
       done: [],
+      // AC-90.1. And no holiday on the 17th.
+      holidays: [],
     });
   });
 
@@ -271,5 +273,35 @@ describe('US-75 finished items stay on their day', () => {
     ]);
 
     expect(weekLoad(grid.slice(14, 21))).toBe(1);
+  });
+});
+
+describe('US-90 holidays on the calendar', () => {
+  test('AC-90.1 a holiday is named on its day', () => {
+    const cells = monthGrid('2026-11', []);
+    const thanksgiving = cells.find((cell) => cell?.day === '2026-11-26');
+
+    expect(thanksgiving?.holidays).toEqual(['Thanksgiving']);
+  });
+
+  test('AC-90.3 December shows New Year’s Day observed from the year after', () => {
+    // 1 January 2028 is a Saturday, observed on Friday 31 December 2027.
+    const cells = monthGrid('2027-12', []);
+    const eve = cells.find((cell) => cell?.day === '2027-12-31');
+
+    expect(eve?.holidays).toHaveLength(2);
+    expect(eve?.holidays).toEqual(
+      expect.arrayContaining(['New Year’s Day (observed)', 'New Year’s Eve']),
+    );
+  });
+
+  test('AC-90.5 a holiday is not a deadline: no item, and no weight in the week', () => {
+    const cells = monthGrid('2026-11', []);
+    const week = cells
+      .slice(cells.findIndex((cell) => cell?.day === '2026-11-22'))
+      .slice(0, 7);
+
+    expect(week.find((cell) => cell?.day === '2026-11-26')?.items).toEqual([]);
+    expect(weekLoad(week)).toBe(0);
   });
 });

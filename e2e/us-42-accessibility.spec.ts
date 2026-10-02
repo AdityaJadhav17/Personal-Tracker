@@ -17,6 +17,7 @@ const VIEWS = [
   'Courses',
   'Reflections',
   'Notes',
+  'Routine',
   'Trends',
   'Data',
 ];
@@ -94,6 +95,16 @@ async function seed(page: Page) {
             createdAt: day(-12, 9, 0),
             updatedAt: day(-12, 9, 0),
           },
+        ],
+        // US-88. One ticked today and one not, so both are scanned.
+        tasks: [
+          {
+            id: 't1',
+            title: 'Vitamins',
+            doneOn: new Date().toLocaleDateString('en-CA'),
+            createdAt: day(-3),
+          },
+          { id: 't2', title: 'Gym', doneOn: null, createdAt: day(-3) },
         ],
         items: [
           item('late', 'Overdue reading', day(-2)),

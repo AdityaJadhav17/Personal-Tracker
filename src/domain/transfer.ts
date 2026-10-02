@@ -7,6 +7,7 @@ import type {
   Note,
   Reflection,
   Sealed,
+  Task,
 } from './types';
 
 /**
@@ -82,6 +83,17 @@ const KEYS: Record<number, string[]> = {
     'notes',
     'lastBackupAt',
     'lock',
+  ],
+  9: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+    'lock',
+    'tasks',
   ],
 };
 
@@ -290,6 +302,33 @@ function toReflection(value: unknown): Reflection {
   };
 }
 
+/** AC-88.7. A routine task: text, and the day it was last ticked or null. */
+function taskProblem(value: unknown): string | null {
+  const raw = fields(value);
+  if (!raw) return 'it is not an object';
+
+  if (!isText(raw.id) || raw.id === '') return 'it has no id';
+  if (!isText(raw.title)) return 'its title must be text';
+  if (
+    raw.doneOn !== null &&
+    (!isText(raw.doneOn) || !/^\d{4}-\d{2}-\d{2}$/.test(raw.doneOn))
+  ) {
+    return 'its done day must look like 2026-09-15, or be null';
+  }
+  if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  return null;
+}
+
+function toTask(value: unknown): Task {
+  const raw = value as Record<string, unknown>;
+  return {
+    id: raw.id as string,
+    title: raw.title as string,
+    doneOn: raw.doneOn as string | null,
+    createdAt: raw.createdAt as string,
+  };
+}
+
 function toNote(value: unknown): Note {
   const raw = value as Record<string, unknown>;
   return {
@@ -368,7 +407,8 @@ export function parseImport(text: string): ParseResult {
     version !== 5 &&
     version !== 6 &&
     version !== 7 &&
-    version !== 8
+    version !== 8 &&
+    version !== 9
   ) {
     return {
       ok: false,
@@ -417,6 +457,15 @@ export function parseImport(text: string): ParseResult {
       return { ok: false, error: 'That file has no notes list.' };
     }
     const problem = collectionProblem(raw.notes, 'Note', noteProblem);
+    if (problem) return { ok: false, error: problem };
+  }
+
+  // AC-88.7. Version 9 is the first to carry tasks, and must carry them.
+  if (version >= 9) {
+    if (!Array.isArray(raw.tasks)) {
+      return { ok: false, error: 'That file has no tasks list.' };
+    }
+    const problem = collectionProblem(raw.tasks, 'Task', taskProblem);
     if (problem) return { ok: false, error: problem };
   }
 
@@ -480,6 +529,7 @@ export function parseImport(text: string): ParseResult {
             },
           }
         : null,
+      tasks: version >= 9 ? (raw.tasks as unknown[]).map(toTask) : [],
     }),
   };
 }

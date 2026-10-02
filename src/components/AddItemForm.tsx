@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { toDueAt } from '../domain/dates';
 import type {
   Category,
@@ -34,6 +34,12 @@ interface AddItemFormProps {
   from?: string;
   /** AC-78.1. Offered as Course once there are any; none, no field. */
   courses?: Course[];
+  /**
+   * AC-89.1. In a calendar day or the phone sheet, closing removes the form.
+   * With this, a title typed and not yet added is added as it goes, rather
+   * than lost with it.
+   */
+  keepOnClose?: boolean;
 }
 
 export default function AddItemForm({
@@ -43,6 +49,7 @@ export default function AddItemForm({
   quickFrom,
   from,
   courses = [],
+  keepOnClose = false,
 }: AddItemFormProps) {
   // AC-66.3. Home's form and the phone's add sheet can share a page, so each
   // form's labels point at its own fields.
@@ -60,28 +67,41 @@ export default function AddItemForm({
   const [titleError, setTitleError] = useState('');
   const [dueError, setDueError] = useState('');
 
+  // AC-89.1. The draft as it stands, read when the form goes. A ref, because
+  // the effect below runs its cleanup once, with this render's values long
+  // gone.
+  const leaving = useRef<() => void>(() => {});
+  leaving.current = () => {
+    const ready = draft();
+    if (ready) onAdd(ready);
+  };
+  useEffect(() => {
+    if (!keepOnClose) return;
+    return () => leaving.current();
+  }, [keepOnClose]);
+
+  /** What the form holds as a draft, or null while it is not one yet. */
+  function draft(): ItemDraft | null {
+    const trimmed = title.trim();
+    const dueAt = toDueAt(dueDate, dueTime);
+    if (!trimmed || !dueAt) return null;
+    return {
+      title: trimmed,
+      dueAt,
+      category,
+      priority,
+      repeat,
+      courseId: courseId || null,
+    };
+  }
+
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const trimmed = title.trim();
-    const dueAt = toDueAt(dueDate, dueTime);
-
-    setTitleError(trimmed ? '' : TITLE_REQUIRED);
-    setDueError(dueAt ? '' : DUE_REQUIRED);
-    if (!trimmed || !dueAt) return;
-
-    if (
-      !onAdd({
-        title: trimmed,
-        dueAt,
-        category,
-        priority,
-        repeat,
-        courseId: courseId || null,
-      })
-    ) {
-      return;
-    }
+    setTitleError(title.trim() ? '' : TITLE_REQUIRED);
+    setDueError(toDueAt(dueDate, dueTime) ? '' : DUE_REQUIRED);
+    const ready = draft();
+    if (!ready || !onAdd(ready)) return;
 
     // Every field resets, not just the text ones. Leaving the selects on their
     // last values means the next item silently inherits them.

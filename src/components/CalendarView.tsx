@@ -300,6 +300,11 @@ export default function CalendarView({
               Close
             </button>
           </div>
+          {openCell.holidays.map((name) => (
+            <p className="calendar__day-holiday" key={name}>
+              {name}
+            </p>
+          ))}
           {openCell.goals.map((goal) => (
             <p className="calendar__day-goal" key={goal.id}>
               Goal: {goal.name}
@@ -337,6 +342,7 @@ export default function CalendarView({
             titleRef={titleRef}
             day={openCell.day}
             courses={courses}
+            keepOnClose
           />
         </section>
       )}
@@ -453,6 +459,14 @@ function Cell({
           <span aria-hidden="true">{cell.date}</span>
         </time>
       </button>
+
+      {/* AC-90.1. A label, not a deadline: nothing to tick or drag. */}
+      {cell.holidays.map((name) => (
+        // A narrow cell cuts a long name short; hover shows it whole.
+        <span className="calendar__holiday" key={name} title={name}>
+          {name}
+        </span>
+      ))}
 
       {cell.goals.map((goal) => (
         <span className="calendar__goal" key={goal.id}>

@@ -1,4 +1,5 @@
 import {
+  act,
   createEvent,
   fireEvent,
   render,
@@ -769,5 +770,99 @@ describe('US-79 copy by dragging with Ctrl', () => {
       'title',
       expect.stringContaining('hold Ctrl as you drop to copy'),
     );
+  });
+});
+
+describe('US-89 a deadline typed into a closing day is kept', () => {
+  test('AC-89.1 clicking outside the day adds what was typed, on that day', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn(() => true);
+    renderWith([], [], onAdd);
+
+    await user.click(cell('September 17,'));
+    await user.keyboard('Dentist');
+    // What a click outside does to a native popover.
+    act(() =>
+      screen.getByRole('dialog', { name: 'September 17, 2026' }).hidePopover(),
+    );
+
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Dentist',
+        dueAt: new Date(2026, 8, 17, 23, 59).toISOString(),
+      }),
+    );
+  });
+
+  test('AC-89.1 Close, another day, or another month keeps it too', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn<(draft: ItemDraft) => boolean>(() => true);
+    renderWith([], [], onAdd);
+
+    await user.click(cell('September 17,'));
+    await user.keyboard('Dentist');
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    await user.click(cell('September 18,'));
+    await user.keyboard('Lab');
+    await user.click(cell('September 19,'));
+
+    await user.keyboard('Quiz');
+    await user.click(screen.getByRole('button', { name: 'Next month' }));
+
+    expect(onAdd.mock.calls.map(([draft]) => draft.title)).toEqual([
+      'Dentist',
+      'Lab',
+      'Quiz',
+    ]);
+  });
+
+  test('AC-89.2 a day closed with nothing typed adds nothing', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn(() => true);
+    renderWith([], [], onAdd);
+
+    await user.click(cell('September 17,'));
+    await user.keyboard('   ');
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  test('AC-89.1 adding with Enter, then closing, adds it once', async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn(() => true);
+    renderWith([], [], onAdd);
+
+    await user.click(cell('September 17,'));
+    await user.keyboard('Dentist{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('US-90 holidays on the calendar', () => {
+  test('AC-90.1 a holiday is named in its cell and in its open day', async () => {
+    const user = userEvent.setup();
+    renderWith([]);
+
+    expect(cell('September 7,')).toHaveTextContent('Labor Day');
+
+    await user.click(cell('September 7,'));
+    expect(
+      within(
+        screen.getByRole('dialog', { name: 'September 7, 2026' }),
+      ).getByText('Labor Day'),
+    ).toBeVisible();
+  });
+
+  test('AC-90.5 a holiday has nothing to tick off', () => {
+    renderWith([]);
+
+    expect(
+      within(cell('September 7,')).queryByRole('button', { name: /Labor Day/ }),
+    ).toBeNull();
   });
 });

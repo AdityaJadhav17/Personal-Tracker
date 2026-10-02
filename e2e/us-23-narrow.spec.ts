@@ -9,6 +9,7 @@ const VIEWS = [
   'Courses',
   'Reflections',
   'Notes',
+  'Routine',
   'Trends',
   'Data',
 ];

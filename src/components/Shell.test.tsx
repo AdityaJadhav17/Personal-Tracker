@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Shell, { VIEWS } from './Shell';
 
@@ -227,4 +227,28 @@ describe('US-66 the phone tab bar', () => {
       screen.queryByRole('button', { name: 'Add a deadline' }),
     ).not.toBeInTheDocument();
   });
+});
+
+test('AC-89.3 the phone add sheet keeps what was typed when it closes', async () => {
+  const user = userEvent.setup();
+  const onAdd = vi.fn(() => true);
+  render(
+    <Shell view="calendar" onNavigate={noop} onAdd={onAdd}>
+      <p>content</p>
+    </Shell>,
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Add a deadline' }));
+  const sheet = screen.getByRole('dialog', { name: 'Add a deadline' });
+  await user.type(within(sheet).getByLabelText('Title'), 'CSE 120 HW 1');
+  // What a tap outside does to a native popover.
+  act(() => sheet.hidePopover());
+
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+  );
+  expect(onAdd).toHaveBeenCalledTimes(1);
+  expect(onAdd).toHaveBeenCalledWith(
+    expect.objectContaining({ title: 'CSE 120 HW 1' }),
+  );
 });

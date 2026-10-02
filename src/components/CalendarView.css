@@ -197,6 +197,20 @@
   color: var(--text-muted);
 }
 
+/* AC-90.1. A holiday is the quietest thing in a day: muted words, no box,
+   so it never reads as something to do. */
+.calendar__holiday {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 2px;
+  padding: 1px var(--space-1);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+
 /* AC-41.1. A goal is a date that matters, not something due: outlined, not
    filled, so it never reads as one more deadline. */
 .calendar__goal {
@@ -261,6 +275,7 @@
   font-size: 1rem;
 }
 
+.calendar__day-holiday,
 .calendar__day-goal,
 .calendar__day-repeat,
 .calendar__day-empty {
