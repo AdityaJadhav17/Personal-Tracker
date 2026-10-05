@@ -20,3 +20,6 @@ personal-tracker-*.ics
 
 # Local editor and preview tooling, not part of the app.
 .claude/
+
+# Archify working folders (US-91). Finished diagrams live in docs/diagrams.
+.archify/

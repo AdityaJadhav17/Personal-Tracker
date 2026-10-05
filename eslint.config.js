@@ -12,6 +12,9 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       'node_modules',
+      // US-91. Local editor and agent tooling, gitignored like this: the
+      // Archify skill installed there is someone else's code.
+      '.claude',
       // Throwaway spike, deleted once it has answered its three questions.
       // Not shipped, not imported, and not worth a globals config.
       'spike',

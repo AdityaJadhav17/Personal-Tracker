@@ -1,0 +1,363 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Personal Tracker: from an idea to the app on your taskbar",
+    "output": "docs/diagrams/workflow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/AdityaJadhav17/Personal-Tracker.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "47b1fd74d312b38e4dc6a62bd8c7710e74bd1c22"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Work step"
+        },
+        "security": {
+          "label": "Gate or stop"
+        },
+        "cloud": {
+          "label": "Hosted service"
+        },
+        "external": {
+          "label": "Your action"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "you",
+      "label": "You"
+    },
+    {
+      "id": "agent",
+      "label": "Claude"
+    },
+    {
+      "id": "github",
+      "label": "GitHub"
+    },
+    {
+      "id": "laptop",
+      "label": "Laptop"
+    }
+  ],
+  "phases": [
+    {
+      "id": "agree",
+      "label": "Agree",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "make",
+      "label": "Build test-first",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ship",
+      "label": "Ship",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "ask",
+    "story",
+    "approve",
+    "tests",
+    "checks",
+    "push",
+    "ci",
+    "deploy"
+  ],
+  "nodes": [
+    {
+      "id": "ask",
+      "lane": "you",
+      "col": 0,
+      "type": "external",
+      "label": "Ask",
+      "sublabel": "a feature or a bug",
+      "icon": "person",
+      "width": 176
+    },
+    {
+      "id": "story",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "Story + plan",
+      "sublabel": "US-NN.md, ACs",
+      "width": 176,
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 35,
+          "label": "one story per file"
+        },
+        {
+          "path": "CLAUDE.md",
+          "line": 73,
+          "label": "plan before 200+ lines"
+        }
+      ]
+    },
+    {
+      "id": "approve",
+      "lane": "you",
+      "col": 2,
+      "type": "security",
+      "label": "Approve",
+      "sublabel": "say go",
+      "tag": "no code before",
+      "width": 176,
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 63,
+          "label": "no code before a plan"
+        }
+      ]
+    },
+    {
+      "id": "tests",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Test first",
+      "sublabel": "red, then green",
+      "width": 176,
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 79,
+          "end_line": 80,
+          "label": "watch it fail first"
+        },
+        {
+          "path": "CLAUDE.md",
+          "line": 83,
+          "end_line": 84,
+          "label": "AC ID in every test"
+        },
+        {
+          "path": "CLAUDE.md",
+          "line": 94,
+          "label": "pinned clock"
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "lane": "agent",
+      "col": 4,
+      "type": "backend",
+      "label": "Full checks",
+      "sublabel": "unit, e2e, lint",
+      "width": 176,
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 106,
+          "end_line": 107,
+          "label": "Playwright before showing"
+        },
+        {
+          "path": "docs/engineering/definition-of-done.md",
+          "line": 10,
+          "label": "definition of done"
+        }
+      ]
+    },
+    {
+      "id": "push",
+      "lane": "you",
+      "col": 5,
+      "type": "external",
+      "label": "Commit + push",
+      "sublabel": "you run git",
+      "icon": "person",
+      "width": 176,
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "line": 75,
+          "label": "he runs the git commands"
+        }
+      ]
+    },
+    {
+      "id": "ci",
+      "lane": "github",
+      "col": 5,
+      "type": "cloud",
+      "label": "CI",
+      "sublabel": "Node 22, read-only",
+      "width": 176,
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 3,
+          "label": "on every push"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 9,
+          "label": "token can only read"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 36,
+          "end_line": 45,
+          "label": "tests, e2e, build"
+        }
+      ]
+    },
+    {
+      "id": "deploy",
+      "lane": "laptop",
+      "col": 5,
+      "type": "backend",
+      "label": "update.mjs",
+      "sublabel": "build into 4180's folder",
+      "width": 176,
+      "sources": [
+        {
+          "path": "scripts/update.mjs",
+          "line": 113,
+          "label": "deploy once passed"
+        },
+        {
+          "path": "scripts/update.mjs",
+          "line": 126,
+          "label": "build into the target"
+        },
+        {
+          "path": "scripts/update.mjs",
+          "line": 132,
+          "label": "deployed.txt"
+        }
+      ]
+    },
+    {
+      "id": "failed",
+      "lane": "github",
+      "col": 4,
+      "type": "security",
+      "label": "CI failed",
+      "sublabel": "never deployed",
+      "width": 176,
+      "sources": [
+        {
+          "path": "scripts/update.mjs",
+          "line": 115,
+          "end_line": 116,
+          "label": "not deploying it"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "ask-story",
+      "from": "ask",
+      "to": "story",
+      "label": "describe"
+    },
+    {
+      "id": "story-approve",
+      "from": "story",
+      "to": "approve",
+      "label": "plan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approve-tests",
+      "from": "approve",
+      "to": "tests",
+      "label": "go",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tests-checks",
+      "from": "tests",
+      "to": "checks"
+    },
+    {
+      "id": "checks-push",
+      "from": "checks",
+      "to": "push",
+      "label": "commit commands"
+    },
+    {
+      "id": "push-ci",
+      "from": "push",
+      "to": "ci"
+    },
+    {
+      "id": "ci-deploy",
+      "from": "ci",
+      "to": "deploy",
+      "label": "check passed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "approve-back",
+      "from": "approve",
+      "to": "story",
+      "label": "not yet",
+      "variant": "security",
+      "role": "return"
+    },
+    {
+      "id": "ci-failed",
+      "from": "ci",
+      "to": "failed",
+      "label": "red",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "failed-fix",
+      "from": "failed",
+      "to": "tests",
+      "label": "fix, test first",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agree first",
+      "items": [
+        "Every change starts as a story with acceptance criteria",
+        "No application code until you say go; over 200 lines always stops for a plan"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Build",
+      "items": [
+        "Each criterion gets a test named by its ID, seen failing before the code exists",
+        "Every test runs on 15 September 2026, so results do not depend on the day"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Ship",
+      "items": [
+        "You commit and push; CI runs with a read-only token",
+        "The laptop deploys only a commit whose check named check passed"
+      ]
+    }
+  ]
+}

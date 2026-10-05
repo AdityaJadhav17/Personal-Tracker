@@ -1,0 +1,457 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Personal Tracker: runtime architecture",
+    "output": "docs/diagrams/architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/AdityaJadhav17/Personal-Tracker.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "47b1fd74d312b38e4dc6a62bd8c7710e74bd1c22"
+    }
+  },
+  "components": [
+    {
+      "id": "you",
+      "type": "external",
+      "label": "You",
+      "sublabel": "taskbar app",
+      "icon": "person",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "serve.mjs",
+      "sublabel": "127.0.0.1:4180",
+      "tag": "Host check",
+      "pos": [
+        280,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/serve.mjs",
+          "line": 69,
+          "end_line": 71,
+          "label": "hostAllowed"
+        },
+        {
+          "path": "scripts/serve.mjs",
+          "line": 110,
+          "label": "listen on loopback"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "React app",
+      "sublabel": "App + views",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/main.tsx",
+          "line": 14,
+          "end_line": 16,
+          "label": "mounts App"
+        },
+        {
+          "path": "index.html",
+          "line": 40,
+          "label": "loads main.tsx"
+        },
+        {
+          "path": "src/App.tsx",
+          "line": 32,
+          "label": "uses useDatabase"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "frontend",
+      "label": "useDatabase",
+      "sublabel": "actions + undo",
+      "pos": [
+        780,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/state/useDatabase.ts",
+          "line": 135,
+          "label": "the hook"
+        },
+        {
+          "path": "src/state/useDatabase.ts",
+          "line": 183,
+          "end_line": 191,
+          "label": "write first, then show"
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "db.ts",
+      "sublabel": "load / save",
+      "pos": [
+        1030,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/storage/db.ts",
+          "line": 44,
+          "end_line": 45,
+          "label": "load"
+        },
+        {
+          "path": "src/storage/db.ts",
+          "line": 103,
+          "end_line": 105,
+          "label": "save"
+        }
+      ]
+    },
+    {
+      "id": "browserStore",
+      "type": "database",
+      "label": "localStorage",
+      "sublabel": "personal-tracker/v1",
+      "pos": [
+        1280,
+        260
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/storage/db.ts",
+          "line": 13,
+          "label": "the one key"
+        }
+      ]
+    },
+    {
+      "id": "lock",
+      "type": "security",
+      "label": "Web Crypto lock",
+      "sublabel": "PBKDF2 + AES-GCM",
+      "pos": [
+        530,
+        80
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/domain/lock.ts",
+          "line": 13,
+          "label": "600,000 iterations"
+        },
+        {
+          "path": "src/domain/lock.ts",
+          "line": 50,
+          "label": "seal"
+        },
+        {
+          "path": "src/components/NotesView.tsx",
+          "line": 72,
+          "label": "key held in memory"
+        }
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "Domain rules",
+      "sublabel": "pure, now passed in",
+      "pos": [
+        780,
+        440
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/domain/migrate.ts",
+          "line": 35,
+          "label": "upgrade, one hop a version"
+        },
+        {
+          "path": "src/domain/transfer.ts",
+          "line": 379,
+          "label": "parseImport"
+        },
+        {
+          "path": "src/domain/ics.ts",
+          "line": 168,
+          "label": "toCalendar"
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "type": "external",
+      "label": "Your files",
+      "sublabel": "backup .json, .ics",
+      "pos": [
+        530,
+        620
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/App.tsx",
+          "line": 92,
+          "end_line": 106,
+          "label": "export, calendar export"
+        },
+        {
+          "path": "src/App.tsx",
+          "line": 117,
+          "label": "import is parsed"
+        }
+      ]
+    },
+    {
+      "id": "deployed",
+      "type": "database",
+      "label": "Deployed build",
+      "sublabel": "%LOCALAPPDATA%",
+      "pos": [
+        280,
+        440
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/serve.mjs",
+          "line": 117,
+          "end_line": 118,
+          "label": "served from here"
+        },
+        {
+          "path": "scripts/update.mjs",
+          "line": 33,
+          "label": "deployed.txt marker"
+        }
+      ]
+    },
+    {
+      "id": "updater",
+      "type": "backend",
+      "label": "update.mjs",
+      "sublabel": "every 5 minutes",
+      "pos": [
+        280,
+        620
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/update.mjs",
+          "line": 41,
+          "label": "verdict"
+        },
+        {
+          "path": "scripts/update.mjs",
+          "line": 123,
+          "end_line": 132,
+          "label": "build, check, mark"
+        }
+      ]
+    },
+    {
+      "id": "github",
+      "type": "cloud",
+      "label": "GitHub",
+      "sublabel": "main + CI checks",
+      "pos": [
+        40,
+        620
+      ],
+      "size": [
+        130,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/update.mjs",
+          "line": 56,
+          "label": "check-runs API"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 1,
+          "label": "the CI workflow"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Browser page, CSP: scripts and requests to 'self' only",
+      "wraps": [
+        "app",
+        "state",
+        "storage",
+        "browserStore",
+        "lock",
+        "domain"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "open-app",
+      "from": "you",
+      "to": "server",
+      "label": "GET :4180",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serve-build",
+      "from": "server",
+      "to": "app",
+      "label": "static files"
+    },
+    {
+      "id": "call-actions",
+      "from": "app",
+      "to": "state",
+      "label": "actions"
+    },
+    {
+      "id": "commit",
+      "from": "state",
+      "to": "storage",
+      "label": "commit"
+    },
+    {
+      "id": "persist",
+      "from": "storage",
+      "to": "browserStore",
+      "label": "JSON"
+    },
+    {
+      "id": "seal-notes",
+      "from": "app",
+      "to": "lock",
+      "label": "seal / open",
+      "variant": "security"
+    },
+    {
+      "id": "use-rules",
+      "from": "state",
+      "to": "domain",
+      "label": "pure rules"
+    },
+    {
+      "id": "exchange-files",
+      "from": "app",
+      "to": "files",
+      "label": "export / import",
+      "variant": "dashed"
+    },
+    {
+      "id": "read-build",
+      "from": "deployed",
+      "to": "server",
+      "label": "read files"
+    },
+    {
+      "id": "write-build",
+      "from": "updater",
+      "to": "deployed",
+      "label": "build + check"
+    },
+    {
+      "id": "poll-github",
+      "from": "github",
+      "to": "updater",
+      "label": "CI passed",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Opening the app",
+      "items": [
+        "The taskbar app loads from serve.mjs, a Node built-ins-only server on loopback",
+        "Any Host but localhost or 127.0.0.1 on its port gets a 403"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data",
+      "items": [
+        "One localStorage key holds everything, written before the screen updates",
+        "Imports are parsed as hostile; every version upgrades one hop at a time"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security",
+      "items": [
+        "CSP in index.html: no network after load, no inline script",
+        "Locked notes are sealed in the browser; the key never leaves memory"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Deploy",
+      "items": [
+        "update.mjs deploys main only after GitHub's check named check passes",
+        "It builds into the folder serve.mjs reads, then writes deployed.txt"
+      ]
+    }
+  ]
+}

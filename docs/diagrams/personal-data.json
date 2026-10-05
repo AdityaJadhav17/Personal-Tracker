@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Personal Tracker: where your personal data goes",
+    "output": "docs/diagrams/personal-data.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/AdityaJadhav17/Personal-Tracker.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "47b1fd74d312b38e4dc6a62bd8c7710e74bd1c22"
+    },
+    "viewBox": [
+      1068,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "your data, in the app"
+        },
+        "security": {
+          "label": "sealed or checked"
+        },
+        "dashed": {
+          "label": "leaves as a file you save"
+        },
+        "default": {
+          "label": "untrusted file"
+        },
+        "database": {
+          "label": "stored"
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "label": "Comes from"
+    },
+    {
+      "label": "Checked"
+    },
+    {
+      "label": "Held"
+    },
+    {
+      "label": "Stored"
+    },
+    {
+      "label": "Leaves, only as your file"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "typed",
+      "type": "frontend",
+      "label": "What you type",
+      "sublabel": "notes, tasks, dates",
+      "stage": 0,
+      "row": 1,
+      "icon": "person",
+      "sources": [
+        {
+          "path": "src/components/AddItemForm.tsx",
+          "line": 98,
+          "end_line": 104,
+          "label": "add a deadline"
+        },
+        {
+          "path": "src/components/NotesView.tsx",
+          "line": 149,
+          "label": "note as you type"
+        },
+        {
+          "path": "src/components/RoutineView.tsx",
+          "line": 81,
+          "label": "routine task"
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "type": "external",
+      "label": "Files you import",
+      "sublabel": "backup or .ics",
+      "stage": 0,
+      "row": 2,
+      "tag": "hostile",
+      "sources": [
+        {
+          "path": "src/App.tsx",
+          "line": 117,
+          "label": "backup parsed"
+        },
+        {
+          "path": "src/components/CalendarFileImport.tsx",
+          "line": 46,
+          "label": ".ics parsed"
+        }
+      ]
+    },
+    {
+      "id": "lock",
+      "type": "security",
+      "label": "Note lock",
+      "sublabel": "AES-GCM in browser",
+      "stage": 1,
+      "row": 0,
+      "tag": "sealed",
+      "sources": [
+        {
+          "path": "src/components/NotesView.tsx",
+          "line": 160,
+          "label": "seal while typing"
+        },
+        {
+          "path": "src/domain/lock.ts",
+          "line": 50,
+          "label": "seal"
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "type": "security",
+      "label": "Import checks",
+      "sublabel": "checked first",
+      "stage": 1,
+      "row": 2,
+      "tag": "5 MB cap",
+      "sources": [
+        {
+          "path": "src/domain/transfer.ts",
+          "line": 382,
+          "label": "size refused first"
+        },
+        {
+          "path": "src/domain/transfer.ts",
+          "line": 424,
+          "label": "unknown keys refused"
+        },
+        {
+          "path": "src/domain/icsImport.ts",
+          "line": 30,
+          "label": "parseCalendar"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "frontend",
+      "label": "useDatabase",
+      "sublabel": "in memory, this tab",
+      "stage": 2,
+      "row": 1,
+      "sources": [
+        {
+          "path": "src/state/useDatabase.ts",
+          "line": 135,
+          "label": "the hook"
+        },
+        {
+          "path": "src/state/useDatabase.ts",
+          "line": 183,
+          "end_line": 191,
+          "label": "commit"
+        }
+      ]
+    },
+    {
+      "id": "browserStore",
+      "type": "database",
+      "label": "localStorage",
+      "sublabel": "this browser only",
+      "stage": 3,
+      "row": 2,
+      "sources": [
+        {
+          "path": "src/storage/db.ts",
+          "line": 13,
+          "label": "the one key"
+        },
+        {
+          "path": "src/storage/db.ts",
+          "line": 103,
+          "end_line": 105,
+          "label": "save"
+        }
+      ]
+    },
+    {
+      "id": "exportFile",
+      "type": "external",
+      "label": "Export",
+      "sublabel": "a backup you keep",
+      "stage": 4,
+      "row": 0,
+      "sources": [
+        {
+          "path": "src/App.tsx",
+          "line": 96,
+          "label": "serialize everything"
+        },
+        {
+          "path": "src/domain/transfer.ts",
+          "line": 19,
+          "label": "serialize"
+        }
+      ]
+    },
+    {
+      "id": "phoneCalendar",
+      "type": "external",
+      "label": "Phone calendar",
+      "sublabel": ".ics you import",
+      "stage": 4,
+      "row": 1,
+      "sources": [
+        {
+          "path": "src/App.tsx",
+          "line": 104,
+          "end_line": 106,
+          "label": "calendar export"
+        },
+        {
+          "path": "src/domain/ics.ts",
+          "line": 177,
+          "label": "open deadlines only"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "type-note",
+      "from": "typed",
+      "to": "lock",
+      "label": "locked note text",
+      "classification": "never stored readable",
+      "variant": "security"
+    },
+    {
+      "id": "type-rest",
+      "from": "typed",
+      "to": "state",
+      "label": "everything else",
+      "classification": "personal",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "sealed-in",
+      "from": "lock",
+      "to": "state",
+      "label": "title + ciphertext",
+      "classification": "sealed",
+      "variant": "security"
+    },
+    {
+      "id": "files-in",
+      "from": "files",
+      "to": "checks",
+      "label": "JSON or events",
+      "classification": "untrusted"
+    },
+    {
+      "id": "files-ok",
+      "from": "checks",
+      "to": "state",
+      "label": "checked records",
+      "classification": ".ics: after you confirm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "persist",
+      "from": "state",
+      "to": "browserStore",
+      "label": "whole database",
+      "classification": "one key",
+      "variant": "emphasis"
+    },
+    {
+      "id": "export",
+      "from": "state",
+      "to": "exportFile",
+      "label": "everything",
+      "classification": "locks stay sealed",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          530,
+          157
+        ]
+      ]
+    },
+    {
+      "id": "to-phone",
+      "from": "state",
+      "to": "phoneCalendar",
+      "label": "open deadlines",
+      "classification": "no notes",
+      "variant": "dashed",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Nothing leaves on its own",
+      "items": [
+        "No network request after load; the page's CSP allows only its own origin",
+        "Data leaves only as a file you choose to save: a backup, or an .ics for your phone"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Files are hostile until checked",
+      "items": [
+        "A backup is size-capped, then every field and key is checked before anything is written",
+        "A calendar file is previewed and added only when you confirm"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Locked notes",
+      "items": [
+        "Sealed as you type; only the title is stored readable",
+        "The passcode and key are never written anywhere"
+      ]
+    }
+  ]
+}
