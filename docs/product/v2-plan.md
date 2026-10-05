@@ -405,3 +405,4 @@ passed 1,300 lines.
 - [US-90, US holidays on the calendar](stories/US-90.md)
 - [US-91, diagrams and a README that matches the app](stories/US-91.md)
 - [US-92, editing an event on the calendar is only editing](stories/US-92.md)
+- [US-93, change an event's category](stories/US-93.md)

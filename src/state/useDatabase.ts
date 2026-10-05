@@ -6,6 +6,7 @@ import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
 import type {
+  Category,
   Course,
   CourseDraft,
   Database,
@@ -44,6 +45,8 @@ export interface DatabaseActions {
   setGoal: (id: string, goalId: string | null) => void;
   /** AC-92.2. */
   setPriority: (id: string, priority: Priority) => void;
+  /** AC-93.1. */
+  setCategory: (id: string, category: Category) => void;
   addCourse: (draft: CourseDraft) => void;
   /** AC-77.2. New details for the same course: same id, so same items. */
   editCourse: (id: string, draft: CourseDraft) => void;
@@ -426,6 +429,10 @@ export function useDatabase(): {
 
     setPriority(id, priority) {
       mapItems(id, (item) => ({ ...item, priority }));
+    },
+
+    setCategory(id, category) {
+      mapItems(id, (item) => ({ ...item, category }));
     },
 
     addCourse(draft) {

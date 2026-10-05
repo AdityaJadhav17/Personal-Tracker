@@ -201,6 +201,7 @@ export default function App() {
                   goals={db.goals}
                   onGoalChange={actions.setGoal}
                   onPriorityChange={actions.setPriority}
+                  onCategoryChange={actions.setCategory}
                   onEdit={actions.editItem}
                   onDelete={actions.removeItem}
                   steps={stepsOf(item.id, db.items)}
@@ -439,6 +440,7 @@ export default function App() {
               goals={db.goals}
               onGoalChange={actions.setGoal}
               onPriorityChange={actions.setPriority}
+              onCategoryChange={actions.setCategory}
               onEdit={actions.editItem}
               onDelete={actions.removeItem}
               allItems={db.items}

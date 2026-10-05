@@ -10,7 +10,14 @@ import {
   toTimeValue,
   tomorrowOf,
 } from '../domain/dates';
-import type { Course, Goal, Item, Priority, Repeat } from '../domain/types';
+import type {
+  Category,
+  Course,
+  Goal,
+  Item,
+  Priority,
+  Repeat,
+} from '../domain/types';
 
 /** Same words the add form uses, so there is one definition of the message. */
 const TITLE_REQUIRED = 'Give it a title.';
@@ -28,6 +35,8 @@ interface ItemRowProps {
   onGoalChange: (id: string, goalId: string | null) => void;
   /** AC-92.2. Saved on pick, like course and goal. */
   onPriorityChange: (id: string, priority: Priority) => void;
+  /** AC-93.1. Saved on pick. */
+  onCategoryChange: (id: string, category: Category) => void;
   onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
   /** US-45. This item's steps, in date order; empty for most items. */
@@ -63,6 +72,7 @@ export default function ItemRow({
   onCourseChange,
   onGoalChange,
   onPriorityChange,
+  onCategoryChange,
   onEdit,
   onDelete,
   steps,
@@ -448,9 +458,29 @@ export default function ItemRow({
           */}
           {/* AC-59.1. Named on screen like the fields above, and sized like
               them, where they were once two small unlabelled boxes. */}
-          {/* AC-92.2 and AC-92.3. Everything set while adding can be
-              changed here; priority leads the row Course and Goal share. */}
-          <div className="form__field">
+          {/* AC-93.1 and AC-93.2. Everything set while adding can be
+              changed here: what kind of thing it is and how much it matters,
+              then, on the next row, what it belongs to. */}
+          <div className="form__field item__field--half">
+            <span className="form__label" aria-hidden="true">
+              Category
+            </span>
+            <select
+              className="form__input"
+              aria-label={`Category for ${item.title}`}
+              value={item.category}
+              onChange={(event) =>
+                onCategoryChange(item.id, event.target.value as Category)
+              }
+            >
+              <option value="academic">Academic</option>
+              <option value="personal">Personal</option>
+              <option value="work">Work</option>
+            </select>
+          </div>
+
+          {/* AC-92.2. */}
+          <div className="form__field item__field--half">
             <span className="form__label" aria-hidden="true">
               Priority
             </span>
@@ -469,7 +499,7 @@ export default function ItemRow({
           </div>
 
           {courses.length > 0 && (
-            <div className="form__field">
+            <div className="form__field item__field--half">
               <span className="form__label" aria-hidden="true">
                 Course
               </span>
@@ -492,7 +522,7 @@ export default function ItemRow({
           )}
 
           {goals.length > 0 && (
-            <div className="form__field">
+            <div className="form__field item__field--half">
               <span className="form__label" aria-hidden="true">
                 Goal
               </span>

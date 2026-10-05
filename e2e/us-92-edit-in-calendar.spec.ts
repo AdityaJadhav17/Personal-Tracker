@@ -96,7 +96,7 @@ test('AC-92.1 opening an event in the day hides the add form, and closing it bri
   await expect(addTitle).toBeVisible();
 });
 
-test('AC-92.2 and AC-92.3 priority is changed in the open event, sits with Course and Goal, and survives a reload', async ({
+test('AC-92.2 priority is changed in the open event, and survives a reload', async ({
   page,
 }) => {
   await seed(page);
@@ -106,15 +106,6 @@ test('AC-92.2 and AC-92.3 priority is changed in the open event, sits with Cours
 
   const field = (name: string) =>
     day(page).getByLabel(`${name} for Paturi meeting`, { exact: true });
-  const [priority, course, goal, due] = await Promise.all(
-    ['Priority', 'Course', 'Goal', 'Due'].map((name) =>
-      field(name).boundingBox(),
-    ),
-  );
-  expect(course!.y).toBe(priority!.y);
-  expect(goal!.y).toBe(priority!.y);
-  expect(priority!.y).toBeGreaterThan(due!.y);
-
   await field('Priority').selectOption('high');
 
   await page.reload();
