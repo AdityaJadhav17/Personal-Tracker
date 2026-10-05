@@ -10,7 +10,7 @@ import {
   toTimeValue,
   tomorrowOf,
 } from '../domain/dates';
-import type { Course, Goal, Item, Repeat } from '../domain/types';
+import type { Course, Goal, Item, Priority, Repeat } from '../domain/types';
 
 /** Same words the add form uses, so there is one definition of the message. */
 const TITLE_REQUIRED = 'Give it a title.';
@@ -26,6 +26,8 @@ interface ItemRowProps {
   onNoteChange: (id: string, note: string) => void;
   onCourseChange: (id: string, courseId: string | null) => void;
   onGoalChange: (id: string, goalId: string | null) => void;
+  /** AC-92.2. Saved on pick, like course and goal. */
+  onPriorityChange: (id: string, priority: Priority) => void;
   onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
   /** US-45. This item's steps, in date order; empty for most items. */
@@ -60,6 +62,7 @@ export default function ItemRow({
   onNoteChange,
   onCourseChange,
   onGoalChange,
+  onPriorityChange,
   onEdit,
   onDelete,
   steps,
@@ -445,8 +448,28 @@ export default function ItemRow({
           */}
           {/* AC-59.1. Named on screen like the fields above, and sized like
               them, where they were once two small unlabelled boxes. */}
+          {/* AC-92.2 and AC-92.3. Everything set while adding can be
+              changed here; priority leads the row Course and Goal share. */}
+          <div className="form__field">
+            <span className="form__label" aria-hidden="true">
+              Priority
+            </span>
+            <select
+              className="form__input"
+              aria-label={`Priority for ${item.title}`}
+              value={item.priority}
+              onChange={(event) =>
+                onPriorityChange(item.id, event.target.value as Priority)
+              }
+            >
+              <option value="high">High</option>
+              <option value="normal">Normal</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
           {courses.length > 0 && (
-            <div className="form__field item__field--half">
+            <div className="form__field">
               <span className="form__label" aria-hidden="true">
                 Course
               </span>
@@ -469,7 +492,7 @@ export default function ItemRow({
           )}
 
           {goals.length > 0 && (
-            <div className="form__field item__field--half">
+            <div className="form__field">
               <span className="form__label" aria-hidden="true">
                 Goal
               </span>

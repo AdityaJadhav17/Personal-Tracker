@@ -197,6 +197,13 @@
   color: var(--text-muted);
 }
 
+/* AC-92.1. An open event is the only thing being edited: the day's add form
+   steps aside while one of its rows is open, and comes back when it closes.
+   Hidden, not removed, so anything typed there is still there after. */
+.calendar__day:has(.item__edit) > .form {
+  display: none;
+}
+
 /* AC-90.1. A holiday is the quietest thing in a day: muted words, no box,
    so it never reads as something to do. */
 .calendar__holiday {

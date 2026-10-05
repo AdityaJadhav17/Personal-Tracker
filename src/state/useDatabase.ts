@@ -15,6 +15,7 @@ import type {
   ItemDraft,
   Lock,
   Note,
+  Priority,
   Reflection,
   Sealed,
   Task,
@@ -41,6 +42,8 @@ export interface DatabaseActions {
   addStep: (parentId: string, title: string, dueAt: string) => void;
   setCourse: (id: string, courseId: string | null) => void;
   setGoal: (id: string, goalId: string | null) => void;
+  /** AC-92.2. */
+  setPriority: (id: string, priority: Priority) => void;
   addCourse: (draft: CourseDraft) => void;
   /** AC-77.2. New details for the same course: same id, so same items. */
   editCourse: (id: string, draft: CourseDraft) => void;
@@ -419,6 +422,10 @@ export function useDatabase(): {
 
     setGoal(id, goalId) {
       mapItems(id, (item) => ({ ...item, goalId }));
+    },
+
+    setPriority(id, priority) {
+      mapItems(id, (item) => ({ ...item, priority }));
     },
 
     addCourse(draft) {

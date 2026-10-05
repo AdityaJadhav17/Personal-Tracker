@@ -12,7 +12,7 @@ import {
 import type { Group } from '../domain/dates';
 import { sortWithinGroup } from '../domain/ordering';
 import { stepsOf } from '../domain/steps';
-import type { Course, Goal, Item, Repeat } from '../domain/types';
+import type { Course, Goal, Item, Priority, Repeat } from '../domain/types';
 import ItemRow from './ItemRow';
 
 /**
@@ -38,6 +38,8 @@ interface DashboardProps {
   onCourseChange: (id: string, courseId: string | null) => void;
   goals: Goal[];
   onGoalChange: (id: string, goalId: string | null) => void;
+  /** AC-92.2. Saved on pick, like course and goal. */
+  onPriorityChange: (id: string, priority: Priority) => void;
   onEdit: (id: string, title: string, dueAt: string, repeat: Repeat) => void;
   onDelete: (id: string) => void;
   /**
@@ -62,6 +64,7 @@ export default function Dashboard({
   onCourseChange,
   goals,
   onGoalChange,
+  onPriorityChange,
   onEdit,
   onDelete,
   allItems,
@@ -108,6 +111,7 @@ export default function Dashboard({
       onCourseChange={onCourseChange}
       goals={goals}
       onGoalChange={onGoalChange}
+      onPriorityChange={onPriorityChange}
       onEdit={onEdit}
       onDelete={onDelete}
       steps={stepsOf(item.id, allItems)}

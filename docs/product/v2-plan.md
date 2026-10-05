@@ -404,3 +404,4 @@ passed 1,300 lines.
 - [US-89, a deadline typed into a closing day is kept](stories/US-89.md)
 - [US-90, US holidays on the calendar](stories/US-90.md)
 - [US-91, diagrams and a README that matches the app](stories/US-91.md)
+- [US-92, editing an event on the calendar is only editing](stories/US-92.md)
