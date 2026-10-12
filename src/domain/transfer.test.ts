@@ -891,3 +891,74 @@ describe('US-88 routine tasks', () => {
     expect(result.ok && result.db.tasks[0]).toEqual(task);
   });
 });
+
+describe('US-94 dates are stored in one form', () => {
+  // The audit's case: Date.parse reads past a bracketed comment, line breaks
+  // and all, so this is a date. It must not stay this text once imported.
+  const loose = 'Sep 16 2026 10:00 UTC (\r\nBEGIN:VALARM\r\n)';
+  const iso = '2026-09-16T10:00:00.000Z';
+
+  test('AC-94.2 every date in an imported file is stored as an ISO instant', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase([
+          anItem({ dueAt: loose, createdAt: loose, completedAt: loose }),
+        ]),
+        lastBackupAt: loose,
+        goals: [
+          {
+            id: 'g',
+            name: 'Internship',
+            description: '',
+            targetAt: loose,
+            createdAt: loose,
+          },
+        ],
+        courses: [
+          {
+            id: 'c',
+            name: 'CSE 123',
+            meetingLocation: '',
+            professorEmail: '',
+            officeHours: '',
+            createdAt: loose,
+          },
+        ],
+        reflections: [
+          { id: 'r', day: '2026-09-15', score: 4, note: '', createdAt: loose },
+        ],
+        notes: [
+          {
+            id: 'n',
+            body: 'Hi',
+            createdAt: loose,
+            updatedAt: loose,
+            pinned: false,
+            sealed: null,
+          },
+        ],
+        tasks: [{ id: 't', title: 'Gym', doneOn: null, createdAt: loose }],
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const { db } = result;
+    expect(db.lastBackupAt).toBe(iso);
+    expect(db.items[0]).toMatchObject({
+      dueAt: iso,
+      createdAt: iso,
+      completedAt: iso,
+    });
+    expect(db.goals[0]).toMatchObject({ targetAt: iso, createdAt: iso });
+    expect(db.courses[0]?.createdAt).toBe(iso);
+    expect(db.reflections[0]?.createdAt).toBe(iso);
+    expect(db.notes[0]).toMatchObject({ createdAt: iso, updatedAt: iso });
+    expect(db.tasks[0]?.createdAt).toBe(iso);
+  });
+
+  test('AC-94.2 an open item keeps a null completed date', () => {
+    const result = parseImport(serialize(aDatabase()));
+    expect(result.ok && result.db.items[0]?.completedAt).toBeNull();
+  });
+});

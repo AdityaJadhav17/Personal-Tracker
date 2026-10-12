@@ -62,6 +62,21 @@ export function fileFor(root, url) {
 }
 
 /**
+ * AC-94.1. What every file goes out with. Besides its type and caching, the
+ * page refuses to be shown inside a frame: a <meta> CSP cannot say that, so
+ * the server does, and another site cannot dress the app up as its own.
+ */
+export function headersFor(file, url) {
+  return {
+    'Content-Type': typeOf(file),
+    'Cache-Control': cacheFor(url),
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Content-Security-Policy': "frame-ancestors 'none'",
+  };
+}
+
+/**
  * AC-83.4. Whether a request was addressed to this server by its own name. A
  * page that rebinds its domain to 127.0.0.1 reaches the port under that
  * domain's name, so anything else is refused.
@@ -93,11 +108,7 @@ function serve(root, port) {
         response.end('Not found');
         return;
       }
-      response.writeHead(200, {
-        'Content-Type': typeOf(file),
-        'Cache-Control': cacheFor(url),
-        'X-Content-Type-Options': 'nosniff',
-      });
+      response.writeHead(200, headersFor(file, url));
       response.end(request.method === 'HEAD' ? undefined : body);
     });
   });

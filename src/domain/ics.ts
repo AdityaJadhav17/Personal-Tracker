@@ -4,6 +4,7 @@ import {
   shiftMinutes,
   toDateValue,
   toIcsStamp,
+  toInstant,
 } from './dates';
 import type { Item } from './types';
 
@@ -115,7 +116,9 @@ function event(item: Item, stamp: string): string[] {
     property('UID', `${item.id}@personal-tracker`),
     `DTSTAMP:${stamp}`,
     `DTSTART:${toIcsStamp(shiftMinutes(item.dueAt, -MINUTES))}`,
-    `DTEND:${toIcsStamp(item.dueAt)}`,
+    // AC-94.3. From the instant, as DTSTART is: the stored text never reaches
+    // the file, so it cannot carry a line break into it.
+    `DTEND:${toIcsStamp(toInstant(item.dueAt))}`,
     property('SUMMARY', item.title),
   ];
 

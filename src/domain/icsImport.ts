@@ -79,7 +79,16 @@ export function parseCalendar(text: string, now: Date): CalendarResult {
 function toDraft({ kind, props }: Component): ItemDraft | null {
   if (props.get('STATUS')?.toUpperCase() === 'CANCELLED') return null;
 
-  const title = unescape(props.get('SUMMARY') ?? '').trim();
+  // AC-94.11. Invisible direction controls can make a title show as other
+  // words than it holds, and nothing typed by hand needs them. A whole file
+  // in one title is cut to a line's worth; counted in characters, not halves.
+  const title = [
+    ...unescape(props.get('SUMMARY') ?? '')
+      .replace(/[؜‎‏‪-‮⁦-⁩]/g, '')
+      .trim(),
+  ]
+    .slice(0, 200)
+    .join('');
   if (title === '') return null;
 
   const when =

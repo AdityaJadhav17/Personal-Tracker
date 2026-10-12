@@ -37,10 +37,15 @@ const marker = join(target, 'deployed.txt');
  * Anything not finished means wait; anything finished and not a pass means
  * never. AC-83.5: until the CI job's own run, named `check`, is among them,
  * wait, so another app's quick pass cannot deploy a commit CI never saw.
+ * AC-94.4: only runs for this commit count, and `check` is CI only when GitHub
+ * Actions posted it, so another app cannot stand in for it under that name.
  */
-export function verdict(runs) {
+export function verdict(all, sha) {
+  const runs = all.filter((run) => run.head_sha === sha);
   if (
-    !runs.some((run) => run.name === 'check') ||
+    !runs.some(
+      (run) => run.name === 'check' && run.app?.slug === 'github-actions',
+    ) ||
     runs.some((run) => run.status !== 'completed')
   ) {
     return 'pending';
@@ -51,16 +56,39 @@ export function verdict(runs) {
     : 'failed';
 }
 
-async function checks(sha) {
-  const response = await fetch(
-    `https://api.github.com/repos/${REPO}/commits/${sha}/check-runs`,
-    {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'personal-tracker-updater',
+/** AC-94.4. GitHub gives 30 runs a page unless asked; ask for the most. */
+export function checksUrl(sha) {
+  return `https://api.github.com/repos/${REPO}/commits/${sha}/check-runs?per_page=100`;
+}
+
+/**
+ * AC-94.5. Whether `sha` is `deployed` or a later commit on top of it. A main
+ * moved backwards, or onto history that never held the deployed commit, is
+ * not deployed: whoever meant it runs `npm run deploy` by hand.
+ */
+export function movesForward(dir, deployed, sha) {
+  if (deployed === '') return true;
+  try {
+    execFileSync(
+      'git',
+      ['-C', dir, 'merge-base', '--is-ancestor', deployed, sha],
+      {
+        stdio: 'pipe',
       },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function checks(sha) {
+  const response = await fetch(checksUrl(sha), {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'personal-tracker-updater',
     },
-  );
+  });
   if (!response.ok) throw new Error(`GitHub answered ${response.status}`);
   return (await response.json()).check_runs;
 }
@@ -105,11 +133,14 @@ async function main() {
     ? readFileSync(marker, 'utf8').trim()
     : '';
   if (sha === deployed) return say(`Up to date at ${short}.`);
+  if (!movesForward(src, deployed, sha)) {
+    return say(`main moved back to ${short}; not deploying an older commit.`);
+  }
 
   // AC-56.3. While CI is running, look again every minute rather than leaving
   // it to the next run, so a push lands about as soon as CI goes green.
   for (let waited = 0; ; waited += 1) {
-    const state = verdict(await checks(sha));
+    const state = verdict(await checks(sha), sha);
     if (state === 'passed') break;
     // AC-56.2.
     if (state === 'failed')
@@ -122,7 +153,8 @@ async function main() {
 
   // AC-56.4. Exactly the commit CI passed, whatever this clone held before.
   git('checkout', '--quiet', '--force', '--detach', sha);
-  npm('ci --no-audit --no-fund');
+  // AC-94.7. No dependency's install script runs on this laptop.
+  npm('ci --ignore-scripts --no-audit --no-fund');
   npm(`run build -- --outDir "${target}" --emptyOutDir`);
   // AC-56.5. Recorded only once the deploy checks out whole.
   execFileSync(process.execPath, ['scripts/check-deploy.mjs', target], {

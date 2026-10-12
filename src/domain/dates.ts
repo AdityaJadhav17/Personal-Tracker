@@ -306,6 +306,14 @@ export function tomorrowOf(now: Date): string {
   );
 }
 
+/**
+ * AC-94.2. Any text `Date.parse` reads as a date, written the one way this app
+ * stores dates: "2026-09-16T10:00:00.000Z". An import may have used another.
+ */
+export function toInstant(text: string): string {
+  return new Date(Date.parse(text)).toISOString();
+}
+
 /** The same instant, moved by `minutes`, still as an ISO instant. */
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();

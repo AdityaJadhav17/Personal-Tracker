@@ -70,6 +70,10 @@ export default function NotesView({
   const [reading, setReading] = useState(false);
   const [query, setQuery] = useState('');
   const [key, setKey] = useState<CryptoKey | null>(null);
+  // AC-94.9. The salt of the lock the key was made from. Another tab that
+  // changes the passcode changes the lock under this one, and a note sealed
+  // with the old key after that would open with neither passcode.
+  const keySalt = useRef<string | null>(null);
   // The open locked note's text, once decrypted.
   const [opened, setOpened] = useState<{ id: string; text: string } | null>(
     null,
@@ -119,6 +123,11 @@ export default function NotesView({
       live = false;
     };
   }, [key, open, opened]);
+
+  // AC-94.9. The lock is no longer the one the key opens: lock again.
+  useEffect(() => {
+    if (key && lock?.salt !== keySalt.current) relock();
+  }, [key, lock]);
 
   // AC-82.4. Every keystroke restarts the five minutes.
   useEffect(() => {
@@ -178,6 +187,7 @@ export default function NotesView({
     if (!open) return;
     const text = open.body;
     onLock(open.id, titleOf(text), await seal(with_, text), made);
+    keySalt.current = (made ?? lock)?.salt ?? null;
     setKey(with_);
     setOpened({ id: open.id, text });
     setAsking(null);
@@ -322,6 +332,7 @@ export default function NotesView({
                 if (!onRekey(result.lock, result.notes)) {
                   return 'A note changed while the passcode was changing, so nothing was changed. Try again.';
                 }
+                keySalt.current = result.lock.salt;
                 setKey(result.key);
                 setAsking(null);
                 setNotice('Passcode changed.');
@@ -452,6 +463,7 @@ export default function NotesView({
                     onSubmit={async (passcode) => {
                       const opens = await unlock(lock!, passcode);
                       if (!opens) return 'That passcode is not right.';
+                      keySalt.current = lock!.salt;
                       setKey(opens);
                       return null;
                     }}
@@ -500,8 +512,10 @@ function Passcode({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (twice && first.length < 6) {
-      setError('A passcode needs at least 6 characters.');
+    // AC-94.10. Asked only when setting one, so a shorter passcode set
+    // before still opens its notes.
+    if (twice && first.length < 8) {
+      setError('A passcode needs at least 8 characters.');
       return;
     }
     if (twice && first !== second) {

@@ -214,3 +214,28 @@ salt, a fresh IV per seal and non-extractable keys, and never stores the
 passcode or the key; opened locked text never reaches storage, export, undo or
 search; no `innerHTML`, `eval` or `dangerouslySetInnerHTML`; no test touches
 4180; no secrets in the git history.
+
+## Addendum, 11 October 2026: security-audit skill, quick profile (US-94)
+
+A source-only pass with the security-audit skill: four agents mapped the
+repo, five hunted, a critic looked for gaps, and a verifier tried to refute
+the one candidate. No repository code ran. Nothing was confirmed.
+
+- **Rejected: line breaks through an imported date into the `.ics` export.**
+  `Date.parse` reads past a bracketed comment, line breaks included, and
+  DTEND was built from the stored text. Every colon is stripped there, so no
+  injected line could form a property. Closed anyway in AC-94.2 and AC-94.3:
+  imported dates are stored as ISO instants and DTEND is built from the
+  instant.
+
+Hardening done in US-94: frame-blocking headers on 4180; the updater counts
+only GitHub Actions' own `check` for the exact commit, reads 100 runs, and
+refuses a commit older than the one deployed; CI actions pinned to commits
+with Dependabot proposing new pins; `npm ci --ignore-scripts` in CI and the
+updater; a merged file brings its lock only with locked notes; a tab takes up
+another tab's save, and drops its key when the passcode changes elsewhere;
+new passcodes need 8 characters; `.ics` titles lose direction controls and
+stop at 200 characters. Skipped by choice: binding locked text to its note id.
+
+Not covered by that pass, for a later one: calendar drag and drop, the Vite
+dev server's configuration, and what the JSON export holds.

@@ -371,8 +371,8 @@ passcode even when no note is locked.
 **Accepted limitations.** A forgotten passcode loses the locked notes; there
 is no server to hold a recovery key, and the app says so before the first
 lock. A locked note's first line stays readable as its title, as in Apple
-Notes. A passcode is at least 6 characters, and a short or common one can
-still be guessed from a copied file; Aditya chose a passcode over a 4 to 6
-digit PIN for that reason. Merging a file locked under a different passcode
+Notes. A passcode is at least 8 characters (6 until US-94; one set before
+still opens), and a short or common one can still be guessed from a copied
+file; Aditya chose a passcode over a 4 to 6 digit PIN for that reason. Merging a file locked under a different passcode
 keeps the lock already here, so that file's locked notes will not open; Replace
 takes them whole.

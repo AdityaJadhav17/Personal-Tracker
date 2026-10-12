@@ -1,0 +1,8 @@
+# AC-94.6. CI's actions are pinned to commits; this proposes the next pin
+# each week as a pull request, which CI checks like any other.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

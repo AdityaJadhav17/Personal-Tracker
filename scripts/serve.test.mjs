@@ -1,6 +1,12 @@
 import { expect, test } from 'vitest';
 import { join, resolve } from 'node:path';
-import { cacheFor, fileFor, hostAllowed, typeOf } from './serve.mjs';
+import {
+  cacheFor,
+  fileFor,
+  headersFor,
+  hostAllowed,
+  typeOf,
+} from './serve.mjs';
 
 // Resolved, so the same expectations hold on Windows here and Linux in CI.
 const ROOT = resolve('deployed');
@@ -52,4 +58,18 @@ test('AC-83.4 any other name, a rebound domain included, is refused', () => {
   expect(hostAllowed('localhost.evil.example:4180', 4180)).toBe(false);
   expect(hostAllowed('localhost:9999', 4180)).toBe(false);
   expect(hostAllowed(undefined, 4180)).toBe(false);
+});
+
+test('AC-94.1 every file tells the browser never to show it inside a frame', () => {
+  for (const [file, url] of [
+    [join(ROOT, 'index.html'), '/'],
+    [join(ROOT, 'assets', 'index-abc123.js'), '/assets/index-abc123.js'],
+  ]) {
+    const headers = headersFor(file, url);
+    expect(headers['X-Frame-Options']).toBe('DENY');
+    expect(headers['Content-Security-Policy']).toBe("frame-ancestors 'none'");
+    expect(headers['X-Content-Type-Options']).toBe('nosniff');
+    expect(headers['Content-Type']).toBe(typeOf(file));
+    expect(headers['Cache-Control']).toBe(cacheFor(url));
+  }
 });

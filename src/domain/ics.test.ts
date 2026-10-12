@@ -401,3 +401,15 @@ describe('AC-24.4 control characters cannot break out of a value', () => {
     expect(unfold(ics)).toContain(`SUMMARY:a${tab}b`);
   });
 });
+
+describe('US-94 the deadline line comes from the instant', () => {
+  test('AC-94.3 DTEND is written from the instant, not the stored text', () => {
+    const ics = toCalendar(
+      [anItem({ dueAt: 'Sep 16 2026 23:59 UTC (\r\nX-INJECTED:1\r\n)' })],
+      NOW,
+    );
+
+    expect(ics).toContain('DTEND:20260916T235900Z\r\n');
+    expect(ics).not.toContain('INJECTED');
+  });
+});

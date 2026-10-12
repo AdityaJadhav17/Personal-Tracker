@@ -82,7 +82,7 @@ test('AC-82.8 and AC-82.1 the first lock warns, then asks for a passcode twice',
   await user.type(screen.getByLabelText('New passcode'), 'short');
   await user.type(screen.getByLabelText('Confirm passcode'), 'short');
   await submit();
-  expect(screen.getByRole('alert')).toHaveTextContent('at least 6');
+  expect(screen.getByRole('alert')).toHaveTextContent('at least 8');
 
   await user.clear(screen.getByLabelText('New passcode'));
   await user.clear(screen.getByLabelText('Confirm passcode'));
@@ -335,5 +335,63 @@ test('AC-86.6 a locked note the passcode cannot open says so, instead of staying
   expect(
     await screen.findByText(/does not open with your passcode/),
   ).toBeVisible();
+  expect(screen.queryByRole('textbox', { name: 'Note' })).toBeNull();
+});
+
+test('AC-94.10 a new passcode needs 8 characters; 7 is refused', async () => {
+  const user = userEvent.setup();
+  const onLock = vi.fn<OnLock>();
+  renderNotes({ onLock });
+
+  await user.click(screen.getByRole('button', { name: 'Lock note' }));
+  await user.type(screen.getByLabelText('New passcode'), 'hunter2');
+  await user.type(screen.getByLabelText('Confirm passcode'), 'hunter2');
+  await user.click(
+    screen.getByRole('button', { name: 'Lock with this passcode' }),
+  );
+
+  expect(screen.getByRole('alert')).toHaveTextContent('at least 8');
+  expect(onLock).not.toHaveBeenCalled();
+});
+
+test('AC-94.10 a 6-character passcode set before the change still opens its notes', async () => {
+  const user = userEvent.setup();
+  const old = await createLock('hunter');
+  const note = {
+    ...aNote('old', 'Wifi'),
+    sealed: await seal(old.key, 'Wifi\npw'),
+  };
+  renderNotes({ notes: [note], lock: old.lock });
+
+  await user.type(screen.getByLabelText('Passcode'), 'hunter');
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+
+  expect(
+    await screen.findByRole('textbox', { name: 'Note' }),
+  ).toHaveTextContent('pw');
+});
+
+test('AC-94.9 when another tab changes the passcode, this one locks again', async () => {
+  const user = userEvent.setup();
+  const view = renderNotes({ notes: [locked], lock });
+  await openLocked(user);
+
+  const elsewhere = await createLock('another1');
+  view.rerender(
+    <NotesView
+      notes={[locked]}
+      now={NOW}
+      onAdd={() => 'made'}
+      onChange={noop}
+      onDelete={noop}
+      onPin={noop}
+      lock={elsewhere.lock}
+      onLock={noop}
+      onUnlock={noop}
+      onRekey={() => true}
+    />,
+  );
+
+  expect(await screen.findByLabelText('Passcode')).toBeVisible();
   expect(screen.queryByRole('textbox', { name: 'Note' })).toBeNull();
 });

@@ -22,7 +22,7 @@ import type {
   Task,
   Repeat,
 } from '../domain/types';
-import { load, save } from '../storage/db';
+import { load, save, STORAGE_KEY } from '../storage/db';
 
 export interface DatabaseActions {
   /** False when storage refused it, so the form can keep what was typed. */
@@ -265,6 +265,22 @@ export function useDatabase(): {
     });
     setUndoable(null);
   }
+
+  // AC-94.9. Another tab of the app saved. Take up what it wrote, so the next
+  // change here builds on it rather than writing this tab's older copy over
+  // it. What Undo would reverse belongs to the copy that is gone.
+  useEffect(() => {
+    function onStorage(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY) return;
+      const next = load();
+      latest.current = next;
+      setDb(next);
+      setUndoable(null);
+    }
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // AC-05.2. Re-attached every render so it always closes over the current
   // database rather than a stale one.
@@ -640,23 +656,31 @@ export function useDatabase(): {
       // what we already hold is what makes importing your own export twice a
       // no-op rather than a way to duplicate everything. Reflections are one
       // per day, so on a clash the one already here wins.
-      update((current) => ({
-        ...current,
-        items: keepBoth(current.items, next.items, (item) => item.id),
-        goals: keepBoth(current.goals, next.goals, (goal) => goal.id),
-        courses: keepBoth(current.courses, next.courses, (c) => c.id),
-        reflections: keepBoth(
-          current.reflections,
-          next.reflections,
-          (r) => r.day,
-        ),
-        notes: keepBoth(current.notes, next.notes, (note) => note.id),
-        tasks: keepBoth(current.tasks, next.tasks, (task) => task.id),
-        // AC-82.7. The lock held wins, as everything held does.
-        // ponytail: a file locked under a different passcode brings notes
-        // this lock cannot open; Replace, not Merge, is the way to take them.
-        lock: current.lock ?? next.lock,
-      }));
+      update((current) => {
+        const notes = keepBoth(current.notes, next.notes, (note) => note.id);
+        return {
+          ...current,
+          items: keepBoth(current.items, next.items, (item) => item.id),
+          goals: keepBoth(current.goals, next.goals, (goal) => goal.id),
+          courses: keepBoth(current.courses, next.courses, (c) => c.id),
+          reflections: keepBoth(
+            current.reflections,
+            next.reflections,
+            (r) => r.day,
+          ),
+          notes,
+          tasks: keepBoth(current.tasks, next.tasks, (task) => task.id),
+          // AC-82.7. The lock held wins, as everything held does.
+          // ponytail: a file locked under a different passcode brings notes
+          // this lock cannot open; Replace, not Merge, is the way to take them.
+          // AC-94.8. With none held, the file's lock comes only with a locked
+          // note it opens: nothing here can be sealed without a lock, so any
+          // sealed note came from the file.
+          lock:
+            current.lock ??
+            (notes.some((note) => note.sealed !== null) ? next.lock : null),
+        };
+      });
       setUndoable(null);
     },
   };

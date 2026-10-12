@@ -1,3 +1,4 @@
+import { toInstant } from './dates';
 import { upgrade } from './migrate';
 import type {
   Course,
@@ -251,13 +252,14 @@ function toItem(value: unknown): Item {
   return {
     id: raw.id as string,
     title: raw.title as string,
-    dueAt: raw.dueAt as string,
+    dueAt: toInstant(raw.dueAt as string),
     category: raw.category as Item['category'],
     priority: raw.priority as Item['priority'],
     status: raw.status as Item['status'],
     note: raw.note as string,
-    createdAt: raw.createdAt as string,
-    completedAt: raw.completedAt as string | null,
+    createdAt: toInstant(raw.createdAt as string),
+    completedAt:
+      raw.completedAt === null ? null : toInstant(raw.completedAt as string),
     goalId: (raw.goalId as string | null | undefined) ?? null,
     courseId: (raw.courseId as string | null | undefined) ?? null,
     // Absent before version 3, and upgrade would fill it anyway; defaulting
@@ -274,8 +276,8 @@ function toGoal(value: unknown): Goal {
     id: raw.id as string,
     name: raw.name as string,
     description: raw.description as string,
-    targetAt: raw.targetAt as string,
-    createdAt: raw.createdAt as string,
+    targetAt: toInstant(raw.targetAt as string),
+    createdAt: toInstant(raw.createdAt as string),
   };
 }
 
@@ -287,7 +289,7 @@ function toCourse(value: unknown): Course {
     meetingLocation: raw.meetingLocation as string,
     professorEmail: raw.professorEmail as string,
     officeHours: raw.officeHours as string,
-    createdAt: raw.createdAt as string,
+    createdAt: toInstant(raw.createdAt as string),
   };
 }
 
@@ -298,7 +300,7 @@ function toReflection(value: unknown): Reflection {
     day: raw.day as string,
     score: raw.score as Reflection['score'],
     note: raw.note as string,
-    createdAt: raw.createdAt as string,
+    createdAt: toInstant(raw.createdAt as string),
   };
 }
 
@@ -325,7 +327,7 @@ function toTask(value: unknown): Task {
     id: raw.id as string,
     title: raw.title as string,
     doneOn: raw.doneOn as string | null,
-    createdAt: raw.createdAt as string,
+    createdAt: toInstant(raw.createdAt as string),
   };
 }
 
@@ -334,8 +336,8 @@ function toNote(value: unknown): Note {
   return {
     id: raw.id as string,
     body: raw.body as string,
-    createdAt: raw.createdAt as string,
-    updatedAt: raw.updatedAt as string,
+    createdAt: toInstant(raw.createdAt as string),
+    updatedAt: toInstant(raw.updatedAt as string),
     pinned: (raw.pinned as boolean | undefined) ?? false,
     // AC-83.3. Rebuilt, so nothing else inside it rides into storage.
     sealed: raw.sealed
@@ -519,7 +521,10 @@ export function parseImport(text: string): ParseResult {
       courses: (raw.courses as unknown[]).map(toCourse),
       reflections: (raw.reflections as unknown[]).map(toReflection),
       notes: version >= 6 ? (raw.notes as unknown[]).map(toNote) : [],
-      lastBackupAt: (raw.lastBackupAt as string | null | undefined) ?? null,
+      lastBackupAt:
+        typeof raw.lastBackupAt === 'string'
+          ? toInstant(raw.lastBackupAt)
+          : null,
       lock: lock
         ? {
             salt: lock.salt as string,

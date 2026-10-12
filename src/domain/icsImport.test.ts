@@ -234,3 +234,24 @@ describe('newOnly', () => {
     expect(newOnly([draft!], [held]).fresh).toHaveLength(1);
   });
 });
+
+describe('US-94 titles from a calendar file', () => {
+  test('AC-94.11 invisible direction controls are dropped from a title', () => {
+    // U+202E reverses what follows on screen: "Pay rent" shown as something else.
+    const [draft] = drafts(
+      calendar(
+        event('SUMMARY:Pay ‮tner‬ rent⁦⁩‎‏؜', 'DTSTART:20261008T065900Z'),
+      ),
+    );
+    expect(draft?.title).toBe('Pay tner rent');
+  });
+
+  test('AC-94.11 a title keeps at most 200 characters', () => {
+    const [draft] = drafts(
+      calendar(
+        event(`SUMMARY:${'a'.repeat(5000)}`, 'DTSTART:20261008T065900Z'),
+      ),
+    );
+    expect(draft?.title).toHaveLength(200);
+  });
+});

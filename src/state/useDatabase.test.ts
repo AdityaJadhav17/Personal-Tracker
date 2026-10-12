@@ -78,3 +78,63 @@ test('AC-86.4 a note locked while resealing, and so missed, stops it too', () =>
   expect(saved).toBe(false);
   expect(stored().lock).toEqual(LOCK);
 });
+
+describe('US-94 merging a file with a lock', () => {
+  const file = (notes: { id: string; sealed: Sealed | null }[]) => ({
+    version: 9 as const,
+    items: [],
+    goals: [],
+    courses: [],
+    reflections: [],
+    notes: notes.map(({ id, sealed }) => ({
+      id,
+      body: id,
+      createdAt: '2026-09-14T17:00:00.000Z',
+      updatedAt: '2026-09-14T17:00:00.000Z',
+      pinned: false,
+      sealed,
+    })),
+    lastBackupAt: null,
+    lock: LOCK,
+    tasks: [],
+  });
+
+  test('AC-94.8 a file with no locked notes brings no lock', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() =>
+      hook.result.current.actions.merge(file([{ id: 'n', sealed: null }])),
+    );
+    expect(hook.result.current.db?.lock).toBeNull();
+  });
+
+  test('AC-94.8 a file bringing a locked note brings the lock that opens it', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() =>
+      hook.result.current.actions.merge(file([{ id: 'n', sealed: OLD }])),
+    );
+    expect(hook.result.current.db?.lock).toEqual(LOCK);
+  });
+});
+
+test('AC-94.9 a save from another tab is taken up here, not written over', () => {
+  const hook = renderHook(() => useDatabase());
+  act(() => {
+    hook.result.current.actions.addNote('Mine');
+  });
+
+  // Another tab writes its own copy, then the browser says so.
+  const theirs = { ...stored(), notes: [] };
+  act(() => {
+    localStorage.setItem('personal-tracker/v1', JSON.stringify(theirs));
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'personal-tracker/v1' }),
+    );
+  });
+  expect(hook.result.current.db?.notes).toEqual([]);
+
+  // What this tab does next builds on theirs.
+  act(() => {
+    hook.result.current.actions.addNote('Next');
+  });
+  expect(stored().notes).toHaveLength(1);
+});
