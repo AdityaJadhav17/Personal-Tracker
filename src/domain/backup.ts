@@ -1,4 +1,4 @@
-import { daysBetween } from './dates';
+import { daysBetween, toDateValue } from './dates';
 
 /** How old a backup can get before the app mentions it. */
 const WEEK = 7;
@@ -21,4 +21,30 @@ export function backupNotice(
 
   const days = daysBetween(lastBackupAt, now);
   return days < WEEK ? null : `Last backup ${days} days ago.`;
+}
+
+/** AC-95.3. How many days of automatic backups are kept. */
+const KEEP = 30;
+
+const BACKUP = /^personal-tracker-backup-\d{4}-\d{2}-\d{2}\.json$/;
+
+/**
+ * AC-95.2. The automatic backup's file for the local day `at` falls on. One a
+ * day, rewritten through it, so a day is the most a lost browser costs.
+ */
+export function backupName(at: Date): string {
+  return `personal-tracker-backup-${toDateValue(at)}.json`;
+}
+
+/**
+ * AC-95.3. Of the names in the backup folder, the automatic backups past the
+ * newest 30, newest first. Anything else in the folder is never a candidate:
+ * the folder is the user's, and so is whatever else they keep there.
+ */
+export function staleBackups(names: string[]): string[] {
+  return names
+    .filter((name) => BACKUP.test(name))
+    .sort()
+    .reverse()
+    .slice(KEEP);
 }

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import AddItemForm from './components/AddItemForm';
+import BackupFolder from './components/BackupFolder';
 import BulkAdd from './components/BulkAdd';
 import CalendarFileImport from './components/CalendarFileImport';
 import CalendarView from './components/CalendarView';
@@ -26,10 +27,13 @@ import { calendarFilename, toCalendar } from './domain/ics';
 import { exportFilename, parseImport, serialize } from './domain/transfer';
 import { dailySeries } from './domain/trends';
 import type { Database } from './domain/types';
+import { useAutoBackup } from './state/useAutoBackup';
 import { useDatabase } from './state/useDatabase';
 
 export default function App() {
   const { db, undoMessage, undo, storageError, actions } = useDatabase();
+  // US-95. Here rather than in Data, so it runs whichever view is open.
+  const backups = useAutoBackup(db, actions.recordBackup);
 
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
@@ -290,6 +294,7 @@ export default function App() {
                 on another laptop.
               </p>
             </div>
+            <BackupFolder {...backups} now={current} />
             <div className="data__tool">
               <button
                 className="data__button"

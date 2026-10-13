@@ -232,3 +232,42 @@ describe('US-88 tasks in storage', () => {
     expect(load().tasks).toEqual([task]);
   });
 });
+
+describe('US-95 the copy kept before an upgrade', () => {
+  const BEFORE = 'personal-tracker/before-upgrade';
+
+  test('AC-95.7 an older stored version is kept, as stored, before upgrading', () => {
+    const old = JSON.stringify({
+      ...aDatabase(),
+      version: 8,
+      tasks: undefined,
+    });
+    localStorage.setItem(STORAGE_KEY, old);
+
+    expect(load().version).toBe(9);
+    expect(localStorage.getItem(BEFORE)).toBe(old);
+  });
+
+  test('AC-95.7 a current database leaves the kept copy alone', () => {
+    localStorage.setItem(BEFORE, 'the last upgrade');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(aDatabase()));
+
+    load();
+    expect(localStorage.getItem(BEFORE)).toBe('the last upgrade');
+  });
+
+  test('AC-95.7 no room for the copy still loads the database', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...aDatabase(), version: 8, tasks: undefined }),
+    );
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('full', 'QuotaExceededError');
+      });
+
+    expect(load().items).toHaveLength(1);
+    setItem.mockRestore();
+  });
+});

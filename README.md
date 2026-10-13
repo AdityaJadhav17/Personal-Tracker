@@ -149,6 +149,14 @@ machine. Files written by every earlier version still import. Once a week has
 passed since the last export, a line by the Export button says so, and Data
 gets its dot.
 
+Or let it back up by itself: **Choose backup folder** in Data, once. The app
+then writes `personal-tracker-backup-YYYY-MM-DD.json` there when it opens and a
+few seconds after each change, keeps the newest 30 days, and deletes nothing
+else in the folder. Import restores any of them. Pick a folder outside
+OneDrive if the copies should stay off the internet, and copy the folder to a
+flash drive now and then. Edge and Chrome only; if the browser wants
+permission again, Data says backups are paused and offers one button.
+
 Export calendar writes an `.ics` file of every open deadline, with reminders
 set by priority: a high priority item warns a day before and an hour before, a
 normal one at 8pm the evening before, and a low one not at all. Import it into
@@ -255,8 +263,8 @@ Playwright spec checks that on every CI run.
 
 Two things follow from that.
 
-**Clearing site data deletes your deadlines.** Use Export now and then, and keep
-the file somewhere you trust. Import restores it exactly, which a round-trip
+**Clearing site data deletes your deadlines.** Turn on automatic backups, or
+use Export now and then, and keep the file somewhere you trust. Import restores it exactly, which a round-trip
 test proves against a real downloaded file.
 
 **Anyone at your unlocked laptop can read it,** as can any browser extension you

@@ -12,6 +12,9 @@ import type {
 
 export const STORAGE_KEY = 'personal-tracker/v1';
 
+/** AC-95.7. The stored text as it was before the latest upgrade. */
+export const BEFORE_UPGRADE_KEY = 'personal-tracker/before-upgrade';
+
 function emptyDatabase(): Database {
   return {
     version: 9,
@@ -70,8 +73,9 @@ export function load(): Database {
   // Rebuilding the object from version and items alone silently dropped goals,
   // courses and reflections, and branching on the version here meant db.ts had
   // an opinion about schema versions that only migrate.ts should hold.
-  return upgrade({
-    version: typeof stored.version === 'number' ? stored.version : 1,
+  const version = typeof stored.version === 'number' ? stored.version : 1;
+  const upgraded = upgrade({
+    version,
     items,
     goals: Array.isArray(stored.goals) ? (stored.goals as Goal[]) : [],
     courses: Array.isArray(stored.courses) ? (stored.courses as Course[]) : [],
@@ -87,6 +91,18 @@ export function load(): Database {
         : null,
     tasks: Array.isArray(stored.tasks) ? (stored.tasks as Task[]) : [],
   });
+
+  // AC-95.7. The first save after this replaces what was stored, so a wrong
+  // migration would lose it for good. Kept as it was, once, before that. No
+  // room for the copy is no reason to refuse the app.
+  if (upgraded.version !== version) {
+    try {
+      localStorage.setItem(BEFORE_UPGRADE_KEY, raw);
+    } catch {
+      // Quota: the database itself still loads.
+    }
+  }
+  return upgraded;
 }
 
 /**

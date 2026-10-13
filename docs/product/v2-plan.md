@@ -407,3 +407,4 @@ passed 1,300 lines.
 - [US-92, editing an event on the calendar is only editing](stories/US-92.md)
 - [US-93, change an event's category](stories/US-93.md)
 - [US-94, the security audit of 11 October](stories/US-94.md)
+- [US-95, automatic backups to a folder on this laptop](stories/US-95.md)

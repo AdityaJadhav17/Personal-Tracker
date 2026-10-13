@@ -41,10 +41,13 @@ component tests, Playwright for end to end. ESLint and Prettier. GitHub Actions
 on Node 22 (US-85).
 
 Storage is `localStorage`, reached through two functions in `src/storage/db.ts`.
-There is no `StorageAdapter` interface and no IndexedDB. See the decision log
-for why. The one other key, `personal-tracker/theme`, is a display setting for
-this browser (US-51), read by `public/theme.js` before paint and written by the
-theme toggle; it is not app data and is never exported.
+There is no `StorageAdapter` interface, and IndexedDB never holds the data. See
+the decision log for why. Two other keys: `personal-tracker/theme`, a display
+setting for this browser (US-51), read by `public/theme.js` before paint and
+written by the theme toggle; and `personal-tracker/before-upgrade`, the stored
+text as it was before the latest migration (AC-95.7). Neither is exported.
+IndexedDB holds one thing, in its own database `personal-tracker-backup`: the
+handle of the folder automatic backups go to (US-95, `src/storage/folder.ts`).
 
 The database is at version 9: items, goals, courses, reflections, notes
 (US-80, pinnable since US-81, lockable since US-82) and routine tasks (US-88),

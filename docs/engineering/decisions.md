@@ -5,6 +5,34 @@ we picked, and why. Add an entry before writing code that depends on it.
 
 ---
 
+## 2026-10-12: automatic backups go to a folder the user picks, remembered in IndexedDB
+
+**Context.** US-95. The only copy of everything is one browser's storage, and
+the only backup is an export Aditya has to remember. He wants copies kept off
+the internet: a folder on C: outside OneDrive, and a flash drive.
+
+**Options considered.** Post the database to serve.mjs, which writes it to
+disk; download a file automatically; the File System Access API, writing into
+a folder picked once.
+
+**Choice.** The File System Access API. The folder's handle is kept in
+IndexedDB, in a database of its own, `personal-tracker-backup`. Nothing else
+goes there; the data stays in localStorage.
+
+**Why.** Posting to serve.mjs breaks "no network request after load" and gives
+the server data to hold for the first time. Downloads pile up in Downloads and
+cannot be pruned. A picked folder needs no server, no dependency and no
+network, and the app can keep the newest 30 days and delete the rest. A folder
+handle is not text, so localStorage cannot hold it; IndexedDB is the only
+place a page can keep one. This narrows the 15 September decision against
+IndexedDB to "not for the data"; it does not reverse it.
+
+**The cost.** Chromium only: Safari, and so the iPhone, cannot write to
+folders, and the option is hidden there. The browser may ask again for
+permission in a new session; until it is given, backups pause and Data says so.
+
+---
+
 ## 2026-09-18: a refused storage write refuses the change, rather than showing it
 
 **Context.** The security audit found `save` calling `setItem` with no guard
