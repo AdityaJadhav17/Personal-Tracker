@@ -98,5 +98,6 @@ test('a title containing markup is shown as text, not executed', async ({
   await expect(page.getByText('<img src=x onerror=alert(1)>')).toBeVisible();
 
   expect(dialogs).toEqual([]);
-  expect(await page.locator('img').count()).toBe(0);
+  // The injected image, not the sidebar's logo (US-96).
+  expect(await page.locator('img[src="x"]').count()).toBe(0);
 });

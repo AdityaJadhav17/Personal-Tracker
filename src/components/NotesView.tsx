@@ -38,7 +38,13 @@ interface NotesViewProps {
   onPin: (id: string) => void;
   lock: Lock | null;
   /** AC-82.1. `made` is the new lock, on the first note ever locked. */
-  onLock: (id: string, title: string, sealed: Sealed, made?: Lock) => void;
+  /** AC-97.2. False if another window set the first lock meanwhile. */
+  onLock: (
+    id: string,
+    title: string,
+    sealed: Sealed,
+    made?: Lock,
+  ) => boolean | void;
   onUnlock: (id: string, body: string) => void;
   /** AC-86.3. Stores a new lock and every note under it; false if refused. */
   onRekey: (lock: Lock, notes: Resealed[]) => boolean;
@@ -186,7 +192,16 @@ export default function NotesView({
   async function lockOpen(with_: CryptoKey, made?: Lock) {
     if (!open) return;
     const text = open.body;
-    onLock(open.id, titleOf(text), await seal(with_, text), made);
+    if (
+      onLock(open.id, titleOf(text), await seal(with_, text), made) === false
+    ) {
+      // AC-97.2. Nothing was locked; this window's passcode is not the one.
+      setAsking(null);
+      setNotice(
+        'A passcode was set in another window just now. Open a locked note with it, then lock this one.',
+      );
+      return;
+    }
     keySalt.current = (made ?? lock)?.salt ?? null;
     setKey(with_);
     setOpened({ id: open.id, text });

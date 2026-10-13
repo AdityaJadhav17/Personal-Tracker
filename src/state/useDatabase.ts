@@ -59,8 +59,12 @@ export interface DatabaseActions {
   /** AC-80.3. Called per keystroke; the edit time moves with it. AC-82.4:
       a locked note passes its title as `body` and its text sealed. */
   editNote: (id: string, body: string, sealed?: Sealed | null) => void;
-  /** AC-82.1. Locks a note, and sets the lock on the first. Not an edit. */
-  lockNote: (id: string, title: string, sealed: Sealed, lock?: Lock) => void;
+  /**
+   * AC-82.1. Locks a note; not an edit. `lock` is the new lock, on the
+   * first note ever locked. AC-97.2: false, and nothing changed, if another
+   * window set one meanwhile.
+   */
+  lockNote: (id: string, title: string, sealed: Sealed, lock?: Lock) => boolean;
   /** AC-82.5. The note made ordinary, its text back. Not an edit. */
   unlockNote: (id: string, body: string) => void;
   /** AC-86.3. A new lock and every locked note under it, in one write, or
@@ -524,7 +528,10 @@ export function useDatabase(): {
     },
 
     lockNote(id, title, sealed, lock) {
-      update((current) => ({
+      // AC-97.2. A lock made here while another window made one would
+      // replace it, and that window's notes would open with neither.
+      if (lock && latest.current?.lock) return false;
+      return update((current) => ({
         ...current,
         lock: lock ?? current.lock,
         notes: current.notes.map((note) =>
@@ -632,7 +639,7 @@ export function useDatabase(): {
         locked.length === notes.length &&
         locked.every((note) => byId.get(note.id)?.was.iv === note.sealed!.iv);
       if (!same) return false;
-      return commit({
+      const saved = commit({
         ...current,
         lock,
         notes: current.notes.map((note) => {
@@ -640,6 +647,10 @@ export function useDatabase(): {
           return resealed ? { ...note, sealed: resealed.sealed } : note;
         }),
       });
+      // AC-97.1. A note deleted before is sealed under the old passcode;
+      // brought back, it would open with neither and block the next change.
+      if (saved) setUndoable(null);
+      return saved;
     },
 
     recordBackup(at) {

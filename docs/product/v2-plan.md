@@ -408,3 +408,5 @@ passed 1,300 lines.
 - [US-93, change an event's category](stories/US-93.md)
 - [US-94, the security audit of 11 October](stories/US-94.md)
 - [US-95, automatic backups to a folder on this laptop](stories/US-95.md)
+- [US-96, Margin on the iPhone](stories/US-96.md)
+- [US-97, hardening from the audit of 13 October](stories/US-97.md)

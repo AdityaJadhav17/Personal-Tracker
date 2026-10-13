@@ -86,7 +86,8 @@ test('a note containing markup is stored as text', async ({ page }) => {
     '<img src=x onerror=alert(1)>',
   );
   expect(dialogs).toEqual([]);
-  expect(await page.locator('img').count()).toBe(0);
+  // The injected image, not the sidebar's logo (US-96).
+  expect(await page.locator('img[src="x"]').count()).toBe(0);
 });
 
 test('AC-06.1 a note is kept when an item is finished and undone', async ({

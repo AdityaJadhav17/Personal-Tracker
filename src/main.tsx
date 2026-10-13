@@ -8,6 +8,13 @@ import './index.css';
 // installed app; if it says no, nothing changes and Export is still the backup.
 void navigator.storage.persist();
 
+// AC-96.4. Opens with no connection to the server, from what public/sw.js
+// kept. Built app only: on the dev server it would cache modules Vite
+// rewrites on every save.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/sw.js');
+}
+
 const root = document.getElementById('root');
 if (!root) throw new Error('No #root element in index.html');
 

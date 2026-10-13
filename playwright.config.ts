@@ -11,10 +11,23 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: 'npm run dev',
-    url: BASE_URL,
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: BASE_URL,
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    // AC-96.4. The built app as 4180 serves it, for the service worker,
+    // which only a production build registers. A scratch folder and port,
+    // never the real app's.
+    {
+      command:
+        'npx vite build --outDir dist-e2e --emptyOutDir --logLevel warn && node scripts/serve.mjs',
+      url: 'http://localhost:4190',
+      env: { PT_TARGET: 'dist-e2e', PT_PORT: '4190' },
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
 });

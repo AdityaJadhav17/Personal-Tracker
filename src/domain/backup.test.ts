@@ -46,15 +46,34 @@ describe('US-95 automatic backup files', () => {
       'personal-tracker-backup-2026-09-01.json.bak',
     ];
 
-    expect(staleBackups([...others, ...days].reverse())).toEqual([
+    expect(
+      staleBackups([...others, ...days].reverse(), new Date(2026, 10, 30)),
+    ).toEqual([
       'personal-tracker-backup-2026-09-02.json',
       'personal-tracker-backup-2026-09-01.json',
     ]);
   });
 
   test('AC-95.3 thirty or fewer files means nothing to delete', () => {
-    expect(staleBackups(['personal-tracker-backup-2026-10-12.json'])).toEqual(
-      [],
-    );
+    expect(
+      staleBackups(['personal-tracker-backup-2026-10-12.json'], NOW),
+    ).toEqual([]);
+  });
+});
+
+describe('US-97 a backup named for a future day', () => {
+  const day = (d: string) => `personal-tracker-backup-${d}.json`;
+  const TODAY = new Date(2026, 8, 15, 10);
+
+  test('AC-97.3 is neither counted among the 30 kept nor deleted', () => {
+    const real = Array.from({ length: 30 }, (_, i) =>
+      day(`2026-08-${String(i + 1).padStart(2, '0')}`),
+    ).concat(day('2026-09-15'));
+    const planted = [day('2099-01-01'), day('2099-01-02')];
+
+    // 31 real backups: only the oldest goes, whatever is dated later.
+    expect(staleBackups([...planted, ...real], TODAY)).toEqual([
+      day('2026-08-01'),
+    ]);
   });
 });

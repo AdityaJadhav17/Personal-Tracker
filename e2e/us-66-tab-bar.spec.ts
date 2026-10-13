@@ -37,9 +37,7 @@ test('AC-66.1 four labelled tabs float at the foot of the screen', async ({
     await expect(tab(page, name)).toContainText(name);
   }
   await expect(tab(page, 'Courses')).toBeHidden();
-  await expect(
-    page.getByRole('heading', { name: 'Personal Tracker' }),
-  ).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Margin' })).toBeHidden();
 
   const bar = (await tabs(page).boundingBox())!;
   expect(bar.y + bar.height).toBeGreaterThan(844 - 24);

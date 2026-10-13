@@ -33,9 +33,7 @@ async function addItem(title: string, due: string, time = '') {
 
 test('renders the app name', () => {
   render(<App />);
-  expect(
-    screen.getByRole('heading', { name: 'Personal Tracker' }),
-  ).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Margin' })).toBeVisible();
 });
 
 test('AC-01.1 an added item appears in the list', async () => {
@@ -78,7 +76,8 @@ test('a title containing markup renders as text, not as HTML', async () => {
   await addItem('<img src=x onerror=alert(1)>', '2026-10-03');
 
   expect(screen.getByText('<img src=x onerror=alert(1)>')).toBeVisible();
-  expect(document.querySelector('img')).toBeNull();
+  // The injected image, not the sidebar's logo (US-96).
+  expect(document.querySelector('img[src="x"]')).toBeNull();
 });
 
 afterEach(() => {
@@ -141,7 +140,7 @@ test('AC-11.2 the add form is not offered when storage cannot be read', () => {
 test('AC-11.1 the app name is still shown in both empty and error states', () => {
   const { unmount } = render(<App />);
   expect(
-    screen.getByRole('heading', { name: 'Personal Tracker', level: 1 }),
+    screen.getByRole('heading', { name: 'Margin', level: 1 }),
   ).toBeVisible();
   unmount();
 
@@ -150,7 +149,7 @@ test('AC-11.1 the app name is still shown in both empty and error states', () =>
   });
   render(<App />);
   expect(
-    screen.getByRole('heading', { name: 'Personal Tracker', level: 1 }),
+    screen.getByRole('heading', { name: 'Margin', level: 1 }),
   ).toBeVisible();
 });
 

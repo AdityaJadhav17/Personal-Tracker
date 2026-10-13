@@ -31,7 +31,13 @@
       media="(prefers-color-scheme: dark)"
       content="#0f172a"
     />
-    <title>Personal Tracker</title>
+    <title>Margin</title>
+    <!-- US-96. What the installed app is called, and its icon, on the laptop
+      and on the iPhone's home screen. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Margin" />
     <!-- US-51. Before anything paints, so a saved theme never flashes the other. -->
     <script src="/theme.js"></script>
   </head>

@@ -9,9 +9,7 @@ test('the app loads with no console errors', async ({ page }) => {
 
   await page.goto('/');
 
-  await expect(
-    page.getByRole('heading', { name: 'Personal Tracker' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Margin' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

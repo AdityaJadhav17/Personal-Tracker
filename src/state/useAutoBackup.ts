@@ -97,7 +97,7 @@ export function useAutoBackup(
             backupName(at),
             serialize({ ...db, lastBackupAt: stamp }),
           );
-          for (const name of staleBackups(await namesIn(folder))) {
+          for (const name of staleBackups(await namesIn(folder), at)) {
             await removeFile(folder, name);
           }
           setLastAt(stamp);

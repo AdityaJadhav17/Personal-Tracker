@@ -8,6 +8,7 @@
  * folder is how a reinstall fails. It listens on loopback, so nothing off
  * this laptop can reach it, and it answers only files inside the folder.
  */
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
@@ -23,6 +24,8 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.woff2': 'font/woff2',
+  // AC-96.3. The installed app's name and icons.
+  '.webmanifest': 'application/manifest+json',
 };
 
 /** AC-74.2. The content type a file goes out with, by its extension. */
@@ -81,13 +84,65 @@ export function headersFor(file, url) {
  * page that rebinds its domain to 127.0.0.1 reaches the port under that
  * domain's name, so anything else is refused.
  */
-export function hostAllowed(host, port) {
-  return host === `localhost:${port}` || host === `127.0.0.1:${port}`;
+export function hostAllowed(host, port, tailnetName = null) {
+  return (
+    host === `localhost:${port}` ||
+    host === `127.0.0.1:${port}` ||
+    // AC-96.1. The phone, through `tailscale serve`, which passes on the name
+    // it was reached by. Only Tailscale's DNS answers for it, so a rebinding
+    // page cannot borrow it.
+    (tailnetName !== null && host === tailnetName)
+  );
+}
+
+/** AC-96.1. This laptop's name on the tailnet, from `tailscale status --json`. */
+export function tailnetNameFrom(status) {
+  try {
+    const name = JSON.parse(status)?.Self?.DNSName;
+    return typeof name === 'string' && name !== ''
+      ? name.replace(/\.$/, '').toLowerCase()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * AC-96.1. Asked of Tailscale itself, so there is nothing to configure. Not at
+ * start: at logon Tailscale may not be up yet. Asked when a request comes in
+ * under some other name, and at most once a minute, so a page sending names
+ * at the server cannot make it start a process per request.
+ */
+let tailnet = { name: null, askedAt: -Infinity };
+function tailnetName() {
+  if (tailnet.name === null && Date.now() - tailnet.askedAt > 60_000) {
+    let status = '';
+    // On PATH, or where the Windows installer puts it: a process started
+    // before Tailscale was installed has a PATH without it.
+    for (const command of [
+      'tailscale',
+      join(process.env.ProgramFiles ?? '', 'Tailscale', 'tailscale.exe'),
+    ]) {
+      try {
+        status = execFileSync(command, ['status', '--json'], {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+          timeout: 5_000,
+        });
+        break;
+      } catch {
+        // Not here; and if nowhere, not installed or not running: localhost only.
+      }
+    }
+    tailnet = { name: tailnetNameFrom(status), askedAt: Date.now() };
+  }
+  return tailnet.name;
 }
 
 function serve(root, port) {
   const server = createServer((request, response) => {
-    if (!hostAllowed(request.headers.host, port)) {
+    const host = request.headers.host;
+    if (!hostAllowed(host, port) && !hostAllowed(host, port, tailnetName())) {
       response.writeHead(403).end();
       return;
     }

@@ -5,6 +5,7 @@ import {
   fileFor,
   headersFor,
   hostAllowed,
+  tailnetNameFrom,
   typeOf,
 } from './serve.mjs';
 
@@ -72,4 +73,26 @@ test('AC-94.1 every file tells the browser never to show it inside a frame', () 
     expect(headers['Content-Type']).toBe(typeOf(file));
     expect(headers['Cache-Control']).toBe(cacheFor(url));
   }
+});
+
+const NAME = 'hub.tail1234.ts.net';
+
+test("AC-96.1 the laptop's own Tailscale name is answered, exactly", () => {
+  expect(hostAllowed(NAME, 4180, NAME)).toBe(true);
+  expect(hostAllowed('localhost:4180', 4180, NAME)).toBe(true);
+});
+
+test('AC-96.1 other Tailscale names, and no Tailscale at all, are refused', () => {
+  expect(hostAllowed('other.tail1234.ts.net', 4180, NAME)).toBe(false);
+  expect(hostAllowed(`evil.${NAME}`, 4180, NAME)).toBe(false);
+  expect(hostAllowed(`${NAME}.evil.example`, 4180, NAME)).toBe(false);
+  expect(hostAllowed(NAME, 4180, null)).toBe(false);
+});
+
+test('AC-96.1 the name is read from tailscale status, without its final dot', () => {
+  const status = JSON.stringify({ Self: { DNSName: 'Hub.Tail1234.ts.net.' } });
+  expect(tailnetNameFrom(status)).toBe(NAME);
+  expect(tailnetNameFrom('{}')).toBeNull();
+  expect(tailnetNameFrom('not json')).toBeNull();
+  expect(tailnetNameFrom(JSON.stringify({ Self: { DNSName: '' } }))).toBeNull();
 });

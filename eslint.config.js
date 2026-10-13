@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist',
+      'dist-e2e',
       'coverage',
       'playwright-report',
       'test-results',
@@ -38,6 +39,19 @@ export default tseslint.config(
     files: ['public/**/*.js'],
     languageOptions: {
       globals: { document: 'readonly', localStorage: 'readonly' },
+    },
+  },
+  {
+    // AC-96.4. The service worker runs in its own scope, with these.
+    files: ['public/sw.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        Response: 'readonly',
+      },
     },
   },
   {

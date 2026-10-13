@@ -129,7 +129,11 @@ export default function Shell({
       </a>
 
       <div className="sidebar">
-        <h1 className="sidebar__title">Personal Tracker</h1>
+        <h1 className="sidebar__title">
+          {/* AC-96.3. Decoration beside the name, which says it already. */}
+          <img className="sidebar__logo" src="/icon.svg" alt="" />
+          Margin
+        </h1>
 
         <nav className="sidebar__nav" aria-label="Views">
           {VIEWS.map(({ id, label, icon }) => (

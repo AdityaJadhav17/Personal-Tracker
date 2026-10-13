@@ -5,6 +5,33 @@ we picked, and why. Add an entry before writing code that depends on it.
 
 ---
 
+## 2026-10-13: the iPhone reaches the laptop over Tailscale, and a service worker keeps the app
+
+**Context.** US-96. Aditya wants Margin on his iPhone with nothing exposed to
+the internet, in transit or at rest. Cloudflare (Pages or a tunnel) was asked
+about and declined: it would put the app on a public address, and a tunnel
+decrypts traffic on Cloudflare's servers.
+
+**Choice.** Tailscale, with Tailnet Lock, and `tailscale serve` (never
+`funnel`) in front of 4180. serve.mjs answers the laptop's own tailnet name,
+asked of `tailscale status --json`, and still refuses every other name. A
+hand-written service worker, `public/sw.js`, registered only by the built app.
+
+**Why.** Tailscale is WireGuard end to end between his two devices; relays and
+Tailscale's servers never see content, and Tailnet Lock removes the need to
+trust Tailscale about who joins. Its published bulletins up to 18 August 2026
+touch nothing this setup uses (SSH, Funnel, subnet routers, the web
+interface), and 1.104.1 is past every fix. The service worker is about seventy
+lines; Workbox would be a dependency for the same thing. Network first for the
+page, so a deploy shows on the next open; cache first for hashed assets.
+
+**The cost.** The machine name goes into the public Certificate Transparency
+log when HTTPS is enabled, so the laptop is named `hub`. The phone keeps its
+own data until sync exists. Playwright tests the worker against a production
+build on a scratch port, 4190, which adds a build to every end-to-end run.
+
+---
+
 ## 2026-10-12: automatic backups go to a folder the user picks, remembered in IndexedDB
 
 **Context.** US-95. The only copy of everything is one browser's storage, and

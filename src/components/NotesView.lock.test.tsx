@@ -43,7 +43,12 @@ beforeAll(async () => {
   };
 });
 
-type OnLock = (id: string, title: string, sealed: Sealed, lock?: Lock) => void;
+type OnLock = (
+  id: string,
+  title: string,
+  sealed: Sealed,
+  lock?: Lock,
+) => boolean | void;
 
 function renderNotes(overrides: Partial<Parameters<typeof NotesView>[0]> = {}) {
   return render(
@@ -394,4 +399,22 @@ test('AC-94.9 when another tab changes the passcode, this one locks again', asyn
 
   expect(await screen.findByLabelText('Passcode')).toBeVisible();
   expect(screen.queryByRole('textbox', { name: 'Note' })).toBeNull();
+});
+
+test('AC-97.2 a first passcode refused because another window set one says so, and locks nothing', async () => {
+  const user = userEvent.setup();
+  const onLock = vi.fn<OnLock>(() => false);
+  renderNotes({ onLock });
+
+  await user.click(screen.getByRole('button', { name: 'Lock note' }));
+  await user.type(screen.getByLabelText('New passcode'), PASSCODE);
+  await user.type(screen.getByLabelText('Confirm passcode'), PASSCODE);
+  await user.click(
+    screen.getByRole('button', { name: 'Lock with this passcode' }),
+  );
+
+  expect(
+    await screen.findByText(/passcode was set in another window/),
+  ).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Lock now' })).toBeNull();
 });

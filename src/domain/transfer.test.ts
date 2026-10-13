@@ -175,11 +175,11 @@ describe('parseImport', () => {
   });
 
   test('a bare array is refused', () => {
-    expect(reject('[]')).toMatch(/not a Personal Tracker export/i);
+    expect(reject('[]')).toMatch(/not a Margin export/i);
   });
 
   test('null is refused', () => {
-    expect(reject('null')).toMatch(/not a Personal Tracker export/i);
+    expect(reject('null')).toMatch(/not a Margin export/i);
   });
 
   test('a file from a different version is refused, naming the version', () => {

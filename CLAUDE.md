@@ -1,4 +1,7 @@
-# Personal Tracker
+# Personal Tracker (Margin)
+
+The app is called Margin since US-96; the repository, the storage keys and the
+file names keep the first name, on purpose.
 
 A local-first deadline and notes tracker Aditya runs on his own laptop. School
 and life in one list. No accounts, no server, no data leaving the machine.

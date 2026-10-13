@@ -1,10 +1,13 @@
-# Personal Tracker
+# Margin
+
+<img src="public/icons/icon-192.png" alt="" width="96" align="right" />
 
 [![CI](https://github.com/AdityaJadhav17/Personal-Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/AdityaJadhav17/Personal-Tracker/actions/workflows/ci.yml)
 
 A personal dashboard for deadlines, notes, a daily routine, goals and courses.
-It runs in your browser on your own laptop. No account, no server, nothing
-leaves the machine.
+It runs in your browser on your own laptop, and on your iPhone over your own
+private network. No account, no cloud, nothing on the internet. (The
+repository keeps its first name, Personal Tracker.)
 
 ![Home: today's date, overdue first, then the coming days](docs/screenshots/home.png)
 
@@ -239,6 +242,28 @@ What it did is in `%LOCALAPPDATA%\PersonalTracker-update.log`. To stop it,
 so 4180 starts empty. Export from 5173 once, Import it at 4180, and from then
 on 4180 holds your real deadlines and 5173 is only for development.
 
+### On your iPhone
+
+Over [Tailscale](https://tailscale.com), a private network of only your own
+devices: encrypted from the laptop to the phone, and never public. Install it
+on both, signed in to one account, with Tailnet Lock on so no third device can
+join without one of them approving it.
+
+1. On the laptop, once: `tailscale serve --bg 4180`. 4180 is then reachable at
+   `https://<laptop>.<tailnet>.ts.net` from your devices only, and stays so
+   across restarts. Never `tailscale funnel`, which makes it public.
+2. On the iPhone, open that address in Safari, then Share, then **Add to Home
+   Screen**. Margin opens full screen from its icon, and opens with no
+   connection too, from what it kept; a deploy shows the next time it can
+   reach the laptop.
+3. The phone keeps its own data, separate from the laptop's. To start it with
+   yours: Export on the laptop, send the file with Taildrop (the Share menu,
+   then Tailscale), and Import it on the phone. Sync is not built yet.
+
+The server answers its Tailscale name only because it asks Tailscale for it;
+any other name still gets a 403. Automatic backups need a folder, which iOS
+does not let a page write to, so the phone has Export.
+
 ## Test it
 
 ```bash
@@ -282,8 +307,8 @@ deadlines by accident.
 
 ## Not in this version
 
-No accounts, no cloud sync, no hosted backend, no mobile app, no collaboration.
-GitHub holds the source and nothing else.
+No accounts, no cloud sync, no hosted backend, no app store app, no
+collaboration. GitHub holds the source and nothing else.
 
 Also absent, and deliberately: push notifications. A browser tab on a laptop
 cannot reach your phone without a server, so the app itself reminds you only

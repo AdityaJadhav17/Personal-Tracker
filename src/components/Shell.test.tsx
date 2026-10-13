@@ -104,7 +104,7 @@ test('the app name is shown once, in the sidebar', () => {
   );
 
   expect(
-    screen.getByRole('heading', { name: 'Personal Tracker', level: 1 }),
+    screen.getByRole('heading', { name: 'Margin', level: 1 }),
   ).toBeVisible();
 });
 

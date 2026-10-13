@@ -40,10 +40,14 @@ export function backupName(at: Date): string {
  * AC-95.3. Of the names in the backup folder, the automatic backups past the
  * newest 30, newest first. Anything else in the folder is never a candidate:
  * the folder is the user's, and so is whatever else they keep there.
+ *
+ * AC-97.3. Nor is a backup named for a day after `at`'s. The app never wrote
+ * one, and counting it would push the real backups out of the 30.
  */
-export function staleBackups(names: string[]): string[] {
+export function staleBackups(names: string[], at: Date): string[] {
+  const today = backupName(at);
   return names
-    .filter((name) => BACKUP.test(name))
+    .filter((name) => BACKUP.test(name) && name <= today)
     .sort()
     .reverse()
     .slice(KEEP);

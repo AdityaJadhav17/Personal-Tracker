@@ -239,3 +239,26 @@ stop at 200 characters. Skipped by choice: binding locked text to its note id.
 
 Not covered by that pass, for a later one: calendar drag and drop, the Vite
 dev server's configuration, and what the JSON export holds.
+
+## Addendum, 13 October 2026: security-audit skill, standard profile (US-96, US-97)
+
+A full source-only pass over the working tree, uncommitted US-96 included:
+three hunter waves, two clean critic passes, and two independent verifier
+passes per candidate. Nothing was confirmed. Three open leads:
+
+- **The service worker kept any page opened as the offline app.** Opening
+  `/icon.svg` as a page, by hand or because another site opened it, replaced
+  the kept app and dropped its code. Reproduced afterwards in Playwright, and
+  fixed before commit as AC-96.6: only `/` served as HTML is kept, one at a
+  time.
+- **Automatic backups keep the plaintext of a note locked later**, for up to
+  30 daily files and in any flash-drive copy. Waiting on Aditya: re-seal or
+  delete older files on lock, or warn as Change passcode does.
+- **The before-upgrade copy is not updated on lock or passcode change.** Latent
+  until the next schema migration; to be fixed before version 10.
+
+Hardening done in US-97: Undo can no longer bring back a locked note deleted
+before a passcode change; a first passcode set in a second window no longer
+replaces one already set; backup names dated after today are ignored when
+pruning. Kept by choice: `spike/ios-push`, which v3-plan says to delete only
+once it has answered its questions. Other notes are in the run's report.

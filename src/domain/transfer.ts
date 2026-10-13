@@ -384,7 +384,7 @@ export function parseImport(text: string): ParseResult {
   if (text.length > MAX_BYTES) {
     return {
       ok: false,
-      error: 'That file is too large to be a Personal Tracker export.',
+      error: 'That file is too large to be a Margin export.',
     };
   }
 
@@ -397,7 +397,7 @@ export function parseImport(text: string): ParseResult {
 
   const raw = fields(parsed);
   if (!raw) {
-    return { ok: false, error: 'That file is not a Personal Tracker export.' };
+    return { ok: false, error: 'That file is not a Margin export.' };
   }
 
   const version = raw.version;
