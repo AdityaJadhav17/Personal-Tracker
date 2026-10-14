@@ -458,7 +458,7 @@ test('AC-09.1 exporting writes every item into one JSON file', async () => {
     version: number;
     items: { title: string }[];
   };
-  expect(parsed.version).toBe(10);
+  expect(parsed.version).toBe(11);
   expect(parsed.items.map((i) => i.title).sort()).toEqual(['Midterm', 'Rent']);
 });
 
@@ -503,7 +503,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
   await user.click(screen.getByRole('button', { name: 'Export' }));
 
   expect(JSON.parse(await readBlob(blobs[0]!))).toEqual({
-    version: 10,
+    version: 11,
     items: [],
     goals: [],
     courses: [],
@@ -513,6 +513,7 @@ test('AC-09.2 exporting an empty database gives a valid file, not an error', asy
     lastBackupAt: expect.any(String) as unknown,
     lock: null,
     tasks: [],
+    deleted: [],
   });
 });
 

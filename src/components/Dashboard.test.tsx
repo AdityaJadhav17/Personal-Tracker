@@ -26,6 +26,7 @@ function anItem(title: string, daysFromNow: number, rest: Partial<Item> = {}) {
     status: 'open',
     note: '',
     createdAt: NOW.toISOString(),
+    changedAt: NOW.toISOString(),
     completedAt: null,
     goalId: null,
     courseId: null,
@@ -658,6 +659,7 @@ const CSE100 = {
   professorEmail: 'prof@ucsd.edu',
   officeHours: 'Tue 2-4pm',
   createdAt: NOW.toISOString(),
+  changedAt: NOW.toISOString(),
 };
 
 /**
@@ -816,6 +818,7 @@ const CSE110 = {
   professorEmail: '',
   officeHours: '',
   createdAt: '2026-09-01T00:00:00.000Z',
+  changedAt: '2026-09-01T00:00:00.000Z',
 };
 
 const GOAL = {
@@ -824,6 +827,7 @@ const GOAL = {
   description: '',
   targetAt: '2026-12-11T07:59:00.000Z',
   createdAt: '2026-09-01T00:00:00.000Z',
+  changedAt: '2026-09-01T00:00:00.000Z',
   achievedAt: null,
 };
 
@@ -1332,6 +1336,7 @@ describe('US-57 Home as a timeline', () => {
       professorEmail: '',
       officeHours: '',
       createdAt: NOW.toISOString(),
+      changedAt: NOW.toISOString(),
     },
   ];
   const GOALS = [
@@ -1341,6 +1346,7 @@ describe('US-57 Home as a timeline', () => {
       description: '',
       targetAt: NOW.toISOString(),
       createdAt: NOW.toISOString(),
+      changedAt: NOW.toISOString(),
       achievedAt: null,
     },
   ];
@@ -1461,6 +1467,7 @@ describe('US-59 the opened row', () => {
             description: '',
             targetAt: NOW.toISOString(),
             createdAt: NOW.toISOString(),
+            changedAt: NOW.toISOString(),
             achievedAt: null,
           },
         ]}

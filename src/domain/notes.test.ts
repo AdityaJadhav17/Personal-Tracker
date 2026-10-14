@@ -10,6 +10,7 @@ function aNote(id: string, body: string, updated: Date, pinned = false): Note {
     body,
     createdAt: updated.toISOString(),
     updatedAt: updated.toISOString(),
+    changedAt: updated.toISOString(),
     pinned,
     sealed: null,
   };

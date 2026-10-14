@@ -11,6 +11,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     status: 'open',
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     completedAt: null,
     goalId: null,
     courseId: null,
@@ -23,7 +24,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 10,
+    version: 11,
     items,
     goals: [],
     courses: [],
@@ -32,6 +33,7 @@ function aDatabase(items: Item[] = [anItem()]): Database {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 }
 
@@ -123,7 +125,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(10);
+    expect(load().version).toBe(11);
   });
 });
 
@@ -143,7 +145,7 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 10 as const,
+    version: 11 as const,
     items: [],
     goals: [],
     courses: [],
@@ -152,6 +154,7 @@ describe('when the browser refuses to store', () => {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 
   test('save reports the failure rather than throwing out of the caller', () => {
@@ -183,6 +186,7 @@ describe('US-80 notes in storage', () => {
     body: 'Groceries\nmilk',
     createdAt: '2026-09-28T17:00:00.000Z',
     updatedAt: '2026-09-28T17:05:00.000Z',
+    changedAt: '2026-09-28T17:05:00.000Z',
     pinned: false,
     sealed: null,
   };
@@ -197,7 +201,7 @@ describe('US-80 notes in storage', () => {
       STORAGE_KEY,
       JSON.stringify({ ...aDatabase([]), version: 5, notes: undefined }),
     );
-    expect(load()).toMatchObject({ version: 10, notes: [] });
+    expect(load()).toMatchObject({ version: 11, notes: [] });
   });
 
   test('AC-80.7 notes of the wrong shape come back empty', () => {
@@ -214,6 +218,7 @@ describe('US-82 the lock in storage', () => {
     const lock = {
       salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
       check: { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVk' },
+      changedAt: '2026-09-28T17:05:00.000Z',
     };
     save({ ...aDatabase([]), lock });
     expect(load().lock).toEqual(lock);
@@ -227,6 +232,7 @@ describe('US-88 tasks in storage', () => {
       title: 'Gym',
       doneOn: null,
       createdAt: '2026-09-14T17:00:00.000Z',
+      changedAt: '2026-09-14T17:00:00.000Z',
     };
     save({ ...aDatabase([]), tasks: [task] });
     expect(load().tasks).toEqual([task]);
@@ -244,7 +250,7 @@ describe('US-95 the copy kept before an upgrade', () => {
     });
     localStorage.setItem(STORAGE_KEY, old);
 
-    expect(load().version).toBe(10);
+    expect(load().version).toBe(11);
     expect(localStorage.getItem(BEFORE)).toBe(old);
   });
 

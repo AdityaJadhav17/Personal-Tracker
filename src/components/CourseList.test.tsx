@@ -13,6 +13,7 @@ function aCourse(overrides: Partial<Course> = {}): Course {
     professorEmail: 'prof@ucsd.edu',
     officeHours: 'Tue 2-4pm, CSE 3108',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     ...overrides,
   };
 }

@@ -11,6 +11,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     status: done ? 'done' : 'open',
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     completedAt: done ? '2026-09-16T01:00:00.000Z' : null,
     goalId,
     courseId: null,
@@ -27,13 +28,14 @@ function aGoal(id: string, name = id): Goal {
     description: 'Something worth doing',
     targetAt: '2026-12-15T08:00:00.000Z',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     achievedAt: null,
   };
 }
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
   return {
-    version: 10,
+    version: 11,
     items,
     goals,
     courses: [],
@@ -42,6 +44,7 @@ function aDatabase(goals: Goal[], items: Item[]): Database {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 }
 
@@ -140,7 +143,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(10);
+    expect(next.version).toBe(11);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

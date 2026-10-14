@@ -21,6 +21,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     status: 'open',
     note: '',
     createdAt: at(-5),
+    changedAt: at(-5),
     completedAt: null,
     goalId: null,
     courseId: null,

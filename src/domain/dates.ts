@@ -314,6 +314,22 @@ export function toInstant(text: string): string {
   return new Date(Date.parse(text)).toISOString();
 }
 
+/** US-99. A lock or record with no time of its own loses to any dated one. */
+export const EPOCH = '1970-01-01T00:00:00.000Z';
+
+/**
+ * US-99. The latest time a record already has: a task finished on one device
+ * and open on the other, or an achieved goal and its unachieved copy, must
+ * not tie.
+ */
+export function newestTime(record: object): string {
+  const r = record as Record<string, unknown>;
+  return [r.createdAt, r.completedAt, r.updatedAt, r.achievedAt]
+    .filter((t): t is string => typeof t === 'string')
+    .sort()
+    .at(-1)!;
+}
+
 /** The same instant, moved by `minutes`, still as an ISO instant. */
 export function shiftMinutes(iso: string, minutes: number): string {
   return new Date(Date.parse(iso) + minutes * 60_000).toISOString();

@@ -13,6 +13,7 @@ function aGoal(overrides: Partial<Goal> = {}): Goal {
     description: 'No late submissions',
     targetAt: new Date(2026, 11, 15, 23, 59).toISOString(),
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     achievedAt: null,
     ...overrides,
   };
@@ -28,6 +29,7 @@ function anItem(id: string, goalId: string | null, done = false): Item {
     status: done ? 'done' : 'open',
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     completedAt: done ? '2026-09-16T01:00:00.000Z' : null,
     goalId,
     courseId: null,

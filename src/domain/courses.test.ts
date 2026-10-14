@@ -11,6 +11,7 @@ function anItem(id: string, courseId: string | null): Item {
     status: 'open',
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     completedAt: null,
     goalId: null,
     courseId,
@@ -28,12 +29,13 @@ function aCourse(id: string, name = id): Course {
     professorEmail: 'prof@ucsd.edu',
     officeHours: 'Tue 2-4pm',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
   };
 }
 
 function aDatabase(courses: Course[], items: Item[]): Database {
   return {
-    version: 10,
+    version: 11,
     items,
     courses,
     goals: [],
@@ -42,6 +44,7 @@ function aDatabase(courses: Course[], items: Item[]): Database {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 }
 
@@ -99,7 +102,7 @@ test('the other collections are carried through untouched', () => {
 
   const next = deleteCourse(db, 'c1');
 
-  expect(next.version).toBe(10);
+  expect(next.version).toBe(11);
   expect(next.goals).toEqual([]);
   expect(next.reflections).toEqual([]);
 });

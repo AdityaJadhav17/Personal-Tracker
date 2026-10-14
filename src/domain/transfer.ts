@@ -1,8 +1,11 @@
-import { toInstant } from './dates';
+import { EPOCH, newestTime, toInstant } from './dates';
 import { upgrade } from './migrate';
+import { COLLECTIONS } from './sync';
 import type {
+  Collection,
   Course,
   Database,
+  Deletion,
   Goal,
   Item,
   Note,
@@ -108,6 +111,19 @@ const KEYS: Record<number, string[]> = {
     'lock',
     'tasks',
   ],
+  // US-99. Gains deleted; every record gains changedAt.
+  11: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+    'lock',
+    'tasks',
+    'deleted',
+  ],
 };
 
 export type ParseResult =
@@ -175,6 +191,10 @@ function itemProblem(value: unknown): string | null {
   if (!isLink(raw.goalId)) return 'its goal must be an id or null';
   if (!isLink(raw.parentId)) return 'its parent must be an id or null';
   if (!isLink(raw.courseId)) return 'its course must be an id or null';
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
 }
 
@@ -195,6 +215,10 @@ function goalProblem(value: unknown): string | null {
   ) {
     return 'its achieved date is not a date';
   }
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
 }
 
@@ -208,6 +232,10 @@ function courseProblem(value: unknown): string | null {
   if (!isText(raw.professorEmail)) return 'its professor email must be text';
   if (!isText(raw.officeHours)) return 'its office hours must be text';
   if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
 }
 
@@ -229,6 +257,10 @@ function reflectionProblem(value: unknown): string | null {
   }
   if (!isText(raw.note)) return 'its note must be text';
   if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
 }
 
@@ -263,7 +295,37 @@ function noteProblem(value: unknown): string | null {
   ) {
     return 'its locked text is not what a lock writes';
   }
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
+}
+
+/** US-99. Its own changedAt, or the newest time an older file gave it. */
+function changedAt(raw: Record<string, unknown>): string {
+  return toInstant(isText(raw.changedAt) ? raw.changedAt : newestTime(raw));
+}
+
+/** What is wrong with this deletion, or null when nothing is. */
+function deletionProblem(value: unknown): string | null {
+  const raw = fields(value);
+  if (!raw) return 'it is not an object';
+  if (!isText(raw.kind) || !COLLECTIONS.includes(raw.kind as Collection)) {
+    return 'its kind is not one of the collections';
+  }
+  if (!isText(raw.id) || raw.id === '') return 'it has no id';
+  if (!isInstant(raw.at)) return 'its time is not a date';
+  return null;
+}
+
+function toDeletion(value: unknown): Deletion {
+  const raw = value as Record<string, unknown>;
+  return {
+    kind: raw.kind as Collection,
+    id: raw.id as string,
+    at: toInstant(raw.at as string),
+  };
 }
 
 /** Copy across only the fields we know about, so nothing else rides along. */
@@ -278,6 +340,7 @@ function toItem(value: unknown): Item {
     status: raw.status as Item['status'],
     note: raw.note as string,
     createdAt: toInstant(raw.createdAt as string),
+    changedAt: changedAt(raw),
     completedAt:
       raw.completedAt === null ? null : toInstant(raw.completedAt as string),
     goalId: (raw.goalId as string | null | undefined) ?? null,
@@ -300,6 +363,7 @@ function toGoal(value: unknown): Goal {
     createdAt: toInstant(raw.createdAt as string),
     achievedAt:
       typeof raw.achievedAt === 'string' ? toInstant(raw.achievedAt) : null,
+    changedAt: changedAt(raw),
   };
 }
 
@@ -312,6 +376,7 @@ function toCourse(value: unknown): Course {
     professorEmail: raw.professorEmail as string,
     officeHours: raw.officeHours as string,
     createdAt: toInstant(raw.createdAt as string),
+    changedAt: changedAt(raw),
   };
 }
 
@@ -323,6 +388,7 @@ function toReflection(value: unknown): Reflection {
     score: raw.score as Reflection['score'],
     note: raw.note as string,
     createdAt: toInstant(raw.createdAt as string),
+    changedAt: changedAt(raw),
   };
 }
 
@@ -340,6 +406,10 @@ function taskProblem(value: unknown): string | null {
     return 'its done day must look like 2026-09-15, or be null';
   }
   if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  // US-99. Absent in files from before version 11.
+  if (raw.changedAt !== undefined && !isInstant(raw.changedAt)) {
+    return 'its changed date is not a date';
+  }
   return null;
 }
 
@@ -350,6 +420,7 @@ function toTask(value: unknown): Task {
     title: raw.title as string,
     doneOn: raw.doneOn as string | null,
     createdAt: toInstant(raw.createdAt as string),
+    changedAt: changedAt(raw),
   };
 }
 
@@ -360,6 +431,7 @@ function toNote(value: unknown): Note {
     body: raw.body as string,
     createdAt: toInstant(raw.createdAt as string),
     updatedAt: toInstant(raw.updatedAt as string),
+    changedAt: changedAt(raw),
     pinned: (raw.pinned as boolean | undefined) ?? false,
     // AC-83.3. Rebuilt, so nothing else inside it rides into storage.
     sealed: raw.sealed
@@ -433,7 +505,8 @@ export function parseImport(text: string): ParseResult {
     version !== 7 &&
     version !== 8 &&
     version !== 9 &&
-    version !== 10
+    version !== 10 &&
+    version !== 11
   ) {
     return {
       ok: false,
@@ -494,12 +567,33 @@ export function parseImport(text: string): ParseResult {
     if (problem) return { ok: false, error: problem };
   }
 
+  // AC-99.5. Version 11 is the first to carry deletions, and must carry them.
+  if (version >= 11) {
+    if (!Array.isArray(raw.deleted)) {
+      return { ok: false, error: 'That file has no deleted list.' };
+    }
+    for (const [index, entry] of raw.deleted.entries()) {
+      const problem = deletionProblem(entry);
+      if (problem) {
+        return {
+          ok: false,
+          error: `Deletion ${index + 1} cannot be read: ${problem}.`,
+        };
+      }
+    }
+  }
+
   // AC-82.7. The lock, and no locked note without one to open it.
   const lock = fields(raw.lock);
   if (
     raw.lock !== undefined &&
     raw.lock !== null &&
-    !(lock && isBase64(lock.salt) && isSealed(lock.check))
+    !(
+      lock &&
+      isBase64(lock.salt) &&
+      isSealed(lock.check) &&
+      (lock.changedAt === undefined || isInstant(lock.changedAt))
+    )
   ) {
     return {
       ok: false,
@@ -555,9 +649,16 @@ export function parseImport(text: string): ParseResult {
               iv: (lock.check as Sealed).iv,
               data: (lock.check as Sealed).data,
             },
+            // AC-99.5. Absent before version 11; upgrade does not see it
+            // there, because the lock is rebuilt here.
+            changedAt:
+              typeof lock.changedAt === 'string'
+                ? toInstant(lock.changedAt)
+                : EPOCH,
           }
         : null,
       tasks: version >= 9 ? (raw.tasks as unknown[]).map(toTask) : [],
+      deleted: version >= 11 ? (raw.deleted as unknown[]).map(toDeletion) : [],
     }),
   };
 }

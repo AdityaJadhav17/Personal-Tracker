@@ -2,6 +2,7 @@ import { upgrade } from '../domain/migrate';
 import type {
   Course,
   Database,
+  Deletion,
   Goal,
   Item,
   Lock,
@@ -30,7 +31,7 @@ export function forgetBeforeUpgrade(): void {
 
 function emptyDatabase(): Database {
   return {
-    version: 10,
+    version: 11,
     items: [],
     goals: [],
     courses: [],
@@ -39,6 +40,7 @@ function emptyDatabase(): Database {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 }
 
@@ -103,6 +105,9 @@ export function load(): Database {
         ? (stored.lock as Lock)
         : null,
     tasks: Array.isArray(stored.tasks) ? (stored.tasks as Task[]) : [],
+    deleted: Array.isArray(stored.deleted)
+      ? (stored.deleted as Deletion[])
+      : [],
   });
 
   // AC-95.7. The first save after this replaces what was stored, so a wrong

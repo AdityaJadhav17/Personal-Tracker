@@ -52,7 +52,7 @@ text as it was before the latest migration (AC-95.7). Neither is exported.
 IndexedDB holds one thing, in its own database `personal-tracker-backup`: the
 handle of the folder automatic backups go to (US-95, `src/storage/folder.ts`).
 
-The database is at version 10: items, goals (achievable since US-98), courses, reflections, notes
+The database is at version 11 (a `changedAt` on every record and a `deleted` list of markers, US-99; `stamp` in `commit` dates every change; Replace import dates the file's records itself; create actions fill `changedAt` only to satisfy the type): items, goals (achievable since US-98), courses, reflections, notes
 (US-80, pinnable since US-81, lockable since US-82) and routine tasks (US-88),
 with a
 `repeat`, a `repeatDay` and a `parentId` on every item and a `lastBackupAt`
@@ -60,7 +60,7 @@ on the whole.
 Both `load` and `parseImport` route through
 `upgrade` in `src/domain/migrate.ts`, which applies one hop per version, so an
 export taken before goals existed still opens. Neither module branches on the
-version itself; adding version 10 means adding one hop there and nowhere else.
+version itself; adding version 12 means adding one hop there and nowhere else.
 
 ## How we work
 

@@ -9,7 +9,8 @@ const NOW = new Date(2026, 8, 15, 10, 0, 0, 0);
 const TODAY = '2026-09-15';
 
 function aTask(id: string, title: string, doneOn: string | null = null): Task {
-  return { id, title, doneOn, createdAt: NOW.toISOString() };
+  const at = NOW.toISOString();
+  return { id, title, doneOn, createdAt: at, changedAt: at };
 }
 
 /** The view with the app's actions done in memory, so lines really appear. */

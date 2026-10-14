@@ -24,6 +24,7 @@ function aNote(id: string, body: string): Note {
     body,
     createdAt: at,
     updatedAt: at,
+    changedAt: at,
     pinned: false,
     sealed: null,
   };
@@ -35,7 +36,7 @@ let lock: Lock;
 let locked: Note;
 
 beforeAll(async () => {
-  const made = await createLock(PASSCODE);
+  const made = await createLock(PASSCODE, new Date());
   lock = made.lock;
   locked = {
     ...aNote('bank', 'Bank details'),
@@ -327,7 +328,7 @@ describe('US-86 changing the passcode', () => {
 test('AC-86.6 a locked note the passcode cannot open says so, instead of staying blank', async () => {
   const user = userEvent.setup();
   // Locked under another passcode, as a note merged in from such a backup is.
-  const stranger = await createLock('another1');
+  const stranger = await createLock('another1', new Date());
   const foreign: Note = {
     ...aNote('merged', 'From the old laptop'),
     sealed: await seal(stranger.key, 'secret'),
@@ -361,7 +362,7 @@ test('AC-94.10 a new passcode needs 8 characters; 7 is refused', async () => {
 
 test('AC-94.10 a 6-character passcode set before the change still opens its notes', async () => {
   const user = userEvent.setup();
-  const old = await createLock('hunter');
+  const old = await createLock('hunter', new Date());
   const note = {
     ...aNote('old', 'Wifi'),
     sealed: await seal(old.key, 'Wifi\npw'),
@@ -381,7 +382,7 @@ test('AC-94.9 when another tab changes the passcode, this one locks again', asyn
   const view = renderNotes({ notes: [locked], lock });
   await openLocked(user);
 
-  const elsewhere = await createLock('another1');
+  const elsewhere = await createLock('another1', new Date());
   view.rerender(
     <NotesView
       notes={[locked]}

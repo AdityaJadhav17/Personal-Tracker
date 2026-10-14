@@ -11,6 +11,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
     status: 'open',
     note: '',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     completedAt: null,
     goalId: null,
     courseId: null,
@@ -24,7 +25,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 10,
+    version: 11,
     items,
     goals: [],
     courses: [],
@@ -33,6 +34,7 @@ function aDatabase(items: Item[] = [anItem()]): Database {
     lastBackupAt: null,
     lock: null,
     tasks: [],
+    deleted: [],
   };
 }
 
@@ -69,7 +71,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(10);
+    expect(parsed.version).toBe(11);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -183,8 +185,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 10 is current since US-98, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 11, "items": []}')).toMatch(/version/i);
+    // 11 is current since US-99, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 12, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -274,6 +276,7 @@ describe('parseImport of a version 1 file', () => {
         status: 'open',
         note: 'Zelle, not Venmo',
         createdAt: '2026-09-15T17:00:00.000Z',
+        changedAt: '2026-09-15T17:00:00.000Z',
         completedAt: null,
       },
     ],
@@ -287,7 +290,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(10);
+    expect(result.ok && result.db.version).toBe(11);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -335,6 +338,7 @@ describe('parseImport of the new collections', () => {
     description: 'Pass everything',
     targetAt: '2026-12-15T08:00:00.000Z',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
     achievedAt: null,
   };
 
@@ -345,6 +349,7 @@ describe('parseImport of the new collections', () => {
     professorEmail: 'prof@ucsd.edu',
     officeHours: 'Tue 2-4pm',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
   };
 
   const reflection = {
@@ -353,6 +358,7 @@ describe('parseImport of the new collections', () => {
     score: 4,
     note: 'long lab',
     createdAt: '2026-09-15T17:00:00.000Z',
+    changedAt: '2026-09-15T17:00:00.000Z',
   };
 
   test('goals, courses and reflections survive a round trip', () => {
@@ -494,6 +500,7 @@ describe('the other collections are validated as hostilely as items are', () => 
     professorEmail: '',
     officeHours: '',
     createdAt: '2026-09-01T00:00:00.000Z',
+    changedAt: '2026-09-01T00:00:00.000Z',
   };
 
   const aReflection = {
@@ -502,6 +509,7 @@ describe('the other collections are validated as hostilely as items are', () => 
     score: 4,
     note: '',
     createdAt: '2026-09-15T21:00:00.000Z',
+    changedAt: '2026-09-15T21:00:00.000Z',
   };
 
   test('a course with a non-text location is refused', () => {
@@ -645,7 +653,7 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(10);
+    expect(result.ok && result.db.version).toBe(11);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });
@@ -690,6 +698,7 @@ describe('US-80 notes', () => {
     body: 'Groceries\nmilk',
     createdAt: '2026-09-28T17:00:00.000Z',
     updatedAt: '2026-09-28T17:05:00.000Z',
+    changedAt: '2026-09-28T17:05:00.000Z',
     pinned: false,
     sealed: null,
   };
@@ -729,9 +738,10 @@ describe('US-80 notes', () => {
         notes: undefined,
         lock: undefined,
         tasks: undefined,
+        deleted: undefined,
       }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 10, notes: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 11, notes: [] });
   });
 
   test('AC-81.4 a pin survives an export and an import', () => {
@@ -757,6 +767,7 @@ describe('US-80 notes', () => {
         notes: [{ ...unpinned, sealed: undefined }],
         lock: undefined,
         tasks: undefined,
+        deleted: undefined,
       }),
     );
     expect(result.ok && result.db.notes[0]?.pinned).toBe(false);
@@ -772,12 +783,17 @@ describe('US-80 notes', () => {
 
 describe('US-82 locked notes', () => {
   const sealed = { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVkIHRleHQ=' };
-  const lock = { salt: 'AAAAAAAAAAAAAAAAAAAAAA==', check: sealed };
+  const lock = {
+    salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
+    check: sealed,
+    changedAt: '2026-09-28T17:05:00.000Z',
+  };
   const locked = {
     id: 'n1',
     body: 'Bank details',
     createdAt: '2026-09-28T17:00:00.000Z',
     updatedAt: '2026-09-28T17:05:00.000Z',
+    changedAt: '2026-09-28T17:05:00.000Z',
     pinned: false,
     sealed,
   };
@@ -819,6 +835,7 @@ describe('US-82 locked notes', () => {
         notes: [{ ...locked, sealed: undefined }],
         lock: undefined,
         tasks: undefined,
+        deleted: undefined,
       }),
     );
     expect(result.ok && result.db.lock).toBeNull();
@@ -828,7 +845,11 @@ describe('US-82 locked notes', () => {
 
 test('AC-83.3 a locked note keeps only its IV and data from the file', () => {
   const sealed = { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVk' };
-  const lock = { salt: 'AAAAAAAAAAAAAAAAAAAAAA==', check: sealed };
+  const lock = {
+    salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
+    check: sealed,
+    changedAt: '2026-09-28T17:05:00.000Z',
+  };
   const result = parseImport(
     JSON.stringify({
       ...aDatabase(),
@@ -839,6 +860,7 @@ test('AC-83.3 a locked note keeps only its IV and data from the file', () => {
           body: 'Bank',
           createdAt: '2026-09-28T17:00:00.000Z',
           updatedAt: '2026-09-28T17:00:00.000Z',
+          changedAt: '2026-09-28T17:00:00.000Z',
           pinned: false,
           sealed: { ...sealed, extra: 'rides along' },
         },
@@ -854,6 +876,7 @@ describe('US-88 routine tasks', () => {
     title: 'Gym',
     doneOn: '2026-09-15',
     createdAt: '2026-09-14T17:00:00.000Z',
+    changedAt: '2026-09-14T17:00:00.000Z',
   };
 
   test('AC-88.7 tasks go into the export and come back on import', () => {
@@ -880,9 +903,14 @@ describe('US-88 routine tasks', () => {
 
   test('AC-88.7 a version 8 file still opens, with no tasks', () => {
     const result = parseImport(
-      JSON.stringify({ ...aDatabase(), version: 8, tasks: undefined }),
+      JSON.stringify({
+        ...aDatabase(),
+        version: 8,
+        tasks: undefined,
+        deleted: undefined,
+      }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 10, tasks: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 11, tasks: [] });
   });
 
   test('AC-88.7 fields a task should not have are dropped', () => {
@@ -903,7 +931,12 @@ describe('US-94 dates are stored in one form', () => {
     const result = parseImport(
       JSON.stringify({
         ...aDatabase([
-          anItem({ dueAt: loose, createdAt: loose, completedAt: loose }),
+          anItem({
+            dueAt: loose,
+            createdAt: loose,
+            changedAt: loose,
+            completedAt: loose,
+          }),
         ]),
         lastBackupAt: loose,
         goals: [
@@ -913,6 +946,7 @@ describe('US-94 dates are stored in one form', () => {
             description: '',
             targetAt: loose,
             createdAt: loose,
+            changedAt: loose,
             achievedAt: null,
           },
         ],
@@ -924,6 +958,7 @@ describe('US-94 dates are stored in one form', () => {
             professorEmail: '',
             officeHours: '',
             createdAt: loose,
+            changedAt: loose,
           },
         ],
         reflections: [
@@ -935,6 +970,7 @@ describe('US-94 dates are stored in one form', () => {
             body: 'Hi',
             createdAt: loose,
             updatedAt: loose,
+            changedAt: loose,
             pinned: false,
             sealed: null,
           },
@@ -950,6 +986,7 @@ describe('US-94 dates are stored in one form', () => {
     expect(db.items[0]).toMatchObject({
       dueAt: iso,
       createdAt: iso,
+      changedAt: iso,
       completedAt: iso,
     });
     expect(db.goals[0]).toMatchObject({ targetAt: iso, createdAt: iso });
@@ -972,6 +1009,7 @@ describe('US-98 achieved goals', () => {
     description: '',
     targetAt: '2026-10-01T00:00:00.000Z',
     createdAt: '2026-09-01T00:00:00.000Z',
+    changedAt: '2026-09-01T00:00:00.000Z',
     achievedAt: '2026-10-13T17:00:00.000Z',
   };
 
@@ -985,7 +1023,12 @@ describe('US-98 achieved goals', () => {
     const old: Record<string, unknown> = { ...goal };
     delete old.achievedAt;
     const result = parseImport(
-      JSON.stringify({ ...aDatabase(), version: 9, goals: [old] }),
+      JSON.stringify({
+        ...aDatabase(),
+        version: 9,
+        goals: [old],
+        deleted: undefined,
+      }),
     );
     expect(result.ok && result.db.goals[0]?.achievedAt).toBeNull();
   });
@@ -998,5 +1041,77 @@ describe('US-98 achieved goals', () => {
       }),
     );
     expect(!result.ok && result.error).toMatch(/achieved date/);
+  });
+});
+
+describe('US-99 change tracking in files', () => {
+  test('AC-99.5 changedAt and deletions survive an export and an import', () => {
+    const db = {
+      ...aDatabase(),
+      deleted: [
+        { kind: 'items' as const, id: 'gone', at: '2026-09-14T00:00:00.000Z' },
+      ],
+    };
+    const result = parseImport(serialize(db));
+    expect(result.ok && result.db.deleted).toEqual(db.deleted);
+    expect(result.ok && result.db.items[0]?.changedAt).toBe(
+      db.items[0]!.changedAt,
+    );
+  });
+
+  test('AC-99.5 a deleted entry that is not a deletion is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        deleted: [{ kind: 'people', id: 'x', at: 'now' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/deleted|deletion/i);
+  });
+
+  test('AC-99.4 a version 10 file imports with changedAt filled in', () => {
+    const old: Record<string, unknown> = { ...aDatabase().items[0]! };
+    delete old.changedAt;
+    const file: Record<string, unknown> = {
+      ...aDatabase(),
+      version: 10,
+      items: [old],
+    };
+    delete file.deleted;
+    const result = parseImport(JSON.stringify(file));
+    expect(result.ok && result.db.items[0]?.changedAt).toBe(old.createdAt);
+    expect(result.ok && result.db.deleted).toEqual([]);
+  });
+});
+
+describe('US-99 hostile change tracking', () => {
+  test('AC-99.5 a record with a changedAt that is not a date is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        items: [{ ...anItem(), changedAt: 'yesterday-ish' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/changed date/i);
+  });
+
+  test('AC-99.5 a deletion with an empty id is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        deleted: [{ kind: 'items', id: '', at: '2026-09-14T00:00:00.000Z' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/Deletion 1.*no id/i);
+  });
+
+  test('AC-99.5 a deletion whose time is not a date is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        deleted: [{ kind: 'items', id: 'x', at: 'later' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/Deletion 1.*not a date/i);
   });
 });

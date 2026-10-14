@@ -22,6 +22,7 @@ export function recordReflection(
     score,
     note,
     createdAt: existing?.createdAt ?? now.toISOString(),
+    changedAt: now.toISOString(),
   };
 
   return {

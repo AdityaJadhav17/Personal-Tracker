@@ -21,7 +21,10 @@ lists are what versions 4 and 5 actually took.
 5. **`src/storage/db.ts`.** `emptyDatabase` uses the new version.
 6. **`src/state/useDatabase.ts`.** `itemFrom` sets the empty value. Check that
    every action that builds or changes an item sets it deliberately: `markDone`
-   copies the item it finishes, and `editItem` spreads the old one.
+   copies the item it finishes, and `editItem` spreads the old one. `stamp` in `commit` dates every change (US-99); Replace import dates the
+   file's records itself, and create actions fill `changedAt` only to satisfy the
+   type. A new action needs nothing for it, but must rebuild only the records it
+   changes.
 7. **Tests.** Every hand-built item fixture needs the field; the compiler lists
    them. Every assertion of "the current version" moves up by one. Add a
    migration test from the previous version and a round-trip import test.

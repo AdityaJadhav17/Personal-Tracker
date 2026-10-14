@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect } from './clock';
+import { test, expect, TODAY } from './clock';
 import { add, open, openData, openHome } from './helpers';
 
 /** Export, and hand back the path of the file the browser actually wrote. */
@@ -66,7 +66,30 @@ test('AC-10.1 a real export imports back into an empty database exactly', async 
   const after = await page.evaluate(() =>
     localStorage.getItem('personal-tracker/v1'),
   );
-  expect(JSON.parse(after!)).toEqual(JSON.parse(before!));
+  // AC-99.6. Replace dates every record at import time, so changedAt differs.
+  const parsed = JSON.parse(after!) as Record<string, unknown>;
+  const withoutDates = (raw: string) =>
+    JSON.parse(raw, (key, value: unknown) =>
+      key === 'changedAt' ? undefined : value,
+    ) as unknown;
+  expect(withoutDates(after!)).toEqual(withoutDates(before!));
+  const stamps: string[] = [];
+  for (const kind of [
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'tasks',
+  ]) {
+    for (const record of parsed[kind] as { changedAt: string }[]) {
+      stamps.push(record.changedAt);
+    }
+  }
+  // The page clock ticks from TODAY, so assert one shared import time, not TODAY.
+  expect(stamps.length).toBeGreaterThan(0);
+  expect(new Set(stamps).size).toBe(1);
+  expect(Date.parse(stamps[0]!)).toBeGreaterThanOrEqual(TODAY.getTime());
 });
 
 test('AC-10.2 a file that is not JSON changes nothing and says why', async ({

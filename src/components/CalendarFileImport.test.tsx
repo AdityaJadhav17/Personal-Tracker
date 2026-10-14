@@ -13,6 +13,7 @@ const COURSE: Course = {
   professorEmail: '',
   officeHours: '',
   createdAt: '2026-09-01T00:00:00.000Z',
+  changedAt: '2026-09-01T00:00:00.000Z',
 };
 
 const HELD: Item = {
@@ -24,6 +25,7 @@ const HELD: Item = {
   status: 'open',
   note: '',
   createdAt: '2026-09-01T00:00:00.000Z',
+  changedAt: '2026-09-01T00:00:00.000Z',
   completedAt: null,
   goalId: null,
   courseId: null,

@@ -21,6 +21,8 @@ export interface Item {
   note: string;
   /** Instant, UTC. */
   createdAt: string;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
   /** Instant, UTC. Null while status is "open". */
   completedAt: string | null;
   /** The goal this belongs to, or null. Added in version 2. */
@@ -51,6 +53,8 @@ export interface Goal {
   createdAt: string;
   /** AC-98.1. When it was marked achieved; null while it is still a goal. */
   achievedAt: string | null;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
 }
 
 /** The details you would otherwise dig out of email every week. */
@@ -61,6 +65,8 @@ export interface Course {
   professorEmail: string;
   officeHours: string;
   createdAt: string;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
 }
 
 /** How one day went. One per day, keyed by local calendar day. */
@@ -72,6 +78,8 @@ export interface Reflection {
   score: 1 | 2 | 3 | 4 | 5;
   note: string;
   createdAt: string;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
 }
 
 /**
@@ -84,6 +92,8 @@ export interface Note {
   createdAt: string;
   /** UTC instant of the last edit. The list sorts and groups by it. */
   updatedAt: string;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
   /** Kept at the top of the list. Added in version 7, US-81. */
   pinned: boolean;
   /**
@@ -107,6 +117,8 @@ export interface Sealed {
 export interface Lock {
   salt: string;
   check: Sealed;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
 }
 
 /**
@@ -120,12 +132,25 @@ export interface Task {
   /** The local day it was last ticked, "2026-09-15", or null. */
   doneOn: string | null;
   createdAt: string;
+  /** US-99. When this record last changed; sync keeps the newer. */
+  changedAt: string;
+}
+
+/** US-99. The six collections sync merges, by key. */
+export type Collection =
+  'items' | 'goals' | 'courses' | 'reflections' | 'notes' | 'tasks';
+
+/** US-99. A record deleted at `at`; reflections are keyed by day. */
+export interface Deletion {
+  kind: Collection;
+  id: string;
+  at: string;
 }
 
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 10;
+  version: 11;
   items: Item[];
   goals: Goal[];
   courses: Course[];
@@ -138,6 +163,8 @@ export interface Database {
   lock: Lock | null;
   /** US-88. The routine, in the order shown. Added in version 9. */
   tasks: Task[];
+  /** US-99. Records deleted, so sync does not bring them back. Added in version 11. */
+  deleted: Deletion[];
 }
 
 /** What the goal form produces, before the app assigns identity and time. */

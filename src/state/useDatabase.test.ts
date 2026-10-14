@@ -1,11 +1,23 @@
 import { act, renderHook } from '@testing-library/react';
 import { useDatabase } from './useDatabase';
+import { EPOCH } from '../domain/dates';
 import type { Lock, Sealed } from '../domain/types';
 
 const OLD: Sealed = { iv: 'AAAAAAAAAAAAAAAA', data: 'b2xk' };
 const NEW: Sealed = { iv: 'BBBBBBBBBBBBBBBB', data: 'bmV3' };
-const LOCK: Lock = { salt: 'AAAAAAAAAAAAAAAAAAAAAA==', check: OLD };
-const NEXT: Lock = { salt: 'BBBBBBBBBBBBBBBBBBBBBB==', check: NEW };
+const LOCK: Lock = {
+  salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
+  check: OLD,
+  changedAt: EPOCH,
+};
+const NEXT: Lock = {
+  salt: 'BBBBBBBBBBBBBBBBBBBBBB==',
+  check: NEW,
+  changedAt: EPOCH,
+};
+
+/** US-99. A lock set during a test is dated by the commit, at the test's now. */
+const NOW = new Date(2026, 8, 15, 10).toISOString();
 
 beforeEach(() => localStorage.clear());
 
@@ -40,7 +52,7 @@ test('AC-86.3 the new lock and every resealed note are written together, edit ti
   });
 
   expect(saved).toBe(true);
-  expect(stored().lock).toEqual(NEXT);
+  expect(stored().lock).toEqual({ ...NEXT, changedAt: NOW });
   expect(stored().notes[0]).toMatchObject({ sealed: NEW, updatedAt: before });
 });
 
@@ -76,12 +88,12 @@ test('AC-86.4 a note locked while resealing, and so missed, stops it too', () =>
   });
 
   expect(saved).toBe(false);
-  expect(stored().lock).toEqual(LOCK);
+  expect(stored().lock).toEqual({ ...LOCK, changedAt: NOW });
 });
 
 describe('US-94 merging a file with a lock', () => {
   const file = (notes: { id: string; sealed: Sealed | null }[]) => ({
-    version: 10 as const,
+    version: 11 as const,
     items: [],
     goals: [],
     courses: [],
@@ -91,12 +103,14 @@ describe('US-94 merging a file with a lock', () => {
       body: id,
       createdAt: '2026-09-14T17:00:00.000Z',
       updatedAt: '2026-09-14T17:00:00.000Z',
+      changedAt: '2026-09-14T17:00:00.000Z',
       pinned: false,
       sealed,
     })),
     lastBackupAt: null,
     lock: LOCK,
     tasks: [],
+    deleted: [],
   });
 
   test('AC-94.8 a file with no locked notes brings no lock', () => {
@@ -170,7 +184,7 @@ describe('US-97 passcode edges', () => {
     });
 
     expect(locked).toBe(false);
-    expect(stored().lock).toEqual(LOCK);
+    expect(stored().lock).toEqual({ ...LOCK, changedAt: NOW });
     expect(
       hook.result.current.db?.notes.find((note) => note.id === other)?.sealed,
     ).toBeNull();
@@ -215,5 +229,147 @@ describe('US-98', () => {
       ]);
     });
     expect(localStorage.getItem(BEFORE)).toBeNull();
+  });
+});
+
+describe('US-99 every write dated', () => {
+  test('AC-99.1 pinning a note changes changedAt but not its edit time', () => {
+    const hook = renderHook(() => useDatabase());
+    let id = '';
+    act(() => {
+      id = hook.result.current.actions.addNote('Pin me')!;
+    });
+    const before = hook.result.current.db!.notes[0]!;
+    vi.setSystemTime(new Date(2026, 8, 15, 11));
+    act(() => hook.result.current.actions.togglePin(id));
+    const after = hook.result.current.db!.notes[0]!;
+    expect(after.updatedAt).toBe(before.updatedAt);
+    expect(after.changedAt).toBe(new Date(2026, 8, 15, 11).toISOString());
+  });
+
+  test('AC-99.2 deleting a note marks it, and Undo unmarks it', () => {
+    const hook = renderHook(() => useDatabase());
+    let id = '';
+    act(() => {
+      id = hook.result.current.actions.addNote('Bye')!;
+    });
+    act(() => hook.result.current.actions.removeNote(id));
+    expect(hook.result.current.db!.deleted.map((d) => d.id)).toEqual([id]);
+    act(() => hook.result.current.undo());
+    expect(hook.result.current.db!.deleted).toEqual([]);
+  });
+
+  test('AC-99.1 a record an action did not touch keeps its date', () => {
+    const hook = renderHook(() => useDatabase());
+    let id = '';
+    act(() => {
+      hook.result.current.actions.addNote('Other');
+      id = hook.result.current.actions.addNote('Pin me')!;
+    });
+    const other = hook.result.current.db!.notes[0]!;
+    vi.setSystemTime(new Date(2026, 8, 15, 11));
+    act(() => hook.result.current.actions.togglePin(id));
+    expect(hook.result.current.db!.notes[0]!.changedAt).toBe(other.changedAt);
+  });
+});
+
+describe('US-99 a stored version 10 database', () => {
+  test('AC-99.4 AC-99.7 one action re-dates only that note; the lock stays at EPOCH', () => {
+    const then = '2026-09-01T00:00:00.000Z';
+    const note = (id: string) => ({
+      id,
+      body: id,
+      createdAt: then,
+      updatedAt: then,
+      pinned: false,
+      sealed: null,
+    });
+    localStorage.setItem(
+      'personal-tracker/v1',
+      JSON.stringify({
+        version: 10,
+        items: [],
+        goals: [],
+        courses: [],
+        reflections: [],
+        notes: [note('a'), note('b')],
+        lastBackupAt: null,
+        lock: { salt: LOCK.salt, check: LOCK.check },
+        tasks: [],
+      }),
+    );
+    const hook = renderHook(() => useDatabase());
+    act(() => hook.result.current.actions.togglePin('a'));
+
+    const { notes, lock, deleted } = hook.result.current.db!;
+    expect(notes.find((n) => n.id === 'a')!.changedAt).toBe(NOW);
+    expect(notes.find((n) => n.id === 'b')!.changedAt).toBe(then);
+    expect(lock!.changedAt).toBe('1970-01-01T00:00:00.000Z');
+    expect(deleted).toEqual([]);
+    expect(
+      localStorage.getItem('personal-tracker/before-upgrade'),
+    ).not.toBeNull();
+  });
+});
+
+describe('US-99 import under sync', () => {
+  const aNote = (id: string, changedAt: string) => ({
+    id,
+    body: id,
+    createdAt: changedAt,
+    updatedAt: changedAt,
+    changedAt,
+    pinned: false,
+    sealed: null,
+  });
+
+  test("AC-99.6 Merge import keeps the file records' own changedAt", () => {
+    const hook = renderHook(() => useDatabase());
+    const file = {
+      ...hook.result.current.db!,
+      notes: [aNote('f', '2026-09-01T00:00:00.000Z')],
+    };
+    act(() => hook.result.current.actions.merge(file));
+    expect(hook.result.current.db!.notes[0]!.changedAt).toBe(
+      '2026-09-01T00:00:00.000Z',
+    );
+  });
+
+  test('AC-99.6 Replace dates the file now and deletes nothing elsewhere', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() => {
+      hook.result.current.actions.addNote('Kept here');
+    });
+    const file = {
+      ...hook.result.current.db!,
+      notes: [aNote('f', '2026-09-01T00:00:00.000Z')],
+    };
+    act(() => hook.result.current.actions.replaceAll(file));
+    expect(hook.result.current.db!.notes[0]!.changedAt).toBe(
+      new Date(2026, 8, 15, 10).toISOString(),
+    );
+    expect(hook.result.current.db!.deleted).toEqual([]);
+  });
+
+  test('AC-99.6 Replace dates the file lock at import time', () => {
+    const hook = renderHook(() => useDatabase());
+    const file = { ...hook.result.current.db!, lock: LOCK };
+    act(() => hook.result.current.actions.replaceAll(file));
+    expect(hook.result.current.db!.lock!.changedAt).toBe(NOW);
+  });
+
+  test('AC-99.7 a commit leaves untouched records with their time', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() => {
+      hook.result.current.actions.addNote('One');
+    });
+    const before = hook.result.current.db!.notes[0]!.changedAt;
+    vi.setSystemTime(new Date(2026, 8, 15, 12));
+    act(() => {
+      hook.result.current.actions.addNote('Two');
+    });
+    expect(
+      hook.result.current.db!.notes.find((n) => n.body === 'One')!.changedAt,
+    ).toBe(before);
   });
 });

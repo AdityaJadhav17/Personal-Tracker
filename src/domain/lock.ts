@@ -73,11 +73,16 @@ export async function openSealed(
 /** AC-82.1. A new lock for this passcode, and the key it opens with. */
 export async function createLock(
   passcode: string,
+  now: Date,
 ): Promise<{ lock: Lock; key: CryptoKey }> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await keyFrom(passcode, salt);
   return {
-    lock: { salt: toBase64(salt), check: await seal(key, KNOWN) },
+    lock: {
+      salt: toBase64(salt),
+      check: await seal(key, KNOWN),
+      changedAt: now.toISOString(),
+    },
     key,
   };
 }
@@ -113,6 +118,7 @@ export async function changePasscode(
   notes: { id: string; sealed: Sealed }[],
   current: string,
   next: string,
+  now: Date,
 ): Promise<
   | { ok: true; lock: Lock; key: CryptoKey; notes: Resealed[] }
   | { ok: false; error: string }
@@ -132,7 +138,7 @@ export async function changePasscode(
     };
   }
 
-  const made = await createLock(next);
+  const made = await createLock(next, now);
   const resealed: Resealed[] = [];
   for (const [index, note] of notes.entries()) {
     resealed.push({

@@ -1,4 +1,5 @@
-import type { Database, Lock } from './types';
+import { EPOCH, newestTime } from './dates';
+import type { Database, Deletion, Lock } from './types';
 
 /** What a database looks like on its way through, before the last hop. */
 interface Partial {
@@ -9,8 +10,9 @@ interface Partial {
   reflections?: unknown[];
   notes?: unknown[];
   lastBackupAt?: string | null;
-  lock?: Lock | null;
+  lock?: (Omit<Lock, 'changedAt'> & { changedAt?: string }) | null;
   tasks?: unknown[];
+  deleted?: Deletion[];
 }
 
 /**
@@ -124,6 +126,30 @@ export function upgrade(db: Partial): Database {
         achievedAt: null,
         ...(goal as object),
       })),
+    };
+  }
+
+  // US-99. Every record dated, so sync can keep the newer; nothing deleted yet.
+  if (current.version < 11) {
+    const dated = (records: unknown[] | undefined) =>
+      (records ?? []).map((record) => ({
+        changedAt: newestTime(record as object),
+        ...(record as object),
+      }));
+    current = {
+      ...current,
+      version: 11,
+      items: dated(current.items),
+      goals: dated(current.goals),
+      courses: dated(current.courses),
+      reflections: dated(current.reflections),
+      notes: dated(current.notes),
+      tasks: dated(current.tasks),
+      // A lock with no time loses to any dated one: it predates sync.
+      lock: current.lock
+        ? { ...current.lock, changedAt: current.lock.changedAt ?? EPOCH }
+        : null,
+      deleted: current.deleted ?? [],
     };
   }
 

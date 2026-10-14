@@ -223,6 +223,7 @@ export default function NotesView({
           body: '',
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
+          changedAt: now.toISOString(),
           pinned: false,
           sealed: null,
         },
@@ -342,6 +343,7 @@ export default function NotesView({
                   ),
                   current,
                   next,
+                  now,
                 );
                 if (!result.ok) return result.error;
                 if (!onRekey(result.lock, result.notes)) {
@@ -431,7 +433,7 @@ export default function NotesView({
                     action="Lock with this passcode"
                     onCancel={() => setAsking(null)}
                     onSubmit={async (passcode) => {
-                      const made = await createLock(passcode);
+                      const made = await createLock(passcode, now);
                       await lockOpen(made.key, made.lock);
                       return null;
                     }}

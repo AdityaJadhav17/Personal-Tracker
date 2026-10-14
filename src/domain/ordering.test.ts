@@ -18,6 +18,7 @@ function anItem(
     status: 'open',
     note: '',
     createdAt: NOW.toISOString(),
+    changedAt: NOW.toISOString(),
     completedAt: null,
     goalId: null,
     courseId: null,

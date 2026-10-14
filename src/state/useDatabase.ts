@@ -5,6 +5,7 @@ import { deleteGoal } from '../domain/goals';
 import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
+import { COLLECTIONS, stamp } from '../domain/sync';
 import type {
   Category,
   Course,
@@ -103,6 +104,7 @@ function itemFrom(draft: ItemDraft): Item {
     status: 'open',
     note: '',
     createdAt: now().toISOString(),
+    changedAt: now().toISOString(),
     completedAt: null,
     goalId: null,
     courseId: draft.courseId ?? null,
@@ -192,14 +194,18 @@ export function useDatabase(): {
    * applied and the caller is told, because a screen that shows an item the
    * browser never stored is a lie that only surfaces on the next reload.
    */
-  function commit(next: Database): boolean {
-    if (!save(next)) {
+  function commit(next: Database, adopt = false): boolean {
+    // US-99. Dated here, once, rather than in every action. Data that came
+    // from sync (US-101) is adopted as it is: its dates are the other device's.
+    const stamped =
+      adopt || !latest.current ? next : stamp(latest.current, next, now());
+    if (!save(stamped)) {
       setStorageError(STORAGE_FULL);
       return false;
     }
     setStorageError('');
-    latest.current = next;
-    setDb(next);
+    latest.current = stamped;
+    setDb(stamped);
     return true;
   }
 
@@ -462,6 +468,7 @@ export function useDatabase(): {
         id: crypto.randomUUID(),
         ...draft,
         createdAt: now().toISOString(),
+        changedAt: now().toISOString(),
       };
       update((current) => ({
         ...current,
@@ -487,6 +494,7 @@ export function useDatabase(): {
         id: crypto.randomUUID(),
         ...draft,
         createdAt: now().toISOString(),
+        changedAt: now().toISOString(),
         achievedAt: null,
       };
       update((current) => ({ ...current, goals: [...current.goals, goal] }));
@@ -518,6 +526,7 @@ export function useDatabase(): {
         id: crypto.randomUUID(),
         body,
         createdAt: at,
+        changedAt: at,
         updatedAt: at,
         pinned: false,
         sealed: null,
@@ -591,6 +600,7 @@ export function useDatabase(): {
         title: '',
         doneOn: null,
         createdAt: now().toISOString(),
+        changedAt: now().toISOString(),
       };
       const stored = update((current) => {
         const at = after
@@ -679,7 +689,23 @@ export function useDatabase(): {
     },
 
     replaceAll(next) {
-      update(() => next);
+      // AC-99.6. A restore brings the file back, dated now, and deletes nothing
+      // the file never had: on the other device, those stay.
+      const current = latest.current;
+      if (!current) return;
+      const at = now().toISOString();
+      const dated = {
+        ...next,
+        deleted: current.deleted,
+        // The restore must win the lock too, or the notes follow the loser.
+        lock: next.lock && { ...next.lock, changedAt: at },
+      };
+      for (const kind of COLLECTIONS) {
+        (dated as Record<string, unknown>)[kind] = (
+          next[kind] as { changedAt: string }[]
+        ).map((record) => ({ ...record, changedAt: at }));
+      }
+      commit(dated, true);
       setUndoable(null);
     },
 
@@ -688,9 +714,12 @@ export function useDatabase(): {
       // what we already hold is what makes importing your own export twice a
       // no-op rather than a way to duplicate everything. Reflections are one
       // per day, so on a clash the one already here wins.
-      update((current) => {
-        const notes = keepBoth(current.notes, next.notes, (note) => note.id);
-        return {
+      // AC-99.6. Adopted: records from the file keep their own dates.
+      const current = latest.current;
+      if (!current) return;
+      const notes = keepBoth(current.notes, next.notes, (note) => note.id);
+      commit(
+        {
           ...current,
           items: keepBoth(current.items, next.items, (item) => item.id),
           goals: keepBoth(current.goals, next.goals, (goal) => goal.id),
@@ -711,8 +740,9 @@ export function useDatabase(): {
           lock:
             current.lock ??
             (notes.some((note) => note.sealed !== null) ? next.lock : null),
-        };
-      });
+        },
+        true,
+      );
       setUndoable(null);
     },
   };

@@ -11,7 +11,8 @@ function aReflection(
   score: Reflection['score'],
   note = '',
 ): Reflection {
-  return { id: day, day, score, note, createdAt: '2026-09-15T21:00:00.000Z' };
+  const at = '2026-09-15T21:00:00.000Z';
+  return { id: day, day, score, note, createdAt: at, changedAt: at };
 }
 
 test('AC-17.1 it asks how today went, with five choices', () => {

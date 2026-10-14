@@ -2,7 +2,8 @@ import { dailySeries, daysWithData } from './trends';
 import type { Item, Reflection } from './types';
 
 function aReflection(day: string, score: Reflection['score']): Reflection {
-  return { id: day, day, score, note: '', createdAt: '2026-09-15T21:00:00Z' };
+  const at = '2026-09-15T21:00:00Z';
+  return { id: day, day, score, note: '', createdAt: at, changedAt: at };
 }
 
 let nextId = 0;
@@ -20,6 +21,7 @@ function completedOn(day: string): Item {
     status: 'done',
     note: '',
     createdAt: '2026-09-01T00:00:00.000Z',
+    changedAt: '2026-09-01T00:00:00.000Z',
     completedAt: new Date(y!, m! - 1, d!, 12).toISOString(),
     goalId: null,
     courseId: null,

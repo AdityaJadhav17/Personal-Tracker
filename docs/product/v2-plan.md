@@ -411,3 +411,4 @@ passed 1,300 lines.
 - [US-96, Margin on the iPhone](stories/US-96.md)
 - [US-97, hardening from the audit of 13 October](stories/US-97.md)
 - [US-98, a goal you can mark achieved](stories/US-98.md)
+- [US-99, every change dated, every deletion remembered](stories/US-99.md)
