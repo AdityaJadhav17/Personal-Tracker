@@ -25,7 +25,14 @@ export default defineConfig({
       command:
         'npx vite build --outDir dist-e2e --emptyOutDir --logLevel warn && node scripts/serve.mjs',
       url: 'http://localhost:4190',
-      env: { PT_TARGET: 'dist-e2e', PT_PORT: '4190' },
+      // US-100. Its pid file and sync copy stay in scratch too, or a test run
+      // overwrites the real server's pid and the updater restarts the wrong one.
+      env: {
+        PT_TARGET: 'dist-e2e',
+        PT_PORT: '4190',
+        PT_PID: 'dist-e2e/server.pid',
+        PT_DATA: 'dist-e2e/hub',
+      },
       reuseExistingServer: false,
       timeout: 120_000,
     },
