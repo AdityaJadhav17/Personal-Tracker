@@ -14,12 +14,12 @@ encrypted transport.
 
 ## Decisions taken
 
-| Question | Decision |
-|---|---|
-| When | Automatically while Margin is open and the laptop is reachable |
-| Conflicts | Per record, the newer change wins; a deletion beats an older edit |
-| Where the shared copy lives | On the laptop's disk, served by `serve.mjs` |
-| Approach | Whole-database merge with per-record timestamps and deletion markers (not a change log, not a CRDT library) |
+| Question                    | Decision                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| When                        | Automatically while Margin is open and the laptop is reachable                                              |
+| Conflicts                   | Per record, the newer change wins; a deletion beats an older edit                                           |
+| Where the shared copy lives | On the laptop's disk, served by `serve.mjs`                                                                 |
+| Approach                    | Whole-database merge with per-record timestamps and deletion markers (not a change log, not a CRDT library) |
 
 ## 1. Data (US-99, database version 11)
 
