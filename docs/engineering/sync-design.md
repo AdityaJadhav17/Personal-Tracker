@@ -26,7 +26,14 @@ encrypted transport.
 Every record in `items`, `goals`, `courses`, `reflections`, `notes` and
 `tasks` gains `changedAt`, a UTC instant set by every action that changes the
 record. The version 11 migration fills it from the newest time the record
-already carries (`updatedAt` for notes, otherwise `createdAt`).
+already carries: the latest of `createdAt`, `completedAt` and `updatedAt`, so
+a task finished on one device and open on the other cannot tie.
+
+Import keeps each file record's own `changedAt`. Replace (a restore) brings the
+file's records back dated now and writes no deletion markers, so it restores
+what is missing and never deletes anything on the other device (chosen by
+Aditya, 13 October). A `changedAt` more than a day ahead of now is treated as
+now, so a wrong clock cannot win every conflict.
 
 The database gains `deleted: { kind, id, at }[]`, one marker per deleted
 record, where `kind` names the collection. Reflections are identified by
@@ -46,8 +53,9 @@ handle, and the before-upgrade copy.
 For each collection, by identity:
 
 - present on one side only, and not deleted later than its `changedAt`: kept;
-- present on both: the one with the later `changedAt`; equal times keep the
-  local one (merging a copy with itself changes nothing);
+- present on both: the one with the later `changedAt`; on equal times, the
+  one whose JSON text sorts later, so both devices pick the same record and
+  `merge(a, b)` equals `merge(b, a)`;
 - a deletion marker removes the record if `marker.at >= record.changedAt`; a
   record changed after its marker survives and the marker is dropped;
 - markers are the union of both sides, the newest per record.
@@ -136,3 +144,29 @@ nothing yet), US-101 (the merge, the loop, the Sync line; sync turns on).
 
 Choosing a winner by hand; sync history; field-level merging; a third device
 beyond simply joining the tailnet.
+
+## Amendments from the council review, 13 October
+
+The council (five advisors, peer review, a chairman) confirmed the
+architecture and found these, now part of the plans:
+
+- **Edits typed during a sync survive.** Adopting a sync result merges it
+  again with the device's latest local data instead of replacing it.
+- **Ties converge** (rule above), and the migration dates from the newest of
+  a record's times.
+- **"Did anything change" compares keys and `changedAt`**, not serialised
+  text, so nothing is sent when nothing changed.
+- **Import and restore** keep or re-date records as above.
+- **A damaged `hub.json`** falls back to `hub.prev.json` instead of failing the
+  request. A write whose database is older than the shared copy's version, or
+  not shaped like a database, is refused.
+- **An app older than the shared copy** says "Update the app" and does not
+  write.
+- **The server restart works**: `serve.mjs` records its process id, and the
+  updater restarts it when `serve.mjs` or `hub.mjs` changed (US-100, first).
+- **Known limitations, each pinned by a test:** a locked note that exists only
+  on the side whose lock lost stays unreadable; a repeating item finished on
+  both devices while apart leaves two next occurrences.
+- **Before first real use:** back up both devices before US-99 (it is the
+  migration), and dry-run the first merge on copies of both devices' data
+  against a scratch server, never 4180.
