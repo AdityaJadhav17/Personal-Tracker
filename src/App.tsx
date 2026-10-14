@@ -18,6 +18,7 @@ import { stepsOf } from './domain/steps';
 import ReflectionView from './components/ReflectionView';
 import RoutineView from './components/RoutineView';
 import Shell from './components/Shell';
+import SyncStatus from './components/SyncStatus';
 import type { View } from './components/Shell';
 import StatRow from './components/StatRow';
 import TrendsView from './components/TrendsView';
@@ -29,11 +30,14 @@ import { dailySeries } from './domain/trends';
 import type { Database } from './domain/types';
 import { useAutoBackup } from './state/useAutoBackup';
 import { useDatabase } from './state/useDatabase';
+import { useSync } from './state/useSync';
 
 export default function App() {
   const { db, undoMessage, undo, storageError, actions } = useDatabase();
   // US-95. Here rather than in Data, so it runs whichever view is open.
   const backups = useAutoBackup(db, actions.recordBackup);
+  // US-101. Same reason: it runs whichever view is open.
+  const sync = useSync(db, actions.adoptSynced);
 
   // Which view is showing. No router: one piece of state, and a reload puts
   // you back on Home, which is the view you want on open. AC-13.4.
@@ -296,6 +300,7 @@ export default function App() {
               </p>
             </div>
             <BackupFolder {...backups} now={current} />
+            <SyncStatus {...sync} now={current} />
             <div className="data__tool">
               <button
                 className="data__button"

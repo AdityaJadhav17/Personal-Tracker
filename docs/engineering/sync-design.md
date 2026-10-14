@@ -32,8 +32,7 @@ a task finished on one device and open on the other cannot tie.
 Import keeps each file record's own `changedAt`. Replace (a restore) brings the
 file's records back dated now and writes no deletion markers, so it restores
 what is missing and never deletes anything on the other device (chosen by
-Aditya, 13 October). A `changedAt` more than a day ahead of now is treated as
-now, so a wrong clock cannot win every conflict.
+Aditya, 13 October).
 
 The database gains `deleted: { kind, id, at }[]`, one marker per deleted
 record, where `kind` names the collection. Reflections are identified by
@@ -166,7 +165,9 @@ architecture and found these, now part of the plans:
   updater restarts it when `serve.mjs` or `hub.mjs` changed (US-100, first).
 - **Known limitations, each pinned by a test:** a locked note that exists only
   on the side whose lock lost stays unreadable; a repeating item finished on
-  both devices while apart leaves two next occurrences.
+  both devices while apart leaves two next occurrences. Clocks are trusted: both devices take time from
+  the network, and a clock that is days fast wins conflicts until real time
+  catches up (nothing is clamped, so two devices never rewrite each other).
 - **Before first real use:** back up both devices before US-99 (it is the
   migration), and dry-run the first merge on copies of both devices' data
   against a scratch server, never 4180.

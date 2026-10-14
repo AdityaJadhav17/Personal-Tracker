@@ -276,11 +276,35 @@ join without one of them approving it.
    reach the laptop.
 3. The phone keeps its own data, separate from the laptop's. To start it with
    yours: Export on the laptop, send the file with Taildrop (the Share menu,
-   then Tailscale), and Import it on the phone. Sync is not built yet.
+   then Tailscale), and Import it on the phone, or let Sync do it (below).
 
 The server answers its Tailscale name only because it asks Tailscale for it;
 any other name still gets a 403. Automatic backups need a folder, which iOS
 does not let a page write to, so the phone has Export.
+
+### Sync
+
+With the laptop's address open on both the laptop and the phone, changes on
+one reach the other by themselves: a few seconds after you edit, once a
+minute, when the connection returns, when the app comes back into view, and
+when you press **Sync now** in Data. It merges the two copies
+record by record and the newest change wins; a deletion on one device removes
+the item on the other. Sync talks only to the laptop, nowhere else.
+
+Undo still works after a sync. One limit: if the two devices were given
+different passcodes, sync pauses until the locked notes on one device are
+unlocked (Remove lock). After that the newer passcode works on both.
+
+The line beside **Sync now** says how it went:
+
+- `Synced ...`, and when.
+- `Syncing...`, the first round after opening.
+- `Laptop not reachable; will sync when it is.` The phone keeps working and
+  catches up later.
+- `Sync failed: ...`, with the reason.
+
+**Back up both devices before the first sync** (Export on each). The laptop
+must be on and reachable over Tailscale for the phone to sync.
 
 ## Test it
 

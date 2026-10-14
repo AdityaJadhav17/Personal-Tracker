@@ -152,7 +152,8 @@ Non-negotiable:
 - Treat the import file as hostile. Validate every field before writing
   anything, reject unknown top-level keys, never pass file contents to `eval`
   or `Function`.
-- No network request after load. No CDN, no analytics, no error reporting, no
+- No network request after load, except sync to the app's own origin
+  (`/api/sync`, US-101). No CDN, no analytics, no error reporting, no
   remote fonts. `index.html` carries a CSP restricting scripts to `'self'` and
   a Playwright spec asserts that nothing off-origin is requested.
 - `.gitignore` blocks exported JSON by pattern. Never commit app data.

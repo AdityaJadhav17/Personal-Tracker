@@ -5,6 +5,39 @@ we picked, and why. Add an entry before writing code that depends on it.
 
 ---
 
+## 2026-10-14: sync merges the whole database, and the newest change wins
+
+**Context.** US-101. The laptop and the iPhone each keep their own data
+(US-96). Aditya wants a change on one to reach the other with no account and no
+server beyond the laptop's own `serve.mjs`.
+
+**Options considered.** Replace one side with the other on every sync (loses
+whatever the other side did meanwhile); an operation log (more machinery than
+two devices need); merge the two databases record by record.
+
+**Choice.** Merge record by record. Each device reads the laptop's shared copy
+(`GET /api/sync`), merges it with its own, writes the result back against the
+revision it read (`PUT`), and takes the merge locally.
+
+**Rules.** The record with the newer `changedAt` wins; equal times are broken
+by comparing the records' canonical JSON, so both sides pick the same one. A
+deletion leaves a marker (US-99) that wins over an older record and loses to a
+newer edit. Markers are dropped after 60 days. A locked note follows whichever
+lock is newer: the lock side's copy is taken whole, and a note found only on
+the losing side stays sealed. `lastBackupAt` never syncs.
+
+**Accepted limitations.** Clocks are trusted, with no clamp: no device can know
+its own clock is fast, and every clamp tried either did nothing or made the
+devices re-date each other forever. A clock days fast wins conflicts until real
+time catches up, but both devices still converge. A newer edit to a locked note
+made under an old passcode can be lost when the other side changed the lock.
+The laptop must be on and reachable over Tailscale for the phone to sync; the
+phone keeps working alone meanwhile.
+
+**Network rule.** CLAUDE.md allowed no request after load; it now allows sync
+to the app's own origin, `/api/sync`, and nothing else. A Playwright spec
+checks no request leaves that origin.
+
 ## 2026-10-13: the iPhone reaches the laptop over Tailscale, and a service worker keeps the app
 
 **Context.** US-96. Aditya wants Margin on his iPhone with nothing exposed to

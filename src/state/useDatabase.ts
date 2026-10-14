@@ -5,7 +5,7 @@ import { deleteGoal } from '../domain/goals';
 import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
-import { COLLECTIONS, stamp } from '../domain/sync';
+import { COLLECTIONS, merge, stamp } from '../domain/sync';
 import type {
   Category,
   Course,
@@ -90,6 +90,9 @@ export interface DatabaseActions {
   replaceAll: (next: Database) => void;
   /** Import chose to keep both, in every collection. What we hold wins. */
   merge: (next: Database) => void;
+  /** US-101. Synced data taken as it is, held changes merged in again. False
+      if storage refused the write. Undo survives: it re-dates on commit. */
+  adoptSynced: (next: Database) => boolean;
 }
 
 /** A draft becomes an item: an id, a creation time, and nothing attached yet. */
@@ -229,10 +232,15 @@ export function useDatabase(): {
 
   /** AC-05.2, AC-64.1 and AC-67.3. The inverse of the last done or delete. */
   function undo() {
+    const db = latest.current;
     if (!db || !undoable) return;
 
     if (undoable.kind === 'deleted') {
-      commit({ ...db, items: [...db.items, ...undoable.removed] });
+      // A record the sync brought back keeps its synced copy (US-101).
+      commit({
+        ...db,
+        items: keepBoth(db.items, undoable.removed, (item) => item.id),
+      });
       setUndoable(null);
       return;
     }
@@ -240,17 +248,24 @@ export function useDatabase(): {
     // AC-88.6. A task goes back to the line it was on.
     if (undoable.kind === 'task') {
       const { task, at } = undoable;
-      commit({
-        ...db,
-        tasks: [...db.tasks.slice(0, at), task, ...db.tasks.slice(at)],
-      });
+      // A record the sync brought back keeps its synced copy (US-101).
+      if (!db.tasks.some((one) => one.id === task.id)) {
+        commit({
+          ...db,
+          tasks: [...db.tasks.slice(0, at), task, ...db.tasks.slice(at)],
+        });
+      }
       setUndoable(null);
       return;
     }
 
     // AC-80.6. A deleted note goes back as it was, edit time included.
     if (undoable.kind === 'note') {
-      commit({ ...db, notes: [...db.notes, undoable.note] });
+      // A record the sync brought back keeps its synced copy (US-101).
+      commit({
+        ...db,
+        notes: keepBoth(db.notes, [undoable.note], (note) => note.id),
+      });
       setUndoable(null);
       return;
     }
@@ -392,6 +407,7 @@ export function useDatabase(): {
     },
 
     copyItem(id, dueAt) {
+      const db = latest.current;
       if (!db) return;
       const source = db.items.find((item) => item.id === id);
       if (!source) return;
@@ -413,6 +429,7 @@ export function useDatabase(): {
     },
 
     removeItem(id) {
+      const db = latest.current;
       if (!db) return;
       // AC-45.4. A step without its project has nothing to be a step of.
       const goes = (item: Item) => item.id === id || item.parentId === id;
@@ -576,6 +593,7 @@ export function useDatabase(): {
     },
 
     removeNote(id) {
+      const db = latest.current;
       if (!db) return;
       const note = db.notes.find((one) => one.id === id);
       if (!note) return;
@@ -641,6 +659,7 @@ export function useDatabase(): {
     },
 
     removeTask(id) {
+      const db = latest.current;
       if (!db) return;
       const at = db.tasks.findIndex((task) => task.id === id);
       const task = db.tasks[at];
@@ -744,6 +763,12 @@ export function useDatabase(): {
         true,
       );
       setUndoable(null);
+    },
+
+    adoptSynced(next) {
+      // Anything typed while the sync was out is in latest.current: merge it in
+      // again rather than replacing it.
+      return commit(merge(latest.current ?? next, next), true);
     },
   };
 

@@ -373,3 +373,176 @@ describe('US-99 import under sync', () => {
     ).toBe(before);
   });
 });
+
+describe('US-101 sync', () => {
+  test('AC-101.2 synced data is adopted with its own dates, and Undo is kept', () => {
+    const hook = renderHook(() => useDatabase());
+    let gone = '';
+    act(() => {
+      hook.result.current.actions.addNote('Mine');
+      gone = hook.result.current.actions.addNote('Gone')!;
+    });
+    // Only a delete leaves an Undo to keep; a plain add does not.
+    act(() => hook.result.current.actions.removeNote(gone));
+    const theirs = {
+      ...hook.result.current.db!,
+      notes: [
+        {
+          ...hook.result.current.db!.notes[0]!,
+          body: 'Theirs',
+          changedAt: '2026-09-15T18:00:00.000Z',
+        },
+      ],
+    };
+    act(() => {
+      hook.result.current.actions.adoptSynced(theirs);
+    });
+    expect(hook.result.current.db!.notes[0]!.changedAt).toBe(
+      '2026-09-15T18:00:00.000Z',
+    );
+    expect(hook.result.current.undoMessage).not.toBeNull();
+  });
+
+  test('AC-101.2 delete, sync, Undo', () => {
+    const hook = renderHook(() => useDatabase());
+    let a = '';
+    let b = '';
+    act(() => {
+      a = hook.result.current.actions.addNote('A')!;
+      b = hook.result.current.actions.addNote('B')!;
+    });
+    act(() => hook.result.current.actions.removeNote(a));
+    expect(hook.result.current.db!.deleted).toEqual([
+      expect.objectContaining({ kind: 'notes', id: a }),
+    ]);
+
+    // The other device still holds A's marker, lacks A, and has edited B later.
+    const local = hook.result.current.db!;
+    const shared = {
+      ...local,
+      notes: [
+        {
+          ...local.notes.find((note) => note.id === b)!,
+          body: 'B, edited there',
+          changedAt: '2026-09-15T18:00:00.000Z',
+        },
+      ],
+      deleted: local.deleted,
+    };
+    act(() => {
+      hook.result.current.actions.adoptSynced(shared);
+    });
+    expect(hook.result.current.undoMessage).not.toBeNull();
+
+    act(() => hook.result.current.undo());
+    expect(hook.result.current.db!.notes.map((note) => note.id).sort()).toEqual(
+      [a, b].sort(),
+    );
+    expect(
+      hook.result.current.db!.notes.find((note) => note.id === a),
+    ).toMatchObject({ body: 'A' });
+    expect(
+      hook.result.current.db!.notes.find((note) => note.id === b),
+    ).toMatchObject({
+      body: 'B, edited there',
+      changedAt: '2026-09-15T18:00:00.000Z',
+    });
+    expect(hook.result.current.db!.deleted).toEqual([]);
+  });
+
+  test('AC-101.2 a note deleted, then synced back edited, is in the list once after Undo', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() => {
+      hook.result.current.actions.addNote('A');
+    });
+    const before = hook.result.current.db!.notes[0]!;
+    act(() => hook.result.current.actions.removeNote(before.id));
+
+    // The other device edited A after the delete, so the sync brings it back.
+    const local = hook.result.current.db!;
+    const shared = {
+      ...local,
+      notes: [
+        {
+          ...before,
+          body: 'A, edited there',
+          changedAt: '2026-09-15T18:00:00.000Z',
+        },
+      ],
+      deleted: local.deleted,
+    };
+    act(() => {
+      hook.result.current.actions.adoptSynced(shared);
+    });
+    act(() => hook.result.current.undo());
+
+    const held = hook.result.current.db!.notes.filter(
+      (note) => note.id === before.id,
+    );
+    expect(held).toHaveLength(1);
+    expect(held[0]!.body).toBe('A, edited there');
+  });
+
+  test('AC-101.2 an item deleted, then synced back edited, is in the list once after Undo', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() => {
+      hook.result.current.actions.addItem({
+        title: 'Essay',
+        dueAt: new Date(2026, 9, 3, 12).toISOString(),
+        category: 'academic',
+        priority: 'normal',
+        repeat: 'none',
+      });
+    });
+    const before = hook.result.current.db!.items[0]!;
+    act(() => hook.result.current.actions.removeItem(before.id));
+
+    const local = hook.result.current.db!;
+    const shared = {
+      ...local,
+      items: [
+        {
+          ...before,
+          title: 'Essay, edited there',
+          changedAt: '2026-09-15T18:00:00.000Z',
+        },
+      ],
+      deleted: local.deleted,
+    };
+    act(() => {
+      hook.result.current.actions.adoptSynced(shared);
+    });
+    act(() => hook.result.current.undo());
+
+    const held = hook.result.current.db!.items.filter(
+      (item) => item.id === before.id,
+    );
+    expect(held).toHaveLength(1);
+    expect(held[0]!.title).toBe('Essay, edited there');
+  });
+
+  test('AC-101.2 a delete fired before the re-render does not delete what a sync just brought', () => {
+    const hook = renderHook(() => useDatabase());
+    let a = '';
+    act(() => {
+      a = hook.result.current.actions.addNote('A')!;
+    });
+    const actions = hook.result.current.actions;
+    const base = hook.result.current.db!;
+    const synced = {
+      ...base,
+      notes: [
+        ...base.notes,
+        { ...base.notes[0]!, id: 'from-sync', body: 'Brought by sync' },
+      ],
+    };
+    // Same act, so no render between: `actions` still holds the old render.
+    act(() => {
+      actions.adoptSynced(synced);
+      actions.removeNote(a);
+    });
+    const db = hook.result.current.db!;
+    expect(db.notes.map((n) => n.id)).toEqual(['from-sync']);
+    expect(db.deleted.map((d) => d.id)).toEqual([a]);
+  });
+});
