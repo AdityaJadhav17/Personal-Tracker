@@ -5,6 +5,9 @@ import {
   fileFor,
   headersFor,
   hostAllowed,
+  isTailnetRequest,
+  syncAllowed,
+  tailnetLoginFrom,
   tailnetNameFrom,
   typeOf,
 } from './serve.mjs';
@@ -95,4 +98,69 @@ test('AC-96.1 the name is read from tailscale status, without its final dot', ()
   expect(tailnetNameFrom('{}')).toBeNull();
   expect(tailnetNameFrom('not json')).toBeNull();
   expect(tailnetNameFrom(JSON.stringify({ Self: { DNSName: '' } }))).toBeNull();
+});
+
+test('AC-100.4 the laptop own login is read from tailscale status', () => {
+  const status = JSON.stringify({
+    Self: { UserID: 7 },
+    User: { 7: { LoginName: 'aditya@example.com' } },
+  });
+  expect(tailnetLoginFrom(status)).toBe('aditya@example.com');
+  expect(tailnetLoginFrom('{}')).toBeNull();
+});
+
+test('AC-100.3 without the sync header, or a PUT without JSON, nobody syncs', () => {
+  expect(syncAllowed({}, 'GET', false, null)).toBe(false);
+  expect(syncAllowed({ 'x-margin-sync': '1' }, 'GET', false, null)).toBe(true);
+  expect(
+    syncAllowed(
+      { 'x-margin-sync': '1', 'content-type': 'text/plain' },
+      'PUT',
+      false,
+      null,
+    ),
+  ).toBe(false);
+  expect(
+    syncAllowed(
+      { 'x-margin-sync': '1', 'content-type': 'application/json' },
+      'PUT',
+      false,
+      null,
+    ),
+  ).toBe(true);
+});
+
+test('AC-100.4 under the tailnet name, only the laptop own login syncs', () => {
+  const ok = {
+    'x-margin-sync': '1',
+    'tailscale-user-login': 'aditya@example.com',
+  };
+  expect(syncAllowed(ok, 'GET', true, 'aditya@example.com')).toBe(true);
+  expect(
+    syncAllowed(
+      { ...ok, 'tailscale-user-login': 'eve@example.com' },
+      'GET',
+      true,
+      'aditya@example.com',
+    ),
+  ).toBe(false);
+  expect(
+    syncAllowed({ 'x-margin-sync': '1' }, 'GET', true, 'aditya@example.com'),
+  ).toBe(false);
+  expect(syncAllowed(ok, 'GET', true, null)).toBe(false);
+});
+
+test('AC-100.4 a request is on the tailnet unless plainly local', () => {
+  const local = { host: 'localhost:4180' };
+  expect(isTailnetRequest(local, 4180)).toBe(false);
+  expect(isTailnetRequest({ ...local, 'x-forwarded-for': '1' }, 4180)).toBe(
+    true,
+  );
+  expect(
+    isTailnetRequest({ ...local, 'x-forwarded-proto': 'https' }, 4180),
+  ).toBe(true);
+  expect(
+    isTailnetRequest({ ...local, 'tailscale-user-login': 'a@b' }, 4180),
+  ).toBe(true);
+  expect(isTailnetRequest({ host: 'laptop.ts.net' }, 4180)).toBe(true);
 });

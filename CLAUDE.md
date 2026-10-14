@@ -33,7 +33,8 @@ The same goes for `scripts/update.mjs`, which his scheduled task runs every
 five minutes: run it only with `PT_SRC`, `PT_TARGET` and `PT_LOG` pointing at
 scratch folders. `scripts/serve.mjs` is always running on 4180 from its own
 scheduled task; try it only with `PT_TARGET` and `PT_PORT` set to a scratch folder and
-port. Test deploy tooling against a scratch folder.
+port. `serve.mjs` keeps the shared copy for sync in `PT_DATA` (US-100); try it
+only with a scratch `PT_DATA` too. Test deploy tooling against a scratch folder.
 
 New stories go in `docs/product/stories/US-NN.md`, one file each.
 

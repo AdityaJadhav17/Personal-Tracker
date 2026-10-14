@@ -412,3 +412,4 @@ passed 1,300 lines.
 - [US-97, hardening from the audit of 13 October](stories/US-97.md)
 - [US-98, a goal you can mark achieved](stories/US-98.md)
 - [US-99, every change dated, every deletion remembered](stories/US-99.md)
+- [US-100, a shared copy on the laptop that only Margin can reach](stories/US-100.md)

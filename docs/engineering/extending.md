@@ -52,3 +52,8 @@ told `exact: true`; Testing Library matches whole strings. Eight collisions
 have come from that difference, most recently "Step title for Midterm"
 containing "Title for Midterm". Before naming a control, search the existing
 names for one that contains it or that it contains.
+
+## A new top-level database key
+
+Add it to `KEYS` in `scripts/hub.mjs` as well, or the sync store refuses every
+sync as an unknown key (US-100).

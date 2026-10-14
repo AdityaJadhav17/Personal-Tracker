@@ -3,7 +3,15 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
-import { checksUrl, movesForward, verdict } from './update.mjs';
+import {
+  checksUrl,
+  confirmRestart,
+  isNode,
+  movesForward,
+  serverChanged,
+  stopServer,
+  verdict,
+} from './update.mjs';
 
 const SHA = 'a'.repeat(40);
 const ACTIONS = { slug: 'github-actions' };
@@ -126,6 +134,86 @@ test('AC-94.5 a newer commit is a deploy; an older or unrelated one is not', () 
     expect(movesForward(dir, older, newer)).toBe(true);
     expect(movesForward(dir, newer, older)).toBe(false);
     expect(movesForward(dir, 'c'.repeat(40), newer)).toBe(false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('US-100 task 0b the server restarts only when its own code changed', () => {
+  expect(serverChanged(['src/App.tsx', 'scripts/serve.mjs'])).toBe(true);
+  expect(serverChanged(['scripts/hub.mjs'])).toBe(true);
+  expect(serverChanged(['src/App.tsx', 'scripts/update.mjs'])).toBe(false);
+  expect(serverChanged([])).toBe(false);
+});
+
+test('US-100 task 0b only a node.exe line in tasklist counts as the server', () => {
+  expect(isNode('"node.exe","4242","Console","1","40,000 K"\r\n')).toBe(true);
+  expect(isNode('"chrome.exe","4242","Console","1","40,000 K"')).toBe(false);
+  expect(isNode('INFO: No tasks are running which match the criteria.')).toBe(
+    false,
+  );
+});
+
+test('US-100 task 0b stopServer ends a node process in the pid file and says so otherwise', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pt-pid-'));
+  const file = join(dir, 'server.pid');
+  // A process table of one: alive until it is sent a signal that kills it.
+  const world = () => {
+    const sent = [];
+    let alive = true;
+    const signal = (pid, sig) => {
+      if (!alive) throw Object.assign(new Error('gone'), { code: 'ESRCH' });
+      if (sig === undefined) {
+        sent.push(pid);
+        alive = false;
+      }
+    };
+    return { sent, signal };
+  };
+  try {
+    writeFileSync(file, '4242\n');
+    const live = world();
+    expect(stopServer(file, () => true, live.signal)).toBe('stopped');
+    expect(live.sent).toEqual([4242]);
+
+    const other = world();
+    expect(stopServer(file, () => false, other.signal)).toBe('stale');
+    expect(other.sent).toEqual([]);
+
+    const gone = world();
+    gone.signal(4242); // already dead before the deploy
+    expect(stopServer(file, () => true, gone.signal)).toBe('stale');
+
+    expect(stopServer(join(dir, 'missing.pid'), () => true, live.signal)).toBe(
+      'none',
+    );
+    writeFileSync(file, 'not a pid');
+    expect(stopServer(file, () => true, live.signal)).toBe('none');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('US-100 final confirmRestart accepts a new live node pid and refuses anything else', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pt-pid-'));
+  const file = join(dir, 'server.pid');
+  const alive = () => {};
+  const dead = () => {
+    throw new Error('gone');
+  };
+  try {
+    writeFileSync(file, '5000\n');
+    expect(confirmRestart(file, 4242, () => true, alive, 2)).toBe(true);
+    // No pid before the stop: any live pid counts.
+    expect(confirmRestart(file, undefined, () => true, alive, 2)).toBe(true);
+
+    // The old pid again, a dead new pid, or a pid that is not node: not back.
+    expect(confirmRestart(file, 5000, () => true, alive, 2)).toBe(false);
+    expect(confirmRestart(file, 4242, () => true, dead, 2)).toBe(false);
+    expect(confirmRestart(file, 4242, () => false, alive, 2)).toBe(false);
+    expect(
+      confirmRestart(join(dir, 'missing.pid'), 4242, () => true, alive, 2),
+    ).toBe(false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

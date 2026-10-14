@@ -209,6 +209,22 @@ $node = (Get-Command node).Source; $script = "$env:LOCALAPPDATA\PersonalTracker-
 
 To stop it for good, `Unregister-ScheduledTask 'Personal Tracker server'`.
 
+US-100. The server also keeps the shared copy of your data that the laptop and
+the phone sync through, in `%LOCALAPPDATA%\PersonalTracker-data` (`hub.json`,
+and `hub.prev.json`, the copy before the latest write). It is outside the
+deployed app, so a deploy never touches it.
+
+`Stop-ScheduledTask` stops the task's window but leaves `node` running, so a
+restart is two steps (US-100). The updater does them when a deploy changes the
+server's code; by hand, the first time (the running server predates the pid
+file, so stop it from Task Manager, or `Get-NetTCPConnection -LocalPort 4180`
+for its id) and in an emergency:
+
+```powershell
+Stop-Process -Id (Get-Content "$env:LOCALAPPDATA\PersonalTracker-server.pid")
+Start-ScheduledTask 'Personal Tracker server'
+```
+
 Then open http://localhost:4180 and install it as an app: in Chrome, the ⋮ menu,
 then **Cast, save, and share**, then **Install page as app**; in Edge, Apps,
 then **Install this site as an app**. Pin it to the taskbar. Stay with one

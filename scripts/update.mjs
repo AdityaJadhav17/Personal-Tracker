@@ -31,6 +31,8 @@ const log = process.env.PT_LOG ?? join(home, 'PersonalTracker-update.log');
 // Inside the deployed folder on purpose: the build empties it first, so a
 // deploy that fails part way leaves no marker and the next run tries again.
 const marker = join(target, 'deployed.txt');
+// US-100. Written by serve.mjs, so a deploy can stop the node it started.
+const pidFile = process.env.PT_PID ?? join(home, 'PersonalTracker-server.pid');
 
 /**
  * What CI says about one commit: deploy it, never deploy it, or wait.
@@ -80,6 +82,101 @@ export function movesForward(dir, deployed, sha) {
   } catch {
     return false;
   }
+}
+
+/** US-100. Whether a deploy changed the code the running server was started with. */
+export function serverChanged(files) {
+  return files.some(
+    (f) => f === 'scripts/serve.mjs' || f === 'scripts/hub.mjs',
+  );
+}
+
+/** US-100. Whether `tasklist /FO CSV /NH` output names a node process. */
+export function isNode(output) {
+  return /^"node\.exe"/im.test(output);
+}
+
+/** US-100. Whether `pid` is a node process, asked of Windows. */
+function tasklistSaysNode(pid) {
+  return isNode(
+    execFileSync('tasklist', ['/FI', `PID eq ${pid}`, '/FO', 'CSV', '/NH'], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }),
+  );
+}
+
+/** US-100. The pid in the server's pid file, or undefined. */
+function readPid(file) {
+  try {
+    const pid = Number(readFileSync(file, 'utf8').trim());
+    return Number.isInteger(pid) && pid > 0 ? pid : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * US-100. After /Run: whether the pid file now names a live node process other
+ * than `before` (any, when there was none). Polls about `tries` x 100 ms, as the
+ * task's IgnoreNew policy can drop a /Run and still exit 0.
+ */
+export function confirmRestart(
+  file,
+  before,
+  isServer = tasklistSaysNode,
+  signal = process.kill,
+  tries = 100,
+) {
+  for (let i = 0; i < tries; i += 1) {
+    const pid = readPid(file);
+    try {
+      if (pid !== undefined && pid !== before && isServer(pid)) {
+        signal(pid, 0);
+        return true;
+      }
+    } catch {
+      // Not up yet.
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+  }
+  return false;
+}
+
+/**
+ * US-100. Ends the node process named in the pid file and waits for it to go,
+ * because the task's IgnoreNew policy drops a /Run while the old one lives.
+ * Stop-ScheduledTask leaves node running, so this is how a deploy reaches the
+ * server. Answers 'none' for a missing or garbled file, 'stale' when the pid
+ * is not a node process (or already gone), 'stopped' once it is ended.
+ */
+export function stopServer(
+  file,
+  isServer = tasklistSaysNode,
+  signal = process.kill,
+) {
+  let pid;
+  try {
+    pid = Number(readFileSync(file, 'utf8').trim());
+  } catch {
+    return 'none';
+  }
+  if (!Number.isInteger(pid) || pid <= 0) return 'none';
+  try {
+    if (!isServer(pid)) return 'stale';
+    signal(pid);
+  } catch {
+    return 'stale';
+  }
+  for (let tries = 0; tries < 50; tries += 1) {
+    try {
+      signal(pid, 0);
+    } catch {
+      return 'stopped';
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+  }
+  throw new Error(`The server (pid ${pid}) did not stop.`);
 }
 
 async function checks(sha) {
@@ -161,8 +258,32 @@ async function main() {
     cwd: src,
     stdio: 'pipe',
   });
+  // US-100. Before the marker, so a failed restart is retried next run.
+  let restarted = false;
+  if (
+    deployed === '' ||
+    serverChanged(git('diff', '--name-only', deployed, sha).split('\n'))
+  ) {
+    const before = readPid(pidFile);
+    const stopped = stopServer(pidFile);
+    // A stale pid means the server is already down: start it all the same.
+    if (stopped === 'none') {
+      say('No server pid; restart the server by hand (README).');
+    } else {
+      execFileSync('schtasks', ['/Run', '/TN', 'Personal Tracker server'], {
+        stdio: 'pipe',
+      });
+      if (!confirmRestart(pidFile, before)) {
+        throw new Error(
+          'The server did not come back; restart it by hand (README).',
+        );
+      }
+      restarted = true;
+    }
+  }
   writeFileSync(marker, `${sha}\n`);
   say(`Deployed ${short}: ${git('log', '-1', '--format=%s', sha)}`);
+  if (restarted) say('Restarted the server.');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
