@@ -70,3 +70,16 @@
   border-radius: 999px;
   background: var(--accent);
 }
+
+/* ---------- AC-98.1: achieved goals ---------- */
+
+.goals__achieved {
+  margin: var(--space-5) 0 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.goal--achieved .goal__target {
+  color: var(--accent);
+  font-weight: 600;
+}

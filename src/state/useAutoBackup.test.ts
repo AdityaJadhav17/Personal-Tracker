@@ -8,7 +8,7 @@ vi.mock('../storage/folder');
 const mocked = vi.mocked(folders);
 
 const DB: Database = {
-  version: 9,
+  version: 10,
   items: [],
   goals: [],
   courses: [],
@@ -70,7 +70,7 @@ test("AC-95.1 and AC-95.2 a chosen folder gets today's backup, in Export's forma
   const written = JSON.parse(
     files.get('personal-tracker-backup-2026-09-15.json')!,
   ) as Database;
-  expect(written).toMatchObject({ version: 9, items: [] });
+  expect(written).toMatchObject({ version: 10, items: [] });
   expect(result.current).toMatchObject({
     state: 'on',
     folder: 'PersonalTracker-Backups',

@@ -259,6 +259,7 @@ export default function App() {
           items={db.items}
           onAdd={actions.addGoal}
           onDelete={actions.removeGoal}
+          onAchieve={actions.setGoalAchieved}
         />
       ) : view === 'courses' ? (
         <CourseList

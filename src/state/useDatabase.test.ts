@@ -81,7 +81,7 @@ test('AC-86.4 a note locked while resealing, and so missed, stops it too', () =>
 
 describe('US-94 merging a file with a lock', () => {
   const file = (notes: { id: string; sealed: Sealed | null }[]) => ({
-    version: 9 as const,
+    version: 10 as const,
     items: [],
     goals: [],
     courses: [],
@@ -174,5 +174,46 @@ describe('US-97 passcode edges', () => {
     expect(
       hook.result.current.db?.notes.find((note) => note.id === other)?.sealed,
     ).toBeNull();
+  });
+});
+
+describe('US-98', () => {
+  test('AC-98.1 and AC-98.2 a goal is marked achieved, and back', () => {
+    const hook = renderHook(() => useDatabase());
+    act(() =>
+      hook.result.current.actions.addGoal({
+        name: 'AWS',
+        description: '',
+        targetAt: '2026-10-01T00:00:00.000Z',
+      }),
+    );
+    const id = hook.result.current.db!.goals[0]!.id;
+
+    act(() => hook.result.current.actions.setGoalAchieved(id, true));
+    expect(hook.result.current.db!.goals[0]!.achievedAt).toBe(
+      new Date(2026, 8, 15, 10).toISOString(),
+    );
+
+    act(() => hook.result.current.actions.setGoalAchieved(id, false));
+    expect(hook.result.current.db!.goals[0]!.achievedAt).toBeNull();
+  });
+
+  const BEFORE = 'personal-tracker/before-upgrade';
+
+  test('AC-98.4 locking a note deletes the copy kept before the last upgrade', () => {
+    localStorage.setItem(BEFORE, '{"version":9,"notes":["readable"]}');
+    withLockedNote();
+    expect(localStorage.getItem(BEFORE)).toBeNull();
+  });
+
+  test('AC-98.4 changing the passcode deletes it too', () => {
+    const { hook, id } = withLockedNote();
+    localStorage.setItem(BEFORE, '{"version":9,"lock":"old"}');
+    act(() => {
+      hook.result.current.actions.rekeyNotes(NEXT, [
+        { id, was: OLD, sealed: NEW },
+      ]);
+    });
+    expect(localStorage.getItem(BEFORE)).toBeNull();
   });
 });

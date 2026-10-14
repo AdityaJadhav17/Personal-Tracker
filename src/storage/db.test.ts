@@ -23,7 +23,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 9,
+    version: 10,
     items,
     goals: [],
     courses: [],
@@ -123,7 +123,7 @@ describe('a stored database with collections of the wrong shape', () => {
     localStorage.setItem('personal-tracker/v1', JSON.stringify({ items: [] }));
 
     // No version means version 1, which upgrade carries forward.
-    expect(load().version).toBe(9);
+    expect(load().version).toBe(10);
   });
 });
 
@@ -143,7 +143,7 @@ describe('when the browser refuses to store', () => {
   }
 
   const EMPTY = {
-    version: 9 as const,
+    version: 10 as const,
     items: [],
     goals: [],
     courses: [],
@@ -197,7 +197,7 @@ describe('US-80 notes in storage', () => {
       STORAGE_KEY,
       JSON.stringify({ ...aDatabase([]), version: 5, notes: undefined }),
     );
-    expect(load()).toMatchObject({ version: 9, notes: [] });
+    expect(load()).toMatchObject({ version: 10, notes: [] });
   });
 
   test('AC-80.7 notes of the wrong shape come back empty', () => {
@@ -244,7 +244,7 @@ describe('US-95 the copy kept before an upgrade', () => {
     });
     localStorage.setItem(STORAGE_KEY, old);
 
-    expect(load().version).toBe(9);
+    expect(load().version).toBe(10);
     expect(localStorage.getItem(BEFORE)).toBe(old);
   });
 

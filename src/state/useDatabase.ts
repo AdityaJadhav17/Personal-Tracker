@@ -22,7 +22,7 @@ import type {
   Task,
   Repeat,
 } from '../domain/types';
-import { load, save, STORAGE_KEY } from '../storage/db';
+import { forgetBeforeUpgrade, load, save, STORAGE_KEY } from '../storage/db';
 
 export interface DatabaseActions {
   /** False when storage refused it, so the form can keep what was typed. */
@@ -53,6 +53,8 @@ export interface DatabaseActions {
   removeCourse: (id: string) => void;
   addGoal: (draft: GoalDraft) => void;
   removeGoal: (id: string) => void;
+  /** AC-98.1 and AC-98.2. Marked achieved now, or not achieved again. */
+  setGoalAchieved: (id: string, achieved: boolean) => void;
   recordToday: (score: Reflection['score'], note: string) => void;
   /** AC-80.2. A note from its first text: its id, or null if not stored. */
   addNote: (body: string) => string | null;
@@ -485,12 +487,23 @@ export function useDatabase(): {
         id: crypto.randomUUID(),
         ...draft,
         createdAt: now().toISOString(),
+        achievedAt: null,
       };
       update((current) => ({ ...current, goals: [...current.goals, goal] }));
     },
 
     removeGoal(id) {
       update((current) => deleteGoal(current, id));
+    },
+
+    setGoalAchieved(id, achieved) {
+      const achievedAt = achieved ? now().toISOString() : null;
+      update((current) => ({
+        ...current,
+        goals: current.goals.map((goal) =>
+          goal.id === id ? { ...goal, achievedAt } : goal,
+        ),
+      }));
     },
 
     recordToday(score, note) {
@@ -531,13 +544,17 @@ export function useDatabase(): {
       // AC-97.2. A lock made here while another window made one would
       // replace it, and that window's notes would open with neither.
       if (lock && latest.current?.lock) return false;
-      return update((current) => ({
+      const locked = update((current) => ({
         ...current,
         lock: lock ?? current.lock,
         notes: current.notes.map((note) =>
           note.id === id ? { ...note, body: title, sealed } : note,
         ),
       }));
+      // AC-98.4. The copy from before the last upgrade may hold this note
+      // readable; it goes once the note is locked.
+      if (locked) forgetBeforeUpgrade();
+      return locked;
     },
 
     unlockNote(id, body) {
@@ -649,7 +666,11 @@ export function useDatabase(): {
       });
       // AC-97.1. A note deleted before is sealed under the old passcode;
       // brought back, it would open with neither and block the next change.
-      if (saved) setUndoable(null);
+      // AC-98.4. Nor may the copy from before the last upgrade outlive it.
+      if (saved) {
+        setUndoable(null);
+        forgetBeforeUpgrade();
+      }
       return saved;
     },
 

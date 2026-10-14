@@ -27,12 +27,13 @@ function aGoal(id: string, name = id): Goal {
     description: 'Something worth doing',
     targetAt: '2026-12-15T08:00:00.000Z',
     createdAt: '2026-09-15T17:00:00.000Z',
+    achievedAt: null,
   };
 }
 
 function aDatabase(goals: Goal[], items: Item[]): Database {
   return {
-    version: 9,
+    version: 10,
     items,
     goals,
     courses: [],
@@ -139,7 +140,7 @@ describe('deleteGoal', () => {
     const db = aDatabase([aGoal('g1')], []);
     const next = deleteGoal(db, 'g1');
 
-    expect(next.version).toBe(9);
+    expect(next.version).toBe(10);
     expect(next.courses).toEqual([]);
     expect(next.reflections).toEqual([]);
   });

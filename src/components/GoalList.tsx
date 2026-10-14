@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toDueAt } from '../domain/dates';
+import { localDay, monthDay, toDueAt } from '../domain/dates';
 import { progressOf, timeLeft } from '../domain/goals';
 import type { Goal, GoalDraft, Item } from '../domain/types';
 import MoreButton from './MoreButton';
@@ -13,6 +13,8 @@ interface GoalListProps {
   items: Item[];
   onAdd: (draft: GoalDraft) => void;
   onDelete: (id: string) => void;
+  /** AC-98.1 and AC-98.2. Mark achieved, or not achieved again. */
+  onAchieve: (id: string, achieved: boolean) => void;
   /** AC-65.1. For how long is left. */
   now: Date;
 }
@@ -23,6 +25,7 @@ export default function GoalList({
   items,
   onAdd,
   onDelete,
+  onAchieve,
 }: GoalListProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -57,6 +60,80 @@ export default function GoalList({
   }
 
   const pending = goals.find((goal) => goal.id === confirming);
+  // AC-98.1. What is still being worked towards first, then what was
+  // reached, the most recent first. Nothing is hidden.
+  const active = goals.filter((goal) => goal.achievedAt === null);
+  const achieved = goals
+    .filter((goal) => goal.achievedAt !== null)
+    .sort((a, b) => b.achievedAt!.localeCompare(a.achievedAt!));
+
+  function card(goal: Goal) {
+    const { done, total } = progressOf(items, goal.id);
+    return (
+      <li
+        className={goal.achievedAt ? 'goal goal--achieved' : 'goal'}
+        key={goal.id}
+      >
+        <div className="card__head">
+          <h3 className="goal__name">{goal.name}</h3>
+          <MoreButton
+            name={goal.name}
+            open={more === goal.id}
+            onToggle={() => setMore(more === goal.id ? null : goal.id)}
+          />
+        </div>
+        {goal.description && (
+          <p className="goal__description">{goal.description}</p>
+        )}
+        <p className="goal__target">
+          {goal.achievedAt ? (
+            <>
+              <span className="goal__check" aria-hidden="true">
+                ✓{' '}
+              </span>
+              {`Achieved ${monthDay(localDay(goal.achievedAt))}`}
+            </>
+          ) : (
+            timeLeft(goal.targetAt, now)
+          )}
+        </p>
+
+        <p className="goal__count">{`${done} of ${total} done`}</p>
+        <progress
+          className="goal__bar"
+          aria-label={`${goal.name} progress`}
+          value={done}
+          /* A goal with no items still needs a bar to render, and max
+             cannot be zero, so it shows empty rather than busy. */
+          max={total || 1}
+        />
+
+        <button
+          className="data__button"
+          type="button"
+          aria-label={
+            goal.achievedAt
+              ? `Mark ${goal.name} not achieved`
+              : `Mark ${goal.name} achieved`
+          }
+          onClick={() => onAchieve(goal.id, goal.achievedAt === null)}
+        >
+          {goal.achievedAt ? 'Mark not achieved' : 'Mark achieved'}
+        </button>
+
+        {more === goal.id && (
+          <button
+            className="data__button"
+            type="button"
+            aria-label={`Delete ${goal.name}`}
+            onClick={() => setConfirming(goal.id)}
+          >
+            Delete
+          </button>
+        )}
+      </li>
+    );
+  }
 
   return (
     <section className="goals">
@@ -177,48 +254,17 @@ export default function GoalList({
           </p>
         </section>
       ) : (
-        <ul className="goal-list">
-          {goals.map((goal) => {
-            const { done, total } = progressOf(items, goal.id);
-            return (
-              <li className="goal" key={goal.id}>
-                <div className="card__head">
-                  <h3 className="goal__name">{goal.name}</h3>
-                  <MoreButton
-                    name={goal.name}
-                    open={more === goal.id}
-                    onToggle={() => setMore(more === goal.id ? null : goal.id)}
-                  />
-                </div>
-                {goal.description && (
-                  <p className="goal__description">{goal.description}</p>
-                )}
-                <p className="goal__target">{timeLeft(goal.targetAt, now)}</p>
-
-                <p className="goal__count">{`${done} of ${total} done`}</p>
-                <progress
-                  className="goal__bar"
-                  aria-label={`${goal.name} progress`}
-                  value={done}
-                  /* A goal with no items still needs a bar to render, and max
-                     cannot be zero, so it shows empty rather than busy. */
-                  max={total || 1}
-                />
-
-                {more === goal.id && (
-                  <button
-                    className="data__button"
-                    type="button"
-                    aria-label={`Delete ${goal.name}`}
-                    onClick={() => setConfirming(goal.id)}
-                  >
-                    Delete
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          {active.length > 0 && (
+            <ul className="goal-list">{active.map(card)}</ul>
+          )}
+          {achieved.length > 0 && (
+            <>
+              <h2 className="goals__achieved">Achieved</h2>
+              <ul className="goal-list">{achieved.map(card)}</ul>
+            </>
+          )}
+        </>
       )}
     </section>
   );

@@ -115,5 +115,17 @@ export function upgrade(db: Partial): Database {
     current = { ...current, version: 9, tasks: current.tasks ?? [] };
   }
 
+  // US-98. A goal can be achieved; none was, before.
+  if (current.version < 10) {
+    current = {
+      ...current,
+      version: 10,
+      goals: (current.goals ?? []).map((goal) => ({
+        achievedAt: null,
+        ...(goal as object),
+      })),
+    };
+  }
+
   return current as unknown as Database;
 }

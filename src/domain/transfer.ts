@@ -96,6 +96,18 @@ const KEYS: Record<number, string[]> = {
     'lock',
     'tasks',
   ],
+  // US-98. Same keys; a goal gains achievedAt.
+  10: [
+    'version',
+    'items',
+    'goals',
+    'courses',
+    'reflections',
+    'notes',
+    'lastBackupAt',
+    'lock',
+    'tasks',
+  ],
 };
 
 export type ParseResult =
@@ -175,6 +187,14 @@ function goalProblem(value: unknown): string | null {
   if (!isText(raw.description)) return 'its description must be text';
   if (!isInstant(raw.targetAt)) return 'its target date is not a date';
   if (!isInstant(raw.createdAt)) return 'its created date is not a date';
+  // AC-98.3. Absent in files from before version 10.
+  if (
+    raw.achievedAt !== undefined &&
+    raw.achievedAt !== null &&
+    !isInstant(raw.achievedAt)
+  ) {
+    return 'its achieved date is not a date';
+  }
   return null;
 }
 
@@ -278,6 +298,8 @@ function toGoal(value: unknown): Goal {
     description: raw.description as string,
     targetAt: toInstant(raw.targetAt as string),
     createdAt: toInstant(raw.createdAt as string),
+    achievedAt:
+      typeof raw.achievedAt === 'string' ? toInstant(raw.achievedAt) : null,
   };
 }
 
@@ -410,7 +432,8 @@ export function parseImport(text: string): ParseResult {
     version !== 6 &&
     version !== 7 &&
     version !== 8 &&
-    version !== 9
+    version !== 9 &&
+    version !== 10
   ) {
     return {
       ok: false,

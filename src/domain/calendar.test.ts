@@ -140,6 +140,7 @@ describe('goals on the calendar', () => {
     description: '',
     targetAt: new Date(2026, 8, 20, 12).toISOString(),
     createdAt: '2026-09-01T00:00:00.000Z',
+    achievedAt: null,
   };
 
   test('AC-41.1 a goal lands on the day of its target', () => {

@@ -15,9 +15,22 @@ export const STORAGE_KEY = 'personal-tracker/v1';
 /** AC-95.7. The stored text as it was before the latest upgrade. */
 export const BEFORE_UPGRADE_KEY = 'personal-tracker/before-upgrade';
 
+/**
+ * AC-98.4. Drops that copy. It is the text as it was, so it may hold a note
+ * since locked, readable, or one under a passcode since changed; it cannot be
+ * resealed, because the app never opened it.
+ */
+export function forgetBeforeUpgrade(): void {
+  try {
+    localStorage.removeItem(BEFORE_UPGRADE_KEY);
+  } catch {
+    // Storage refused: there is nothing it would let us read either.
+  }
+}
+
 function emptyDatabase(): Database {
   return {
-    version: 9,
+    version: 10,
     items: [],
     goals: [],
     courses: [],

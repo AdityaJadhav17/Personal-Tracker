@@ -24,7 +24,7 @@ function anItem(overrides: Partial<Item> = {}): Item {
 /** A current-version database holding these items and nothing else. */
 function aDatabase(items: Item[] = [anItem()]): Database {
   return {
-    version: 9,
+    version: 10,
     items,
     goals: [],
     courses: [],
@@ -69,7 +69,7 @@ describe('serialize', () => {
 
   test('AC-09.1 the version is carried so import can tell what it is reading', () => {
     const parsed = JSON.parse(serialize(aDatabase([]))) as Database;
-    expect(parsed.version).toBe(9);
+    expect(parsed.version).toBe(10);
   });
 
   test('AC-09.2 an empty database exports an empty collection, not a failure', () => {
@@ -183,8 +183,8 @@ describe('parseImport', () => {
   });
 
   test('a file from a different version is refused, naming the version', () => {
-    // 9 is current since US-88, so the unreadable one has to be beyond it.
-    expect(reject('{"version": 10, "items": []}')).toMatch(/version/i);
+    // 10 is current since US-98, so the unreadable one has to be beyond it.
+    expect(reject('{"version": 11, "items": []}')).toMatch(/version/i);
   });
 
   test('unknown top level fields are refused and named', () => {
@@ -287,7 +287,7 @@ describe('parseImport of a version 1 file', () => {
   test('it comes back at the current version with empty collections', () => {
     const result = parseImport(v1File);
 
-    expect(result.ok && result.db.version).toBe(9);
+    expect(result.ok && result.db.version).toBe(10);
     expect(result.ok && result.db.goals).toEqual([]);
     expect(result.ok && result.db.courses).toEqual([]);
     expect(result.ok && result.db.reflections).toEqual([]);
@@ -335,6 +335,7 @@ describe('parseImport of the new collections', () => {
     description: 'Pass everything',
     targetAt: '2026-12-15T08:00:00.000Z',
     createdAt: '2026-09-15T17:00:00.000Z',
+    achievedAt: null,
   };
 
   const course = {
@@ -644,7 +645,7 @@ describe('version 4 files', () => {
       }),
     );
 
-    expect(result.ok && result.db.version).toBe(9);
+    expect(result.ok && result.db.version).toBe(10);
     expect(result.ok && result.db.lastBackupAt).toBeNull();
   });
 });
@@ -730,7 +731,7 @@ describe('US-80 notes', () => {
         tasks: undefined,
       }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 9, notes: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 10, notes: [] });
   });
 
   test('AC-81.4 a pin survives an export and an import', () => {
@@ -881,7 +882,7 @@ describe('US-88 routine tasks', () => {
     const result = parseImport(
       JSON.stringify({ ...aDatabase(), version: 8, tasks: undefined }),
     );
-    expect(result.ok && result.db).toMatchObject({ version: 9, tasks: [] });
+    expect(result.ok && result.db).toMatchObject({ version: 10, tasks: [] });
   });
 
   test('AC-88.7 fields a task should not have are dropped', () => {
@@ -912,6 +913,7 @@ describe('US-94 dates are stored in one form', () => {
             description: '',
             targetAt: loose,
             createdAt: loose,
+            achievedAt: null,
           },
         ],
         courses: [
@@ -960,5 +962,41 @@ describe('US-94 dates are stored in one form', () => {
   test('AC-94.2 an open item keeps a null completed date', () => {
     const result = parseImport(serialize(aDatabase()));
     expect(result.ok && result.db.items[0]?.completedAt).toBeNull();
+  });
+});
+
+describe('US-98 achieved goals', () => {
+  const goal = {
+    id: 'g',
+    name: 'AWS',
+    description: '',
+    targetAt: '2026-10-01T00:00:00.000Z',
+    createdAt: '2026-09-01T00:00:00.000Z',
+    achievedAt: '2026-10-13T17:00:00.000Z',
+  };
+
+  test('AC-98.3 an achieved goal survives an export and an import', () => {
+    const result = parseImport(serialize({ ...aDatabase(), goals: [goal] }));
+    expect(result.ok && result.db.goals[0]).toEqual(goal);
+  });
+
+  test('AC-98.3 a goal from a version 9 file imports not achieved', () => {
+    // A version 9 goal has no achievedAt at all.
+    const old: Record<string, unknown> = { ...goal };
+    delete old.achievedAt;
+    const result = parseImport(
+      JSON.stringify({ ...aDatabase(), version: 9, goals: [old] }),
+    );
+    expect(result.ok && result.db.goals[0]?.achievedAt).toBeNull();
+  });
+
+  test('AC-98.3 an achieved date that is not a date is refused', () => {
+    const result = parseImport(
+      JSON.stringify({
+        ...aDatabase(),
+        goals: [{ ...goal, achievedAt: 'yes' }],
+      }),
+    );
+    expect(!result.ok && result.error).toMatch(/achieved date/);
   });
 });

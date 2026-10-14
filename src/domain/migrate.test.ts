@@ -24,7 +24,7 @@ function v1Database(items: unknown[] = [v1Item()]) {
 describe('upgrade', () => {
   test('a database already at the current version is returned untouched', () => {
     const already: Database = {
-      version: 9,
+      version: 10,
       items: [],
       goals: [],
       courses: [],
@@ -42,7 +42,7 @@ describe('upgrade', () => {
 
     // US-28 moved the destination from 2 to 3; the point of the test is that
     // a version 1 file arrives at whatever current is, with nothing missing.
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.goals).toEqual([]);
     expect(upgraded.courses).toEqual([]);
     expect(upgraded.reflections).toEqual([]);
@@ -87,7 +87,7 @@ describe('upgrade', () => {
 
   test('an empty version 1 database upgrades without complaint', () => {
     expect(upgrade(v1Database([]))).toEqual({
-      version: 9,
+      version: 10,
       items: [],
       goals: [],
       courses: [],
@@ -118,7 +118,7 @@ describe('AC-28.7 upgrading past version 3', () => {
   test('a version 1 database arrives at the current version with everything filled in', () => {
     const upgraded = upgrade(v1Database());
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.items[0]).toMatchObject({
       title: 'CSE 100 project',
       goalId: null,
@@ -138,7 +138,7 @@ describe('AC-28.7 upgrading past version 3', () => {
 
     const upgraded = upgrade(v2 as never);
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.items[0]?.repeat).toBe('none');
     // The links it already had survive the second hop.
     expect(upgraded.items[0]?.goalId).toBe('g1');
@@ -183,7 +183,7 @@ describe('version 4', () => {
       reflections: [],
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.lastBackupAt).toBeNull();
     expect(upgraded.items[0]?.repeatDay).toBeNull();
     expect(upgraded.items[0]?.repeat).toBe('monthly');
@@ -192,7 +192,7 @@ describe('version 4', () => {
   test('AC-40.7 a version 1 file still reaches the current version whole', () => {
     const upgraded = upgrade(v1Database());
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.items[0]).toMatchObject({
       repeat: 'none',
       repeatDay: null,
@@ -220,7 +220,7 @@ describe('version 5', () => {
       lastBackupAt: '2026-09-20T17:00:00.000Z',
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.items[0]?.parentId).toBeNull();
     expect(upgraded.items[0]?.repeatDay).toBe(31);
     expect(upgraded.lastBackupAt).toBe('2026-09-20T17:00:00.000Z');
@@ -246,7 +246,7 @@ describe('version 7', () => {
       lastBackupAt: null,
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.notes[0]).toMatchObject({
       body: 'Groceries',
       pinned: false,
@@ -265,7 +265,7 @@ describe('version 6', () => {
       lastBackupAt: '2026-09-20T17:00:00.000Z',
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.notes).toEqual([]);
     expect(upgraded.items).toHaveLength(1);
     expect(upgraded.lastBackupAt).toBe('2026-09-20T17:00:00.000Z');
@@ -292,7 +292,7 @@ describe('version 8', () => {
       lastBackupAt: null,
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.lock).toBeNull();
     expect(upgraded.notes[0]).toMatchObject({ pinned: true, sealed: null });
   });
@@ -311,8 +311,34 @@ describe('version 9', () => {
       lock: null,
     });
 
-    expect(upgraded.version).toBe(9);
+    expect(upgraded.version).toBe(10);
     expect(upgraded.tasks).toEqual([]);
     expect(upgraded.lastBackupAt).toBe('2026-09-20T17:00:00.000Z');
+  });
+});
+
+describe('US-98 goals that can be achieved', () => {
+  test('AC-98.3 a version 9 database upgrades with every goal not achieved', () => {
+    const upgraded = upgrade({
+      version: 9,
+      items: [],
+      goals: [
+        {
+          id: 'g',
+          name: 'AWS',
+          description: '',
+          targetAt: '2026-10-01T00:00:00.000Z',
+          createdAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      courses: [],
+      reflections: [],
+      notes: [],
+      lastBackupAt: null,
+      lock: null,
+      tasks: [],
+    });
+    expect(upgraded.version).toBe(10);
+    expect(upgraded.goals[0]?.achievedAt).toBeNull();
   });
 });

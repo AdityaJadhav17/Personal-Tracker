@@ -49,6 +49,8 @@ export interface Goal {
   /** UTC instant. */
   targetAt: string;
   createdAt: string;
+  /** AC-98.1. When it was marked achieved; null while it is still a goal. */
+  achievedAt: string | null;
 }
 
 /** The details you would otherwise dig out of email every week. */
@@ -123,7 +125,7 @@ export interface Task {
 /** Everything the app owns. This object is the export file. */
 export interface Database {
   /** Bumped when the shape changes in a way import has to handle. */
-  version: 9;
+  version: 10;
   items: Item[];
   goals: Goal[];
   courses: Course[];

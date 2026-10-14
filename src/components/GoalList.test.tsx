@@ -13,6 +13,7 @@ function aGoal(overrides: Partial<Goal> = {}): Goal {
     description: 'No late submissions',
     targetAt: new Date(2026, 11, 15, 23, 59).toISOString(),
     createdAt: '2026-09-15T17:00:00.000Z',
+    achievedAt: null,
     ...overrides,
   };
 }
@@ -42,7 +43,14 @@ function setDate(label: string, value: string) {
 
 test('AC-14.1 the form offers a name, a description and a target date', () => {
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={noop} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={noop}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   expect(screen.getByLabelText('Goal name')).toBeVisible();
@@ -54,7 +62,14 @@ test('AC-14.1 saving reports all three', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={onAdd}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
@@ -73,7 +88,14 @@ test('AC-14.1 the target date is the end of the day chosen, locally', async () =
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={onAdd}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
@@ -94,6 +116,7 @@ test('AC-14.1 a saved goal shows its name, description and target', () => {
       items={[]}
       onAdd={noop}
       onDelete={noop}
+      onAchieve={noop}
     />,
   );
 
@@ -110,7 +133,14 @@ test('AC-14.2 a goal with no name is refused, with a message', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={onAdd}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   setDate('Target date', '2026-12-15');
@@ -126,7 +156,14 @@ test('AC-14.2 a goal with no target date is refused', async () => {
   const user = userEvent.setup();
   const onAdd = vi.fn<(draft: GoalDraft) => void>();
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={onAdd} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={onAdd}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   await user.type(screen.getByLabelText('Goal name'), 'Finish the quarter');
@@ -140,7 +177,14 @@ test('AC-14.2 a goal with no target date is refused', async () => {
 
 test('AC-14.4 with no goals an empty state offers a way in', () => {
   render(
-    <GoalList now={NOW} goals={[]} items={[]} onAdd={noop} onDelete={noop} />,
+    <GoalList
+      now={NOW}
+      goals={[]}
+      items={[]}
+      onAdd={noop}
+      onDelete={noop}
+      onAchieve={noop}
+    />,
   );
 
   expect(screen.getByText('No goals yet.')).toBeVisible();
@@ -159,6 +203,7 @@ test('AC-15.1 a goal shows how many of its items are done', () => {
       ]}
       onAdd={noop}
       onDelete={noop}
+      onAchieve={noop}
     />,
   );
 
@@ -178,6 +223,7 @@ test('AC-15.2 a goal with no items reads zero of zero, not an error', () => {
       items={[]}
       onAdd={noop}
       onDelete={noop}
+      onAchieve={noop}
     />,
   );
 
@@ -197,6 +243,7 @@ test('AC-15.1 items belonging to another goal do not count', () => {
       items={[anItem('a', 'g1', true), anItem('b', 'other'), anItem('c', null)]}
       onAdd={noop}
       onDelete={noop}
+      onAchieve={noop}
     />,
   );
 
@@ -213,6 +260,7 @@ test('AC-20.3 deleting asks before anything goes', async () => {
       items={[]}
       onAdd={noop}
       onDelete={onDelete}
+      onAchieve={noop}
     />,
   );
 
@@ -240,6 +288,7 @@ test('AC-20.1 confirming reports the goal id', async () => {
       items={[]}
       onAdd={noop}
       onDelete={onDelete}
+      onAchieve={noop}
     />,
   );
 
@@ -265,6 +314,7 @@ test('AC-20.3 keeping it removes nothing', async () => {
       items={[]}
       onAdd={noop}
       onDelete={onDelete}
+      onAchieve={noop}
     />,
   );
 
@@ -293,6 +343,7 @@ describe('US-60 the list first', () => {
         items={[]}
         onAdd={noop}
         onDelete={noop}
+        onAchieve={noop}
       />,
     );
 
@@ -312,6 +363,7 @@ describe('US-60 the list first', () => {
         items={[]}
         onAdd={noop}
         onDelete={noop}
+        onAchieve={noop}
       />,
     );
 
@@ -324,5 +376,77 @@ describe('US-60 the list first', () => {
     expect(
       screen.getByRole('button', { name: 'Delete Finish the quarter clean' }),
     ).toBeVisible();
+  });
+});
+
+describe('US-98 achieved goals', () => {
+  const aws = aGoal({ id: 'aws', name: 'AWS exam' });
+  const done = aGoal({
+    id: 'run',
+    name: 'Run a 10k',
+    achievedAt: new Date(2026, 8, 20, 18).toISOString(),
+  });
+
+  test('AC-98.1 an achieved goal sits under Achieved, with its day instead of the time left', () => {
+    render(
+      <GoalList
+        now={NOW}
+        goals={[done, aws]}
+        items={[]}
+        onAdd={noop}
+        onDelete={noop}
+        onAchieve={noop}
+      />,
+    );
+
+    const achieved = screen.getByRole('heading', { name: 'Achieved' });
+    const lists = screen.getAllByRole('list');
+    expect(lists[0]).toHaveTextContent('AWS exam');
+    expect(lists[0]).not.toHaveTextContent('Run a 10k');
+    expect(lists[1]).toHaveTextContent('Run a 10k');
+    expect(lists[1]).toHaveTextContent('Achieved Sep 20');
+    expect(lists[1]).not.toHaveTextContent('days left');
+    expect(achieved).toBeVisible();
+  });
+
+  test('AC-98.1 and AC-98.2 the buttons mark a goal achieved, and back', async () => {
+    const user = userEvent.setup();
+    const onAchieve = vi.fn<(id: string, achieved: boolean) => void>();
+    render(
+      <GoalList
+        now={NOW}
+        goals={[done, aws]}
+        items={[]}
+        onAdd={noop}
+        onDelete={noop}
+        onAchieve={onAchieve}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Mark AWS exam achieved' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Mark Run a 10k not achieved' }),
+    );
+
+    expect(onAchieve.mock.calls).toEqual([
+      ['aws', true],
+      ['run', false],
+    ]);
+  });
+
+  test('AC-98.1 with nothing achieved there is no Achieved section', () => {
+    render(
+      <GoalList
+        now={NOW}
+        goals={[aws]}
+        items={[]}
+        onAdd={noop}
+        onDelete={noop}
+        onAchieve={noop}
+      />,
+    );
+    expect(screen.queryByRole('heading', { name: 'Achieved' })).toBeNull();
   });
 });

@@ -33,7 +33,7 @@ function aCourse(id: string, name = id): Course {
 
 function aDatabase(courses: Course[], items: Item[]): Database {
   return {
-    version: 9,
+    version: 10,
     items,
     courses,
     goals: [],
@@ -99,7 +99,7 @@ test('the other collections are carried through untouched', () => {
 
   const next = deleteCourse(db, 'c1');
 
-  expect(next.version).toBe(9);
+  expect(next.version).toBe(10);
   expect(next.goals).toEqual([]);
   expect(next.reflections).toEqual([]);
 });

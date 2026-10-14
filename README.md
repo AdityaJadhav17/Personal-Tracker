@@ -103,6 +103,8 @@ month to carry it further.
 
 **Goals** are things to aim at with a date on them. Items can belong to a goal,
 and each goal shows how much of its work is finished and how long is left.
+Mark one achieved and it moves under Achieved, with the day you reached it;
+nothing disappears, and Mark not achieved puts it back.
 
 **Courses** keeps the details you would otherwise dig out of email every week:
 where it meets, your professor's address, when office hours are. Edit a course
