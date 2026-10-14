@@ -24,3 +24,6 @@ personal-tracker-*.ics
 
 # Archify working folders (US-91). Finished diagrams live in docs/diagrams.
 .archify/
+
+# Agent working notes, not part of the app.
+.superpowers/

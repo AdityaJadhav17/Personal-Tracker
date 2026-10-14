@@ -12,7 +12,7 @@ type Permission = 'granted' | 'denied' | 'prompt';
 interface Folder extends FileSystemDirectoryHandle {
   queryPermission(options: { mode: 'readwrite' }): Promise<Permission>;
   requestPermission(options: { mode: 'readwrite' }): Promise<Permission>;
-  keys(): AsyncIterableIterator<string>;
+  entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
 }
 declare global {
   interface Window {
@@ -84,25 +84,37 @@ export async function chooseFolder(): Promise<Folder | null> {
   }
 }
 
-/** Write `text` into the folder as `name`, replacing any file of that name. */
+/**
+ * Write `text` into the folder as `name`, replacing any file of that name.
+ * With `create` false, only a file that is still there (AC-102.3).
+ */
 export async function writeFile(
   folder: Folder,
   name: string,
   text: string,
+  create = true,
 ): Promise<void> {
-  const file = await folder.getFileHandle(name, { create: true });
+  const file = await folder.getFileHandle(name, { create });
   const writable = await file.createWritable();
   await writable.write(text);
   await writable.close();
 }
 
-/** Every name in the folder, files and folders alike. */
+/** The name of every file in the folder; folders are not listed. */
 export async function namesIn(folder: Folder): Promise<string[]> {
   const names: string[] = [];
-  for await (const name of folder.keys()) names.push(name);
+  for await (const [name, handle] of folder.entries()) {
+    if (handle.kind === 'file') names.push(name);
+  }
   return names;
 }
 
 export async function removeFile(folder: Folder, name: string): Promise<void> {
   await folder.removeEntry(name);
+}
+
+/** AC-102.3. The text of the file called `name`. */
+export async function readFile(folder: Folder, name: string): Promise<string> {
+  const file = await (await folder.getFileHandle(name)).getFile();
+  return file.text();
 }

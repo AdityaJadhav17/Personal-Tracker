@@ -33,7 +33,13 @@ interface NotesViewProps {
   /** Makes a note from its first text; its id, or null if storage refused. */
   onAdd: (body: string) => string | null;
   /** AC-82.4. A locked note passes its title and its text sealed. */
-  onChange: (id: string, body: string, sealed?: Sealed | null) => void;
+  onChange: (
+    id: string,
+    body: string,
+    sealed?: Sealed | null,
+    /** AC-102.5. The lock the sealing key was made from. */
+    salt?: string,
+  ) => void;
   onDelete: (id: string) => void;
   onPin: (id: string) => void;
   lock: Lock | null;
@@ -44,6 +50,7 @@ interface NotesViewProps {
     title: string,
     sealed: Sealed,
     made?: Lock,
+    salt?: string,
   ) => boolean | void;
   onUnlock: (id: string, body: string) => void;
   /** AC-86.3. Stores a new lock and every note under it; false if refused. */
@@ -170,10 +177,12 @@ export default function NotesView({
     if (open?.sealed) {
       if (!key) return;
       const note = open;
+      const salt = keySalt.current ?? undefined;
       setOpened({ id: note.id, text: body });
       const turn = ++sealing.current;
       void seal(key, body).then((sealed) => {
-        if (turn === sealing.current) onChange(note.id, titleOf(body), sealed);
+        if (turn === sealing.current)
+          onChange(note.id, titleOf(body), sealed, salt);
       });
       return;
     }
@@ -189,11 +198,12 @@ export default function NotesView({
   }
 
   /** AC-82.1. Seals the open ordinary note, and keeps it open. */
-  async function lockOpen(with_: CryptoKey, made?: Lock) {
+  async function lockOpen(with_: CryptoKey, salt: string, made?: Lock) {
     if (!open) return;
     const text = open.body;
     if (
-      onLock(open.id, titleOf(text), await seal(with_, text), made) === false
+      onLock(open.id, titleOf(text), await seal(with_, text), made, salt) ===
+      false
     ) {
       // AC-97.2. Nothing was locked; this window's passcode is not the one.
       setAsking(null);
@@ -202,7 +212,7 @@ export default function NotesView({
       );
       return;
     }
-    keySalt.current = (made ?? lock)?.salt ?? null;
+    keySalt.current = salt;
     setKey(with_);
     setOpened({ id: open.id, text });
     setAsking(null);
@@ -388,7 +398,7 @@ export default function NotesView({
                       onClick={() => {
                         if (open.sealed) relock();
                         else if (!lock) setAsking('setup');
-                        else if (key) void lockOpen(key);
+                        else if (key) void lockOpen(key, keySalt.current ?? '');
                         else setAsking('confirm');
                       }}
                     >
@@ -434,7 +444,7 @@ export default function NotesView({
                     onCancel={() => setAsking(null)}
                     onSubmit={async (passcode) => {
                       const made = await createLock(passcode, now);
-                      await lockOpen(made.key, made.lock);
+                      await lockOpen(made.key, made.lock.salt, made.lock);
                       return null;
                     }}
                   />
@@ -446,7 +456,7 @@ export default function NotesView({
                     onSubmit={async (passcode) => {
                       const opens = await unlock(lock!, passcode);
                       if (!opens) return 'That passcode is not right.';
-                      await lockOpen(opens);
+                      await lockOpen(opens, lock!.salt);
                       return null;
                     }}
                   />

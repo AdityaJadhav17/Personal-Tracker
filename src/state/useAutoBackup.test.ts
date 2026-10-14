@@ -2,7 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useAutoBackup } from './useAutoBackup';
 import * as folders from '../storage/folder';
 import type { Folder } from '../storage/folder';
-import type { Database } from '../domain/types';
+import { serialize } from '../domain/transfer';
+import type { Database, Note } from '../domain/types';
 
 vi.mock('../storage/folder');
 const mocked = vi.mocked(folders);
@@ -38,6 +39,9 @@ function aFolder(permission: 'granted' | 'prompt' = 'granted') {
     return Promise.resolve();
   });
   mocked.namesIn.mockImplementation(() => Promise.resolve([...files.keys()]));
+  mocked.readFile.mockImplementation((_, name) =>
+    Promise.resolve(files.get(name) ?? ''),
+  );
   mocked.removeFile.mockImplementation((_, name) => {
     files.delete(name);
     return Promise.resolve();
@@ -145,4 +149,148 @@ test('AC-95.5 a folder that cannot be written pauses backups and says why', asyn
 
   await waitFor(() => expect(result.current.state).toBe('paused'));
   expect(result.current.reason).toMatch(/flash drive/);
+});
+
+describe('US-102 backups follow a lock change', () => {
+  const OLD = 'personal-tracker-backup-2026-09-14.json';
+  const LOCK = {
+    salt: 's',
+    check: { iv: 'i', data: 'd' },
+    changedAt: '2026-09-15T08:00:00.000Z',
+  };
+  const note = (body: string, sealed: Note['sealed']): Note => ({
+    id: 'n',
+    body,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    changedAt: '2026-09-01T00:00:00.000Z',
+    pinned: false,
+    sealed,
+  });
+  const plain: Database = { ...DB, notes: [note('secret text', null)] };
+  const locked: Database = {
+    ...DB,
+    lock: LOCK,
+    notes: [note('Title', { iv: 'x', data: 'y' })],
+  };
+
+  /** Mounted on `plain`, today's backup written, then the note is locked. */
+  async function lockAfterwards(files: Map<string, string>) {
+    const { result, rerender } = renderHook(
+      ({ db, n }) => useAutoBackup(db, vi.fn(), 0, n),
+      { initialProps: { db: plain, n: 0 } },
+    );
+    await waitFor(() => expect(result.current.state).toBe('on'));
+    await waitFor(() => expect(files.size).toBeGreaterThan(1));
+    rerender({ db: locked, n: 1 });
+    return result;
+  }
+
+  test('AC-102.3 a lock change rewrites older backups with the locked note', async () => {
+    const { folder, files } = aFolder();
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    await lockAfterwards(files);
+
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+    const out = JSON.parse(files.get(OLD)!) as Database;
+    expect(out.lock).toEqual(LOCK);
+    expect(out.notes[0]?.sealed).toEqual({ iv: 'x', data: 'y' });
+  });
+
+  test('AC-102.3 without a lock change older backups are left alone', async () => {
+    const { folder, files } = aFolder();
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    renderHook(() => useAutoBackup(plain, vi.fn(), 0, 0));
+
+    await waitFor(() => expect(files.size).toBe(2));
+    expect(files.get(OLD)).toBe(serialize(plain));
+  });
+
+  test('AC-102.3 a backup that does not parse is left as it is and the rest are still rewritten', async () => {
+    const { folder, files } = aFolder();
+    files.set('personal-tracker-backup-2026-09-13.json', 'not json');
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    const result = await lockAfterwards(files);
+
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+    expect(files.get('personal-tracker-backup-2026-09-13.json')).toBe(
+      'not json',
+    );
+    expect(result.current.state).toBe('on');
+  });
+
+  test('AC-102.3 a file that cannot be rewritten does not stop the others, and backups pause', async () => {
+    const { folder, files } = aFolder();
+    const first = 'personal-tracker-backup-2026-09-13.json';
+    files.set(first, serialize(plain));
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    const write = mocked.writeFile.getMockImplementation()!;
+    mocked.writeFile.mockImplementation((f, name, text) =>
+      name === first && !text.includes('secret text')
+        ? Promise.reject(new DOMException('gone', 'NotFoundError'))
+        : write(f, name, text),
+    );
+    const result = await lockAfterwards(files);
+
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+    expect(files.get(first)).toBe(serialize(plain));
+    await waitFor(() => expect(result.current.state).toBe('paused'));
+    expect(result.current.reason).toMatch(/flash drive/);
+  });
+
+  test('AC-102.3 a rewrite that failed is tried again once backups are allowed', async () => {
+    const { folder, files } = aFolder();
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    const write = mocked.writeFile.getMockImplementation()!;
+    let broken = true;
+    mocked.writeFile.mockImplementation((f, name, text, create) =>
+      broken && name === OLD
+        ? Promise.reject(new DOMException('gone', 'NotFoundError'))
+        : write(f, name, text, create),
+    );
+    const result = await lockAfterwards(files);
+    await waitFor(() => expect(result.current.state).toBe('paused'));
+    expect(files.get(OLD)).toContain('secret text');
+
+    broken = false;
+    await act(() => result.current.allow());
+
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+  });
+
+  test('AC-102.3 a backup pruned meanwhile is not created again by the rewrite', async () => {
+    const { folder, files } = aFolder();
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    await lockAfterwards(files);
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+    expect(mocked.writeFile).toHaveBeenCalledWith(
+      folder,
+      OLD,
+      expect.any(String),
+      false,
+    );
+  });
+
+  test('AC-102.3 a fresh session relocks an older backup that still holds a now-sealed note, and leaves an unchanged one unwritten', async () => {
+    const { folder, files } = aFolder();
+    const same = 'personal-tracker-backup-2026-09-13.json';
+    files.set(OLD, serialize(plain));
+    files.set(same, serialize(locked));
+    mocked.savedFolder.mockResolvedValue(folder);
+    renderHook(() => useAutoBackup(locked, vi.fn(), 0, 0));
+
+    await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
+    expect(mocked.writeFile).not.toHaveBeenCalledWith(
+      folder,
+      same,
+      expect.any(String),
+      false,
+    );
+  });
 });

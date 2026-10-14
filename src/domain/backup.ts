@@ -1,3 +1,4 @@
+import type { Database } from './types';
 import { daysBetween, toDateValue } from './dates';
 
 /** How old a backup can get before the app mentions it. */
@@ -51,4 +52,25 @@ export function staleBackups(names: string[], at: Date): string[] {
     .sort()
     .reverse()
     .slice(KEEP);
+}
+
+/** AC-102.3. The automatic backups in `names` other than the one for `at`'s day. */
+export function olderBackups(names: string[], at: Date): string[] {
+  const today = backupName(at);
+  return names.filter((name) => BACKUP.test(name) && name !== today);
+}
+
+/**
+ * AC-102.3. An older backup as it should be kept now: the current lock, and
+ * every note that is locked in `current` as it is there.
+ */
+export function relock(file: Database, current: Database): Database {
+  const sealed = new Map(
+    current.notes.filter((n) => n.sealed).map((n) => [n.id, n]),
+  );
+  return {
+    ...file,
+    lock: current.lock,
+    notes: file.notes.map((n) => sealed.get(n.id) ?? n),
+  };
 }

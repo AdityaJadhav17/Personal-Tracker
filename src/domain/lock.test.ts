@@ -128,3 +128,10 @@ describe('US-86 changing the passcode', () => {
     expect(!result.ok && result.error).toMatch(/nothing was changed/);
   });
 });
+
+test('AC-102.2 a lock that cannot be read fails to open instead of throwing', async () => {
+  const { lock } = await createLock('hunter22', new Date());
+  expect(
+    await unlock({ ...lock, salt: '!!not base64!!' }, 'hunter22'),
+  ).toBeNull();
+});

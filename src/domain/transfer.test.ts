@@ -1115,3 +1115,41 @@ describe('US-99 hostile change tracking', () => {
     expect(!result.ok && result.error).toMatch(/Deletion 1.*not a date/i);
   });
 });
+
+describe('US-102 dates and locks keep their shape', () => {
+  const withDue = (dueAt: string) =>
+    parseImport(serialize(aDatabase([anItem({ dueAt })])));
+
+  test('AC-102.1 dates outside the years 1970 to 9999 are refused', () => {
+    for (const dueAt of [
+      '+275760-09-13T00:00:00.000Z',
+      '-000001-01-01T00:00:00.000Z',
+      '1969-12-31T23:59:59.999Z',
+      '+010000-01-01T00:00:00.000Z',
+    ]) {
+      const result = withDue(dueAt);
+      expect(result.ok).toBe(false);
+    }
+  });
+
+  test('AC-102.1 the first and last instants in range are accepted', () => {
+    expect(withDue('1970-01-01T00:00:00.000Z').ok).toBe(true);
+    expect(withDue('9999-12-31T23:59:59.999Z').ok).toBe(true);
+  });
+
+  test('AC-102.2 base64 text whose length is not a multiple of four is refused', () => {
+    const lock = {
+      salt: 'AAAAAAAAAAAAAAAAAAAAAA==',
+      check: { iv: 'AAAAAAAAAAAAAAAA', data: 'c2VhbGVk' },
+    };
+    for (const bad of [
+      { ...lock, salt: 'AAAAAAAAAAAAAAAAAAAAA==' },
+      { ...lock, check: { ...lock.check, iv: 'AAAAAAAAAAAAAAA' } },
+    ]) {
+      const result = parseImport(JSON.stringify({ ...aDatabase(), lock: bad }));
+      expect(result.ok).toBe(false);
+    }
+    const good = parseImport(JSON.stringify({ ...aDatabase(), lock }));
+    expect(good.ok).toBe(true);
+  });
+});

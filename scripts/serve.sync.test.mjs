@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, expect, test } from 'vitest';
@@ -106,4 +106,26 @@ test('AC-100.5 an older database than the held one is refused with a reason', as
   const res = await put({ revision, db: { ...db, version: 10 } });
   expect(res.status).toBe(400);
   expect((await res.json()).error).toEqual(expect.any(String));
+});
+
+test('AC-102.6 a device name or a folder is a 404, a file is served', async () => {
+  writeFileSync(join(root, 'a.txt'), 'hi');
+  mkdirSync(join(root, 'dir'));
+  const get = (p) => fetch(`http://127.0.0.1:${PORT}${p}`, { headers });
+  expect((await get('/CON')).status).toBe(404);
+  expect((await get('/nul.txt')).status).toBe(404);
+  expect((await get('/dir')).status).toBe(404);
+  const ok = await get('/a.txt');
+  expect(ok.status).toBe(200);
+  expect(await ok.text()).toBe('hi');
+});
+
+test('AC-102.7 a version newer than the app, or a revision past the safe count, is refused', async () => {
+  const rev = (await (await fetch(base, { headers })).json()).revision;
+  expect(
+    (await put({ revision: rev, db: { ...db, version: 12 } })).status,
+  ).toBe(400);
+  expect((await put({ revision: Number.MAX_SAFE_INTEGER, db })).status).toBe(
+    400,
+  );
 });

@@ -78,7 +78,15 @@ test('AC-86.4 a note locked while resealing, and so missed, stops it too', () =>
   act(() => {
     other = hook.result.current.actions.addNote('Wifi')!;
   });
-  act(() => hook.result.current.actions.lockNote(other, 'Wifi', OLD));
+  act(() =>
+    hook.result.current.actions.lockNote(
+      other,
+      'Wifi',
+      OLD,
+      undefined,
+      LOCK.salt,
+    ),
+  );
 
   let saved = true;
   act(() => {
@@ -544,5 +552,125 @@ describe('US-101 sync', () => {
     const db = hook.result.current.db!;
     expect(db.notes.map((n) => n.id)).toEqual(['from-sync']);
     expect(db.deleted.map((d) => d.id)).toEqual([a]);
+  });
+});
+
+describe('US-102 after a lock change', () => {
+  const BEFORE = 'personal-tracker/before-upgrade';
+  const LATER = '2026-09-16T10:00:00.000Z';
+  const sealedNote = (id: string) => ({
+    id,
+    body: id,
+    createdAt: LATER,
+    updatedAt: LATER,
+    changedAt: LATER,
+    pinned: false,
+    sealed: NEW,
+  });
+
+  test('AC-102.3 a synced locked note removes the copy kept from before the upgrade', () => {
+    const hook = renderHook(() => useDatabase());
+    localStorage.setItem(BEFORE, 'old');
+    act(() => {
+      hook.result.current.actions.adoptSynced({
+        ...hook.result.current.db!,
+        lock: { ...LOCK, changedAt: LATER },
+        notes: [sealedNote('n')],
+      });
+    });
+    expect(localStorage.getItem(BEFORE)).toBeNull();
+    expect(hook.result.current.lockChanges).toBe(1);
+  });
+
+  test('AC-102.3 a synced new passcode clears Undo and the copy from before the upgrade', () => {
+    const { hook, id } = withLockedNote();
+    act(() => hook.result.current.actions.removeNote(id));
+    expect(hook.result.current.undoMessage).not.toBeNull();
+    localStorage.setItem(BEFORE, 'old');
+
+    act(() => {
+      hook.result.current.actions.adoptSynced({
+        ...hook.result.current.db!,
+        lock: { ...NEXT, changedAt: LATER },
+      });
+    });
+
+    expect(hook.result.current.undoMessage).toBeNull();
+    expect(localStorage.getItem(BEFORE)).toBeNull();
+  });
+
+  test('AC-102.3 replacing everything with a locked note removes the copy from before the upgrade', () => {
+    const hook = renderHook(() => useDatabase());
+    localStorage.setItem(BEFORE, 'old');
+    act(() =>
+      hook.result.current.actions.replaceAll({
+        ...hook.result.current.db!,
+        lock: LOCK,
+        notes: [sealedNote('n')],
+      }),
+    );
+    expect(localStorage.getItem(BEFORE)).toBeNull();
+  });
+
+  test('AC-102.3 an ordinary edit leaves the copy from before the upgrade', () => {
+    const hook = renderHook(() => useDatabase());
+    localStorage.setItem(BEFORE, 'old');
+    act(() => {
+      hook.result.current.actions.addNote('Plain');
+    });
+    expect(localStorage.getItem(BEFORE)).toBe('old');
+    expect(hook.result.current.lockChanges).toBe(0);
+  });
+
+  test('AC-102.4 a lock set after the round began stops adoptSynced', () => {
+    const { hook } = withLockedNote();
+    const before = localStorage.getItem('personal-tracker/v1');
+    let adopted = true;
+    act(() => {
+      adopted = hook.result.current.actions.adoptSynced({
+        ...hook.result.current.db!,
+        lock: { ...NEXT, changedAt: LATER },
+        notes: [sealedNote('other')],
+      });
+    });
+    expect(adopted).toBe(false);
+    expect(localStorage.getItem('personal-tracker/v1')).toBe(before);
+  });
+
+  test('AC-102.5 locking with a passcode that is no longer the current one saves nothing', () => {
+    const { hook } = withLockedNote();
+    let other = '';
+    act(() => {
+      other = hook.result.current.actions.addNote('Wifi')!;
+    });
+    let locked = true;
+    act(() => {
+      locked = hook.result.current.actions.lockNote(
+        other,
+        'Wifi',
+        NEW,
+        undefined,
+        NEXT.salt,
+      );
+    });
+    expect(locked).toBe(false);
+    expect(
+      hook.result.current.db!.notes.find((note) => note.id === other)?.sealed,
+    ).toBeNull();
+  });
+
+  test('AC-102.5 editing a locked note with a stale passcode saves nothing', () => {
+    const { hook, id } = withLockedNote();
+    let saved = true;
+    act(() => {
+      saved = hook.result.current.actions.editNote(id, 'x', NEW, NEXT.salt);
+    });
+    expect(saved).toBe(false);
+    expect(hook.result.current.db!.notes[0]!.sealed).toEqual(OLD);
+    act(() => {
+      saved = hook.result.current.actions.editNote(id, 'x', NEW, LOCK.salt);
+    });
+    expect(saved).toBe(true);
+    expect(hook.result.current.db!.notes[0]!.sealed).toEqual(NEW);
   });
 });

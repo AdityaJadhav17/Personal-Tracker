@@ -1,4 +1,11 @@
-import { backupName, backupNotice, staleBackups } from './backup';
+import {
+  backupName,
+  backupNotice,
+  olderBackups,
+  relock,
+  staleBackups,
+} from './backup';
+import type { Database, Lock, Note } from './types';
 
 /** Tuesday 15 September 2026, 10:00 local. */
 const NOW = new Date(2026, 8, 15, 10, 0, 0, 0);
@@ -75,5 +82,72 @@ describe('US-97 a backup named for a future day', () => {
     expect(staleBackups([...planted, ...real], TODAY)).toEqual([
       day('2026-08-01'),
     ]);
+  });
+});
+
+describe('US-102 backups follow a lock change', () => {
+  const base: Database = {
+    version: 11,
+    items: [],
+    goals: [],
+    courses: [],
+    reflections: [],
+    notes: [],
+    lastBackupAt: null,
+    lock: null,
+    tasks: [],
+    deleted: [],
+  };
+  const note = (id: string, body: string, sealed: Note['sealed']): Note => ({
+    id,
+    body,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    changedAt: '2026-09-01T00:00:00.000Z',
+    pinned: false,
+    sealed,
+  });
+  const lock = (salt: string): Lock => ({
+    salt,
+    check: { iv: salt, data: salt },
+    changedAt: '2026-09-02T00:00:00.000Z',
+  });
+
+  test('AC-102.3 a note locked now is the locked one in an older file, and the lock is current', () => {
+    const file: Database = {
+      ...base,
+      lock: lock('old'),
+      notes: [note('a', 'plain text', null), note('b', 'other', null)],
+    };
+    const current: Database = {
+      ...base,
+      lock: lock('new'),
+      notes: [
+        note('a', 'Title', { iv: 'x', data: 'y' }),
+        note('b', 'other', null),
+      ],
+    };
+    const out = relock(file, current);
+    expect(out.lock).toEqual(current.lock);
+    expect(out.notes[0]).toEqual(current.notes[0]);
+    expect(out.notes[1]).toEqual(file.notes[1]);
+  });
+
+  test('AC-102.3 a note the current database no longer has is left as the file has it', () => {
+    const file: Database = { ...base, notes: [note('gone', 'text', null)] };
+    expect(relock(file, base).notes).toEqual(file.notes);
+  });
+
+  test('AC-102.3 only backups from other days are candidates', () => {
+    expect(
+      olderBackups(
+        [
+          'personal-tracker-backup-2026-09-14.json',
+          'personal-tracker-backup-2026-09-15.json',
+          'mine.txt',
+        ],
+        NOW,
+      ),
+    ).toEqual(['personal-tracker-backup-2026-09-14.json']);
   });
 });

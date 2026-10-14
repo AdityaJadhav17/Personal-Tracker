@@ -414,3 +414,4 @@ passed 1,300 lines.
 - [US-99, every change dated, every deletion remembered](stories/US-99.md)
 - [US-100, a shared copy on the laptop that only Margin can reach](stories/US-100.md)
 - [US-101, the laptop and the iPhone keep one set of data](stories/US-101.md)
+- [US-102, tighter edges](stories/US-102.md)

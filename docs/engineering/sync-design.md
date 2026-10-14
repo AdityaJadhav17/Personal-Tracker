@@ -88,8 +88,9 @@ Who may call it:
 2. Under the tailnet name, `Tailscale-User-Login` must equal the laptop's own
    login, learned from `tailscale status --json` like its name. Tailscale
    strips client-supplied copies of the header.
-3. Under `localhost` or `127.0.0.1`, the existing Host check applies and the
-   caller is this Windows account.
+3. Under `localhost` or `127.0.0.1`, the existing Host check applies. The
+   loopback endpoint is reachable by programs running on the laptop as its
+   user, as the browser profile and data folder already are.
 
 The body is capped at 5 MB and must parse as JSON with a `db` that has the
 database's top-level shape; full validation happens in the app.

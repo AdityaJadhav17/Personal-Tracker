@@ -28,9 +28,11 @@ const home = process.env.LOCALAPPDATA ?? '';
 const src = process.env.PT_SRC ?? join(home, 'PersonalTracker-src');
 const target = process.env.PT_TARGET ?? join(home, 'PersonalTracker');
 const log = process.env.PT_LOG ?? join(home, 'PersonalTracker-update.log');
-// Inside the deployed folder on purpose: the build empties it first, so a
-// deploy that fails part way leaves no marker and the next run tries again.
-const marker = join(target, 'deployed.txt');
+// AC-102.8. Outside the folder the build empties, so a build that fails part
+// way still leaves the record of what is deployed.
+const marker = process.env.PT_MARKER ?? `${target}-deployed.txt`;
+// Where the marker used to live; read once when the new file is not there yet.
+const legacyMarker = join(target, 'deployed.txt');
 // US-100. Written by serve.mjs, so a deploy can stop the node it started.
 const pidFile = process.env.PT_PID ?? join(home, 'PersonalTracker-server.pid');
 
@@ -82,6 +84,20 @@ export function movesForward(dir, deployed, sha) {
   } catch {
     return false;
   }
+}
+
+/**
+ * AC-102.8. The commit last deployed, or '' for none. Only a full commit id
+ * counts; anything else is logged and treated as absent.
+ */
+export function readMarker(file, legacy, say) {
+  for (const path of [file, legacy]) {
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, 'utf8').trim();
+    if (/^[0-9a-f]{40}$/.test(text)) return text;
+    say('The deployed-commit marker is not a commit id; ignoring it.');
+  }
+  return '';
 }
 
 /** US-100. Whether a deploy changed the code the running server was started with. */
@@ -226,9 +242,7 @@ async function main() {
   const short = sha.slice(0, 7);
 
   // AC-56.6.
-  const deployed = existsSync(marker)
-    ? readFileSync(marker, 'utf8').trim()
-    : '';
+  const deployed = readMarker(marker, legacyMarker, say);
   if (sha === deployed) return say(`Up to date at ${short}.`);
   if (!movesForward(src, deployed, sha)) {
     return say(`main moved back to ${short}; not deploying an older commit.`);

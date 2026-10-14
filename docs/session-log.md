@@ -1386,8 +1386,7 @@ Run against rules written for a Python desktop app: pickle, `subprocess`,
 `ctypes`, PyQt, an auto-updater. This app is a browser page with two runtime
 dependencies and no server, so most sections had no surface. The audit says so
 per section rather than reporting clean results against checks that could not
-have failed. The full report is
-[engineering/security-audit.md](engineering/security-audit.md).
+have failed.
 
 **The one real vulnerability was in code written this morning.** `escape` in
 `ics.ts` handled `\r?\n`, which does not match a bare carriage return, so a

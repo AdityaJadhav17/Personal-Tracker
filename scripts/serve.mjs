@@ -10,7 +10,7 @@
  */
 import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
-import { readFile, writeFileSync } from 'node:fs';
+import { readFile, stat, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -64,6 +64,32 @@ export function fileFor(root, url) {
   const base = resolve(root);
   const file = resolve(base, `.${path === '/' ? '/index.html' : path}`);
   return file.startsWith(base + sep) ? file : null;
+}
+
+/**
+ * AC-102.6. Whether the last part of a path is a Windows device name, which
+ * opens a device rather than a file whatever its case or extension.
+ */
+export function deviceName(path) {
+  const last = path.split(/[\\/]/).pop() ?? '';
+  const stem = last.split('.')[0].trimEnd();
+  return /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³]|conin\$|conout\$)$/i.test(
+    stem,
+  );
+}
+
+/**
+ * AC-102.6. Whether a request path has a colon, which on Windows names a
+ * device or a stream rather than a file. The address is decoded first.
+ */
+export function hasColon(url) {
+  let path = url.split('?')[0] ?? '';
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // Left as it came; fileFor refuses what does not decode.
+  }
+  return path.includes(':');
 }
 
 /**
@@ -168,11 +194,10 @@ let tailnet = { name: null, login: null, askedAt: -Infinity };
 function tailnetStatus() {
   if (tailnet.name === null && Date.now() - tailnet.askedAt > 60_000) {
     let status = '';
-    // On PATH, or where the Windows installer puts it: a process started
-    // before Tailscale was installed has a PATH without it.
+    // AC-102.6. The installed copy first, then PATH.
     for (const command of [
-      'tailscale',
       join(process.env.ProgramFiles ?? '', 'Tailscale', 'tailscale.exe'),
+      'tailscale',
     ]) {
       try {
         status = execFileSync(command, ['status', '--json'], {
@@ -201,7 +226,11 @@ const MAX_BODY = 5 * 1024 * 1024;
 
 /** AC-100.5. Whether a parsed body carries a revision that is a count. */
 function validRevision(body) {
-  return Number.isInteger(body?.revision) && body.revision >= 0;
+  return (
+    Number.isInteger(body?.revision) &&
+    body.revision >= 0 &&
+    body.revision <= Number.MAX_SAFE_INTEGER - 1
+  );
 }
 
 /** AC-100.1 to AC-100.5. GET and PUT of the shared copy. */
@@ -293,15 +322,28 @@ export function serve(root, port, dataDir) {
       response.writeHead(400).end();
       return;
     }
-    // A folder or a missing file both fail here, and both are a 404.
-    readFile(file, (error, body) => {
-      if (error) {
-        response.writeHead(404, { 'Content-Type': TYPES['.txt'] });
-        response.end('Not found');
+    const notFound = () => {
+      response.writeHead(404, { 'Content-Type': TYPES['.txt'] });
+      response.end('Not found');
+    };
+    // AC-102.6. Only a regular file, and never a device.
+    if (deviceName(file) || hasColon(url)) {
+      notFound();
+      return;
+    }
+    stat(file, (statError, info) => {
+      if (statError || !info.isFile()) {
+        notFound();
         return;
       }
-      response.writeHead(200, headersFor(file, url));
-      response.end(request.method === 'HEAD' ? undefined : body);
+      readFile(file, (error, body) => {
+        if (error) {
+          notFound();
+          return;
+        }
+        response.writeHead(200, headersFor(file, url));
+        response.end(request.method === 'HEAD' ? undefined : body);
+      });
     });
   });
 

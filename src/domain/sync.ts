@@ -106,8 +106,11 @@ export function lockConflict(
     return { count: 0, here: false };
   const [win, lose] =
     lockWinner(local, shared) === shared ? [shared, local] : [local, shared];
-  const has = new Set(win.notes.map((n) => n.id));
-  const count = lose.notes.filter((n) => n.sealed && !has.has(n.id)).length;
+  // AC-102.4. Missing from the winner, or readable there while sealed here.
+  const kept = new Map(win.notes.map((n) => [n.id, n]));
+  const count = lose.notes.filter(
+    (n) => n.sealed && !kept.get(n.id)?.sealed,
+  ).length;
   return { count, here: lose === local };
 }
 

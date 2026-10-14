@@ -1,4 +1,4 @@
-import { EPOCH, newestTime, toInstant } from './dates';
+import { EPOCH, inRange, newestTime, toInstant } from './dates';
 import { upgrade } from './migrate';
 import { COLLECTIONS } from './sync';
 import type {
@@ -134,7 +134,7 @@ function isText(value: unknown): value is string {
 }
 
 function isInstant(value: unknown): value is string {
-  return isText(value) && !Number.isNaN(Date.parse(value));
+  return isText(value) && inRange(value);
 }
 
 function isLink(value: unknown): boolean {
@@ -266,7 +266,11 @@ function reflectionProblem(value: unknown): string | null {
 
 /** AC-82.7. Base64 and nothing else: sealed text is never read as text. */
 function isBase64(value: unknown): value is string {
-  return isText(value) && /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+  return (
+    isText(value) &&
+    value.length % 4 === 0 &&
+    /^[A-Za-z0-9+/]+={0,2}$/.test(value)
+  );
 }
 
 function isSealed(value: unknown): boolean {

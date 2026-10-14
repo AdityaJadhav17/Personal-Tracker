@@ -33,9 +33,15 @@ import { useDatabase } from './state/useDatabase';
 import { useSync } from './state/useSync';
 
 export default function App() {
-  const { db, undoMessage, undo, storageError, actions } = useDatabase();
+  const { db, undoMessage, undo, storageError, actions, lockChanges } =
+    useDatabase();
   // US-95. Here rather than in Data, so it runs whichever view is open.
-  const backups = useAutoBackup(db, actions.recordBackup);
+  const backups = useAutoBackup(
+    db,
+    actions.recordBackup,
+    undefined,
+    lockChanges,
+  );
   // US-101. Same reason: it runs whichever view is open.
   const sync = useSync(db, actions.adoptSynced);
 

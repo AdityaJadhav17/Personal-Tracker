@@ -21,6 +21,7 @@ import {
   toIcsStamp,
   toTimeValue,
   toDueAt,
+  fromIcsDate,
   weekdayOf,
 } from './dates';
 
@@ -564,5 +565,19 @@ describe('US-80 when a note was edited', () => {
     expect(noteMonth(new Date(2025, 11, 1).toISOString(), NOW)).toBe(
       'December 2025',
     );
+  });
+});
+
+describe('US-102 typed and imported dates keep the stored range', () => {
+  test('AC-102.1 a typed date before 1970 or after 9999 is not a due date', () => {
+    expect(toDueAt('1969-12-30', '')).toBeNull();
+    expect(toDueAt('1000-01-01', '12:00')).toBeNull();
+    expect(toDueAt('2026-10-03', '')).not.toBeNull();
+  });
+
+  test('AC-102.1 a calendar date outside the range is refused', () => {
+    expect(fromIcsDate('19600101')).toBeNull();
+    expect(fromIcsDate('19600101T120000Z')).toBeNull();
+    expect(fromIcsDate('20261008T065900Z')).not.toBeNull();
   });
 });

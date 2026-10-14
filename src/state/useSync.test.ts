@@ -322,17 +322,17 @@ test('AC-101.5 a round in the background leaves the last result showing', async 
 test('AC-101.7 locked notes under a different passcode pause sync with no PUT and no adopt', async () => {
   const lock = (salt: string, changedAt: string) => ({
     salt,
-    check: { iv: 'c', data: 'c' },
+    check: { iv: 'cccc', data: 'cccc' },
     changedAt,
   });
   const local = {
     ...DB,
-    lock: lock('old', '2026-09-14T09:00:00.000Z'),
-    notes: [{ ...NOTE, sealed: { iv: 'i', data: 'd' } }],
+    lock: lock('oooo', '2026-09-14T09:00:00.000Z'),
+    notes: [{ ...NOTE, sealed: { iv: 'iiii', data: 'dddd' } }],
   };
   const calls = server({
     ...DB,
-    lock: lock('new', '2026-09-14T10:00:00.000Z'),
+    lock: lock('nnnn', '2026-09-14T10:00:00.000Z'),
   });
   const adopt = vi.fn(() => true);
   const { result } = renderHook(() => useSync(local, adopt, 0));
@@ -347,20 +347,105 @@ test('AC-101.7 locked notes under a different passcode pause sync with no PUT an
 test('AC-101.7 locked notes on the other device under a different passcode pause sync here with no PUT and no adopt', async () => {
   const lock = (salt: string, changedAt: string) => ({
     salt,
-    check: { iv: 'c', data: 'c' },
+    check: { iv: 'cccc', data: 'cccc' },
     changedAt,
   });
-  const local = { ...DB, lock: lock('new', '2026-09-14T10:00:00.000Z') };
+  const local = { ...DB, lock: lock('nnnn', '2026-09-14T10:00:00.000Z') };
   const calls = server({
     ...DB,
-    lock: lock('old', '2026-09-14T09:00:00.000Z'),
-    notes: [{ ...NOTE, sealed: { iv: 'i', data: 'd' } }],
+    lock: lock('oooo', '2026-09-14T09:00:00.000Z'),
+    notes: [{ ...NOTE, sealed: { iv: 'iiii', data: 'dddd' } }],
   });
   const adopt = vi.fn(() => true);
   const { result } = renderHook(() => useSync(local, adopt, 0));
   await waitFor(() => expect(result.current.state).toBe('failed'));
   expect(result.current.reason).toBe(
     'Sync paused: 1 locked note on your other device uses a different passcode. Open it there and remove its lock, then sync here.',
+  );
+  expect(adopt).not.toHaveBeenCalled();
+  expect(calls.map((c) => c.method)).toEqual(['GET']);
+});
+
+test('AC-102.4 a lock set here after the round began pauses sync and is not reported as synced', async () => {
+  const lock = (salt: string, changedAt: string) => ({
+    salt,
+    check: { iv: 'cccc', data: 'cccc' },
+    changedAt,
+  });
+  const sealed = (id: string) => ({
+    ...NOTE,
+    id,
+    sealed: { iv: 'iiii', data: 'dddd' },
+  });
+  let release: () => void = () => {};
+  const held = new Promise<void>((r) => (release = r));
+  let first = true;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url: string, init: RequestInit = {}) => {
+      if (init.method === 'PUT') return Response.json({ revision: 1 });
+      if (first) {
+        first = false;
+        await held;
+      }
+      return Response.json({
+        revision: 0,
+        db: {
+          ...JSON.parse(serialize(DB)),
+          lock: lock('oooo', '2026-09-14T09:00:00.000Z'),
+          notes: [sealed('theirs')],
+        },
+      });
+    }),
+  );
+  const { result } = renderHook(() => {
+    const d = useDatabase();
+    return { d, s: useSync(d.db, d.actions.adoptSynced, 0) };
+  });
+  await waitFor(() => expect(result.current.s.state).toBe('syncing'));
+  // Locked here while the round was out.
+  let id = '';
+  act(() => {
+    id = result.current.d.actions.addNote('Mine')!;
+  });
+  act(() => {
+    result.current.d.actions.lockNote(
+      id,
+      'Mine',
+      { iv: 'eeee', data: 'eeee' },
+      lock('nnnn', '2026-09-16T09:00:00.000Z'),
+    );
+  });
+  await act(async () => release());
+  await waitFor(() => expect(result.current.s.state).toBe('failed'));
+  expect(result.current.s.reason).toMatch(/^Sync paused: 1 locked note/);
+});
+
+test('AC-102.1 a local copy the importer would refuse is not sent', async () => {
+  const old = {
+    id: 'i1',
+    title: 'Birthday',
+    dueAt: '1960-05-01T12:00:00.000Z',
+    category: 'personal',
+    priority: 'normal',
+    status: 'open',
+    note: '',
+    createdAt: '2026-09-14T10:00:00.000Z',
+    completedAt: null,
+    repeat: 'none',
+    repeatDay: null,
+    goalId: null,
+    parentId: null,
+    courseId: null,
+    changedAt: '2026-09-14T10:00:00.000Z',
+  };
+  const calls = server(null);
+  const adopt = vi.fn(() => true);
+  const local = { ...DB, items: [old] } as unknown as Database;
+  const { result } = renderHook(() => useSync(local, adopt, 0));
+  await waitFor(() => expect(result.current.state).toBe('failed'));
+  expect(result.current.reason).toMatch(
+    /^This device has data the other device would refuse: .+\.$/,
   );
   expect(adopt).not.toHaveBeenCalled();
   expect(calls.map((c) => c.method)).toEqual(['GET']);

@@ -346,3 +346,20 @@ test('AC-101.7 lockConflict counts sealed notes the losing lock holds and the wi
   expect(lockConflict(older, known).count).toBe(0);
   expect(lockConflict(older, aDatabase([])).count).toBe(0);
 });
+
+test('AC-102.4 lockConflict also counts a note sealed on the losing side and readable on the winner', () => {
+  const older = {
+    ...aDatabase([]),
+    lock: aLock('old', at(9)),
+    notes: [aNote('x', at(9), 'both')],
+  };
+  const newer = {
+    ...aDatabase([]),
+    lock: aLock('new', at(10)),
+    notes: [aNote(null, at(10), 'both')],
+  };
+  expect(lockConflict(older, newer)).toEqual({ count: 1, here: true });
+  expect(lockConflict(newer, older)).toEqual({ count: 1, here: false });
+  const sealedBoth = { ...newer, notes: [aNote('y', at(10), 'both')] };
+  expect(lockConflict(older, sealedBoth).count).toBe(0);
+});

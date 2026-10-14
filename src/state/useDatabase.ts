@@ -5,7 +5,7 @@ import { deleteGoal } from '../domain/goals';
 import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
 import { recordReflection } from '../domain/reflections';
-import { COLLECTIONS, merge, stamp } from '../domain/sync';
+import { COLLECTIONS, lockConflict, merge, stamp } from '../domain/sync';
 import type {
   Category,
   Course,
@@ -60,14 +60,28 @@ export interface DatabaseActions {
   /** AC-80.2. A note from its first text: its id, or null if not stored. */
   addNote: (body: string) => string | null;
   /** AC-80.3. Called per keystroke; the edit time moves with it. AC-82.4:
-      a locked note passes its title as `body` and its text sealed. */
-  editNote: (id: string, body: string, sealed?: Sealed | null) => void;
+      a locked note passes its title as `body` and its text sealed.
+      AC-102.5. `salt` is the lock's, which the key sealing it was made from;
+      false, and nothing saved, if that is not the current lock's. */
+  editNote: (
+    id: string,
+    body: string,
+    sealed?: Sealed | null,
+    salt?: string,
+  ) => boolean;
   /**
    * AC-82.1. Locks a note; not an edit. `lock` is the new lock, on the
    * first note ever locked. AC-97.2: false, and nothing changed, if another
-   * window set one meanwhile.
+   * window set one meanwhile. AC-102.5. Without a new lock, `salt` is the
+   * current lock's, which the key sealing it was made from.
    */
-  lockNote: (id: string, title: string, sealed: Sealed, lock?: Lock) => boolean;
+  lockNote: (
+    id: string,
+    title: string,
+    sealed: Sealed,
+    lock?: Lock,
+    salt?: string,
+  ) => boolean;
   /** AC-82.5. The note made ordinary, its text back. Not an edit. */
   unlockNote: (id: string, body: string) => void;
   /** AC-86.3. A new lock and every locked note under it, in one write, or
@@ -159,6 +173,8 @@ export function useDatabase(): {
   /** Empty unless the last write was refused. */
   storageError: string;
   actions: DatabaseActions;
+  /** AC-102.3. How many saves changed the passcode or locked a note, for backups. */
+  lockChanges: number;
 } {
   // A corrupt or absent key is not the null case: load() returns an empty
   // database for that. Null means the browser refused to hand over storage.
@@ -170,6 +186,7 @@ export function useDatabase(): {
     }
   });
   const [storageError, setStorageError] = useState('');
+  const [lockChanges, setLockChanges] = useState(0);
   /**
    * AC-82.4. The database as last written, for changes that finish after an
    * await. A locked note is sealed asynchronously, so its save can land after
@@ -207,8 +224,23 @@ export function useDatabase(): {
       return false;
     }
     setStorageError('');
+    const before = latest.current;
     latest.current = stamped;
     setDb(stamped);
+    // AC-102.3. Whatever the path, once a note is locked or the passcode
+    // changes, no older copy kept here may hold a note readable.
+    const wasSealed = new Set(
+      before?.notes.filter((note) => note.sealed).map((note) => note.id),
+    );
+    const saltChanged = before?.lock && before.lock.salt !== stamped.lock?.salt;
+    if (
+      saltChanged ||
+      stamped.notes.some((note) => note.sealed && !wasSealed.has(note.id))
+    ) {
+      forgetBeforeUpgrade();
+      if (saltChanged) setUndoable(null);
+      setLockChanges((n) => n + 1);
+    }
     return true;
   }
 
@@ -555,8 +587,9 @@ export function useDatabase(): {
       return stored ? note.id : null;
     },
 
-    editNote(id, body, sealed = null) {
-      update((current) => ({
+    editNote(id, body, sealed = null, salt) {
+      if (sealed && salt !== latest.current?.lock?.salt) return false;
+      return update((current) => ({
         ...current,
         notes: current.notes.map((note) =>
           note.id === id
@@ -566,21 +599,19 @@ export function useDatabase(): {
       }));
     },
 
-    lockNote(id, title, sealed, lock) {
+    lockNote(id, title, sealed, lock, salt) {
       // AC-97.2. A lock made here while another window made one would
       // replace it, and that window's notes would open with neither.
       if (lock && latest.current?.lock) return false;
-      const locked = update((current) => ({
+      // AC-102.5. Sealed under a passcode that is no longer the current one.
+      if (!lock && salt !== latest.current?.lock?.salt) return false;
+      return update((current) => ({
         ...current,
         lock: lock ?? current.lock,
         notes: current.notes.map((note) =>
           note.id === id ? { ...note, body: title, sealed } : note,
         ),
       }));
-      // AC-98.4. The copy from before the last upgrade may hold this note
-      // readable; it goes once the note is locked.
-      if (locked) forgetBeforeUpgrade();
-      return locked;
     },
 
     unlockNote(id, body) {
@@ -685,7 +716,9 @@ export function useDatabase(): {
         locked.length === notes.length &&
         locked.every((note) => byId.get(note.id)?.was.iv === note.sealed!.iv);
       if (!same) return false;
-      const saved = commit({
+      // AC-97.1 and AC-98.4. commit clears Undo and the copy from before the
+      // last upgrade: both hold notes under the old passcode.
+      return commit({
         ...current,
         lock,
         notes: current.notes.map((note) => {
@@ -693,14 +726,6 @@ export function useDatabase(): {
           return resealed ? { ...note, sealed: resealed.sealed } : note;
         }),
       });
-      // AC-97.1. A note deleted before is sealed under the old passcode;
-      // brought back, it would open with neither and block the next change.
-      // AC-98.4. Nor may the copy from before the last upgrade outlive it.
-      if (saved) {
-        setUndoable(null);
-        forgetBeforeUpgrade();
-      }
-      return saved;
     },
 
     recordBackup(at) {
@@ -767,7 +792,11 @@ export function useDatabase(): {
 
     adoptSynced(next) {
       // Anything typed while the sync was out is in latest.current: merge it in
-      // again rather than replacing it.
+      // again rather than replacing it. AC-102.4. A lock set meanwhile can make
+      // the merge unreadable, so the answer is checked against what is held now.
+      if (latest.current && lockConflict(latest.current, next).count > 0) {
+        return false;
+      }
       return commit(merge(latest.current ?? next, next), true);
     },
   };
@@ -785,5 +814,6 @@ export function useDatabase(): {
             : `Deleted ${undoable.title}.`,
     undo,
     actions,
+    lockChanges,
   };
 }

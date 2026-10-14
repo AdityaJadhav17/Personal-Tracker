@@ -92,8 +92,8 @@ export async function unlock(
   lock: Lock,
   passcode: string,
 ): Promise<CryptoKey | null> {
-  const key = await keyFrom(passcode, fromBase64(lock.salt));
   try {
+    const key = await keyFrom(passcode, fromBase64(lock.salt));
     return (await openSealed(key, lock.check)) === KNOWN ? key : null;
   } catch {
     return null;

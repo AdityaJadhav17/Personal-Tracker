@@ -9,11 +9,15 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
 
 const HUB = 'hub.json';
+
+/** AC-102.7. The newest database version this app writes; moves with it. */
+export const APP_VERSION = 11;
 
 // Undefined when the file is missing or does not parse.
 function readCopy(file) {
@@ -45,6 +49,21 @@ export function readHub(dir) {
   return { revision: 0, db: null };
 }
 
+// AC-102.7. Whether the new database changed the passcode or sealed a note
+// that the old one held readable.
+function lockedSince(old, next) {
+  if (!isObject(old) || !isObject(next)) return false;
+  if (old.lock?.salt !== next.lock?.salt) return true;
+  const open = new Set(
+    (Array.isArray(old.notes) ? old.notes : [])
+      .filter((n) => n?.sealed == null)
+      .map((n) => n?.id),
+  );
+  return (Array.isArray(next.notes) ? next.notes : []).some(
+    (n) => n?.sealed != null && open.has(n.id),
+  );
+}
+
 export function writeHub(dir, revision, db) {
   if (readHub(dir).revision !== revision) return { ok: false };
   mkdirSync(dir, { recursive: true });
@@ -53,8 +72,17 @@ export function writeHub(dir, revision, db) {
   writeFileSync(`${file}.tmp`, JSON.stringify(next), { flush: true });
   // Only a copy that parses may become the previous one, so a damaged
   // current copy never replaces the last good one.
-  if (isCopy(readCopy(file))) {
-    copyFileSync(file, join(dir, 'hub.prev.json'));
+  const prev = join(dir, 'hub.prev.json');
+  const old = readCopy(file);
+  if (isCopy(old) && !lockedSince(old.db, db)) {
+    copyFileSync(file, prev);
+  } else if (isCopy(old)) {
+    // AC-102.7. No older copy keeps a note readable after it was locked.
+    try {
+      rmSync(prev, { force: true });
+    } catch {
+      // The write goes ahead; a file that cannot be removed cannot be helped.
+    }
   }
   renameSync(`${file}.tmp`, file);
   return { ok: true, revision: next.revision };
@@ -90,7 +118,13 @@ const LISTS = [
  */
 export function dbProblem(db, held) {
   if (!isObject(db)) return 'not an object';
-  if (!Number.isInteger(db.version) || db.version < 11) return 'version';
+  if (
+    !Number.isInteger(db.version) ||
+    db.version < 11 ||
+    db.version > APP_VERSION
+  ) {
+    return 'version';
+  }
   for (const key of LISTS) {
     if (!Array.isArray(db[key])) return `${key} is not a list`;
   }

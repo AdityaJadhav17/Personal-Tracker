@@ -37,9 +37,6 @@ How it is built and what counts as finished.
   checklist for one story and the checklist for a release.
 - [engineering/extending.md](engineering/extending.md) — what adding a field
   or a view touches, file by file, and the naming trap in Playwright.
-- [engineering/security-audit.md](engineering/security-audit.md) — what the
-  trust boundary is, what was found and fixed, and what was tested and found
-  safe with the reason it is safe.
 - [diagrams/](diagrams/) — architecture, the idea-to-deploy workflow and where
   personal data goes, drawn with Archify from cited source lines. A PNG, an
   interactive HTML and the JSON source of each.

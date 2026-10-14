@@ -7,6 +7,12 @@
 /** A deadline with no time given is due at the end of that day. */
 const END_OF_DAY = { hours: 23, minutes: 59 };
 
+/** AC-102.1. 1970-01-01 to 9999-12-31 UTC: the one range every stored instant keeps. */
+export function inRange(iso: string): boolean {
+  const ms = Date.parse(iso);
+  return ms >= 0 && ms <= 253_402_300_799_999;
+}
+
 /**
  * Combine what the date and time controls hold into a UTC instant.
  *
@@ -47,7 +53,8 @@ export function toDueAt(date: string, time: string): string | null {
     return null;
   }
 
-  return at.toISOString();
+  const iso = at.toISOString();
+  return inRange(iso) ? iso : null;
 }
 
 /**
@@ -295,7 +302,9 @@ export function fromIcsDate(value: string): string | null {
   );
   // Date.UTC rolls 31 September into October; reading back rejects it.
   return at.getUTCMonth() === +month! - 1 && at.getUTCDate() === +date!
-    ? at.toISOString()
+    ? inRange(at.toISOString())
+      ? at.toISOString()
+      : null
     : null;
 }
 

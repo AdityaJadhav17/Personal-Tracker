@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { now } from '../domain/dates';
 import { lockConflict, merge, sameRecords } from '../domain/sync';
-import { parseImport } from '../domain/transfer';
+import { parseImport, serialize } from '../domain/transfer';
 import type { Database } from '../domain/types';
 
 /** AC-101.1. Long enough that a burst of typing is one sync, not fifty. */
@@ -23,6 +23,16 @@ async function get(url: string, init?: RequestInit): Promise<Response> {
   }
 }
 
+/** AC-101.7 and AC-102.4. Why sync stopped, and what to do about it. */
+function paused(count: number, here: boolean): string {
+  const one = count === 1;
+  const notes = `${count} locked note${one ? '' : 's'}`;
+  const lock = one ? 'its lock' : 'their lock';
+  return here
+    ? `Sync paused: ${notes} here ${one ? 'uses' : 'use'} a different passcode than the other device. Open ${one ? 'it' : 'them'} and remove ${lock}, then sync.`
+    : `Sync paused: ${notes} on your other device ${one ? 'uses' : 'use'} a different passcode. Open ${one ? 'it' : 'them'} there and remove ${lock}, then sync here.`;
+}
+
 /**
  * US-101. One round with the laptop: read its copy, merge, write back against
  * the revision read, and take the merge here. A TypeError means no laptop to
@@ -31,6 +41,7 @@ async function get(url: string, init?: RequestInit): Promise<Response> {
 async function syncOnce(
   local: Database,
   adopt: (next: Database) => boolean,
+  current: () => Database | null,
 ): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const res = await get('/api/sync', { headers: HEADERS });
@@ -64,18 +75,16 @@ async function syncOnce(
     const { count, here } = shared
       ? lockConflict(local, shared)
       : { count: 0, here: false };
-    if (count > 0) {
-      const one = count === 1;
-      const notes = `${count} locked note${one ? '' : 's'}`;
-      const lock = one ? 'its lock' : 'their lock';
-      throw new Error(
-        here
-          ? `Sync paused: ${notes} here ${one ? 'uses' : 'use'} a different passcode than the other device. Open ${one ? 'it' : 'them'} and remove ${lock}, then sync.`
-          : `Sync paused: ${notes} on your other device ${one ? 'uses' : 'use'} a different passcode. Open ${one ? 'it' : 'them'} there and remove ${lock}, then sync here.`,
-      );
-    }
+    if (count > 0) throw new Error(paused(count, here));
 
     const merged = shared ? merge(local, shared) : local;
+    // AC-102.1. Send nothing the other device's importer would refuse.
+    const sendable = parseImport(serialize(merged));
+    if (!sendable.ok) {
+      throw new Error(
+        `This device has data the other device would refuse: ${sendable.error.replace(/\.$/, '')}.`,
+      );
+    }
     if (!shared || !sameRecords(merged, shared)) {
       const put = await get('/api/sync', {
         method: 'PUT',
@@ -94,7 +103,16 @@ async function syncOnce(
         );
       }
     }
-    if (!sameRecords(merged, local)) adopt(merged);
+    if (!sameRecords(merged, local) && !adopt(merged)) {
+      // AC-102.4. Refused because a lock was set here since the round began.
+      const held = current();
+      const now = held ? lockConflict(held, merged) : { count: 0, here: false };
+      throw new Error(
+        now.count > 0
+          ? paused(now.count, now.here)
+          : 'This device could not save the synced copy.',
+      );
+    }
     return;
   }
   throw new Error('Another device kept syncing at the same moment.');
@@ -146,6 +164,7 @@ export function useSync(
           await syncOnce(
             local,
             (next) => live.current && adopting.current(next),
+            () => latest.current,
           );
           if (!live.current) break;
           setAt(now().toISOString());

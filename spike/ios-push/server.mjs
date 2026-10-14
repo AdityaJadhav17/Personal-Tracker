@@ -31,7 +31,7 @@ function vapidKeys() {
 
 const keys = vapidKeys();
 webpush.setVapidDetails(
-  'mailto:aditya.jadhav7910@gmail.com',
+  'mailto:owner@example.com',
   keys.publicKey,
   keys.privateKey,
 );

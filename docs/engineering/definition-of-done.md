@@ -84,7 +84,7 @@ checklist you will lie to yourself about in week nine.
       export shows nothing new to commit.
 - [ ] The dependency list is short enough that you can say out loud what each
       package does and why it is there.
-- [ ] The audit in [security-audit.md](security-audit.md) has been re-run
+- [ ] The security audit has been re-run (results kept outside the repo)
       against anything that reads or writes a file, and its findings are fixed
       or recorded. The import file and the two exports are the whole untrusted
       surface, so a story that touches either of them re-opens this.

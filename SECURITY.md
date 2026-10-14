@@ -20,7 +20,7 @@ Personal Tracker runs on one laptop and holds personal information: deadlines,
 notes, courses, and notes locked behind a passcode. Worth reporting:
 
 - Anything that sends data off the machine. The app makes no network request
-  after load, and its CSP is meant to enforce that.
+  after load except to its own laptop to sync (`/api/sync`), and its CSP is meant to enforce that.
 - Script injection through anything a user types or imports, including a
   hostile backup file or calendar file.
 - A way to read a locked note's text without its passcode, or a weakness in
@@ -28,6 +28,7 @@ notes, courses, and notes locked behind a passcode. Worth reporting:
 - The local server (`scripts/serve.mjs`, `127.0.0.1:4180`) serving anything
   outside the app's folder, or answering another site.
 - The updater (`scripts/update.mjs`) deploying a commit that CI did not pass.
+- The sync endpoint answering anyone but the owner's devices.
 
 ## Out of scope
 
@@ -37,6 +38,5 @@ notes, courses, and notes locked behind a passcode. Worth reporting:
   as strong as its owner makes it.
 - Anything in `spike/`, which is throwaway and never deployed.
 
-The threat model and past audits are in
-[docs/engineering/security-audit.md](docs/engineering/security-audit.md) and
+The accepted trade-offs are in
 [docs/engineering/decisions.md](docs/engineering/decisions.md).

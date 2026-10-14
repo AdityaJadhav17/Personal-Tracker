@@ -3,6 +3,8 @@ import { join, resolve } from 'node:path';
 import {
   cacheFor,
   fileFor,
+  deviceName,
+  hasColon,
   headersFor,
   hostAllowed,
   isTailnetRequest,
@@ -163,4 +165,35 @@ test('AC-100.4 a request is on the tailnet unless plainly local', () => {
     isTailnetRequest({ ...local, 'tailscale-user-login': 'a@b' }, 4180),
   ).toBe(true);
   expect(isTailnetRequest({ host: 'laptop.ts.net' }, 4180)).toBe(true);
+});
+
+test('AC-102.6 a Windows device name is refused, whatever its case or extension', () => {
+  for (const p of [
+    '/CON',
+    '/nul.txt',
+    '/assets/Com1.js',
+    '/lpt9',
+    '/conin$',
+    '/CONOUT$.x',
+    '/aux .txt',
+  ]) {
+    expect(deviceName(p), p).toBe(true);
+  }
+  for (const p of [
+    '/',
+    '/index.html',
+    '/console.js',
+    '/com10',
+    '/assets/con/x.js',
+  ]) {
+    expect(deviceName(p), p).toBe(false);
+  }
+});
+
+test('AC-102.6 a path with a colon is not a file this server gives out', () => {
+  for (const p of ['/NUL:', '/index.html::$DATA', '/a%3Ab', '/x:y?q=1']) {
+    expect(hasColon(p), p).toBe(true);
+  }
+  expect(hasColon('/assets/index.js?v=a:b')).toBe(false);
+  expect(hasColon('/')).toBe(false);
 });

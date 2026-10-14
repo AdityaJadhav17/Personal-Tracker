@@ -1,4 +1,5 @@
 import {
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -8,7 +9,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
-import { dbProblem, readHub, writeHub } from './hub.mjs';
+import { APP_VERSION, dbProblem, readHub, writeHub } from './hub.mjs';
 
 let dir;
 const fresh = () => (dir = mkdtempSync(join(tmpdir(), 'pt-hub-')));
@@ -82,7 +83,7 @@ test('AC-100.5 a well-formed database has no problem', () => {
   expect(dbProblem(good, undefined)).toBeNull();
   expect(dbProblem(good, { version: 11 })).toBeNull();
   expect(
-    dbProblem({ ...good, version: 12, lock: {} }, { version: 11 }),
+    dbProblem({ ...good, version: 11, lock: {} }, { version: 11 }),
   ).toBeNull();
 });
 
@@ -145,4 +146,74 @@ test('AC-100.5 two wrong-shaped copies read as nothing stored', () => {
   writeFileSync(join(dir, 'hub.json'), 'null');
   writeFileSync(join(dir, 'hub.prev.json'), '{}');
   expect(readHub(dir)).toEqual({ revision: 0, db: null });
+});
+
+const note = (id, sealed) => ({
+  id,
+  sealed: sealed ? { iv: 'a', data: 'b' } : null,
+});
+const withLock = (salt, notes) => ({ version: 11, lock: { salt }, notes });
+
+test('AC-102.7 a newer version than the app is refused', () => {
+  expect(
+    dbProblem(
+      {
+        ...withLock('s', []),
+        items: [],
+        goals: [],
+        courses: [],
+        reflections: [],
+        tasks: [],
+        deleted: [],
+        lastBackupAt: null,
+        version: 12,
+      },
+      null,
+    ),
+  ).toBe('version');
+});
+
+test('AC-102.7 a changed lock salt keeps no previous copy', () => {
+  fresh();
+  writeHub(dir, 0, withLock('s1', []));
+  writeHub(dir, 1, withLock('s1', []));
+  expect(existsSync(join(dir, 'hub.prev.json'))).toBe(true);
+  writeHub(dir, 2, withLock('s2', []));
+  expect(existsSync(join(dir, 'hub.prev.json'))).toBe(false);
+});
+
+test('AC-102.7 a note sealed since the old copy keeps no previous copy', () => {
+  fresh();
+  writeHub(dir, 0, withLock('s', [note('n1', false)]));
+  writeHub(dir, 1, withLock('s', [note('n1', false)]));
+  expect(existsSync(join(dir, 'hub.prev.json'))).toBe(true);
+  writeHub(dir, 2, withLock('s', [note('n1', true)]));
+  expect(existsSync(join(dir, 'hub.prev.json'))).toBe(false);
+});
+
+test('AC-102.7 a note that was already sealed keeps the previous copy', () => {
+  fresh();
+  writeHub(dir, 0, withLock('s', [note('n1', true)]));
+  writeHub(dir, 1, withLock('s', [note('n1', true), note('n2', false)]));
+  expect(existsSync(join(dir, 'hub.prev.json'))).toBe(true);
+});
+
+test('AC-102.7 a previous copy that cannot be removed does not stop the write', () => {
+  fresh();
+  writeHub(dir, 0, withLock('s1', []));
+  // A folder with something in it cannot be removed as a file.
+  mkdirSync(join(dir, 'hub.prev.json'));
+  writeFileSync(join(dir, 'hub.prev.json', 'x'), 'x');
+  expect(writeHub(dir, 1, withLock('s2', []))).toEqual({
+    ok: true,
+    revision: 2,
+  });
+  expect(existsSync(join(dir, 'hub.json.tmp'))).toBe(false);
+});
+
+test('AC-102.7 the hub accepts exactly the database version the app writes', () => {
+  // Tests run from the repository root.
+  const text = readFileSync(join('src', 'storage', 'db.ts'), 'utf8');
+  const found = /version: (\d+),/.exec(text);
+  expect(found?.[1]).toBe(String(APP_VERSION));
 });

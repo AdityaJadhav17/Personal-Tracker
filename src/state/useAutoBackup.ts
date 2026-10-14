@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { backupName, staleBackups } from '../domain/backup';
+import {
+  backupName,
+  olderBackups,
+  relock,
+  staleBackups,
+} from '../domain/backup';
 import { daysBetween, now } from '../domain/dates';
-import { serialize } from '../domain/transfer';
+import { parseImport, serialize } from '../domain/transfer';
 import type { Database } from '../domain/types';
 import {
   canBackUp,
   chooseFolder,
   namesIn,
+  readFile,
   removeFile,
   savedFolder,
   writeFile,
@@ -31,6 +37,7 @@ export function useAutoBackup(
   db: Database | null,
   onBackedUp: (stamp: string) => void,
   settle = SETTLE,
+  lockChanges = 0,
 ): {
   supported: boolean;
   folder: string | null;
@@ -49,6 +56,10 @@ export function useAutoBackup(
   // restart the wait before writing.
   const recorded = useRef(onBackedUp);
   recorded.current = onBackedUp;
+
+  const current = useRef(db);
+  current.current = db;
+  const relocked = useRef(-1);
 
   function pause(why: string) {
     setState('paused');
@@ -116,6 +127,41 @@ export function useAutoBackup(
     }, settle);
     return () => clearTimeout(timer);
   }, [db, folder, state, settle]);
+
+  // AC-102.3. Older backups keep only the locked version of a note locked
+  // since. Each is read, changed and written back under its own name, only
+  // once the new text is ready, so a failure never costs a backup.
+  useEffect(() => {
+    if (state !== 'on' || !folder || lockChanges === relocked.current) return;
+    void (async () => {
+      try {
+        if (
+          (await folder.queryPermission({ mode: 'readwrite' })) !== 'granted'
+        ) {
+          pause(ASK);
+          return;
+        }
+        let failed = false;
+        for (const name of olderBackups(await namesIn(folder), now())) {
+          try {
+            const read = await readFile(folder, name);
+            const parsed = parseImport(read);
+            if (!parsed.ok || !current.current) continue;
+            const text = serialize(relock(parsed.db, current.current));
+            if (text !== read) {
+              await writeFile(folder, name, text, false);
+            }
+          } catch {
+            failed = true;
+          }
+        }
+        if (failed) pause(GONE);
+        else relocked.current = lockChanges;
+      } catch {
+        pause(GONE);
+      }
+    })();
+  }, [lockChanges, folder, state]);
 
   return {
     supported,

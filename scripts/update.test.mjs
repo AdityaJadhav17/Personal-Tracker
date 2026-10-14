@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
@@ -8,6 +8,7 @@ import {
   confirmRestart,
   isNode,
   movesForward,
+  readMarker,
   serverChanged,
   stopServer,
   verdict,
@@ -214,6 +215,54 @@ test('US-100 final confirmRestart accepts a new live node pid and refuses anythi
     expect(
       confirmRestart(join(dir, 'missing.pid'), 4242, () => true, alive, 2),
     ).toBe(false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('AC-102.8 the marker is read from its own file, then from the old one beside the build', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pt-marker-'));
+  const marker = join(dir, 'deployed.txt');
+  const legacy = join(dir, 'old', 'deployed.txt');
+  const said = [];
+  const say = (m) => said.push(m);
+  try {
+    expect(readMarker(marker, legacy, say)).toBe('');
+    mkdirSync(join(dir, 'old'));
+    writeFileSync(
+      legacy,
+      `${'b'.repeat(40)}
+`,
+    );
+    expect(readMarker(marker, legacy, say)).toBe('b'.repeat(40));
+    writeFileSync(
+      marker,
+      `${SHA}
+`,
+    );
+    expect(readMarker(marker, legacy, say)).toBe(SHA);
+    expect(said).toEqual([]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('AC-102.8 a marker that is not a full commit id counts as absent and is logged', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pt-marker-'));
+  const marker = join(dir, 'deployed.txt');
+  const said = [];
+  try {
+    for (const bad of ['abc1234', 'not-a-commit', 'A'.repeat(40), '']) {
+      writeFileSync(
+        marker,
+        `${bad}
+`,
+      );
+      expect(readMarker(marker, join(dir, 'none'), (m) => said.push(m))).toBe(
+        '',
+      );
+    }
+    expect(said).toHaveLength(4);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

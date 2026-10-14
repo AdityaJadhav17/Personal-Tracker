@@ -25,3 +25,18 @@ test('AC-94.7 CI and the updater install without running install scripts', () =>
   );
   expect(read('scripts/update.mjs')).toMatch(/npm\('ci --ignore-scripts /);
 });
+
+test('AC-102.9 Dependabot also watches the npm packages', () => {
+  expect(read('.github/dependabot.yml')).toMatch(
+    /package-ecosystem:\s*["']?npm/,
+  );
+});
+
+test('AC-102.9 every checkout in CI keeps no credentials', () => {
+  const steps = read('.github/workflows/ci.yml').split(/^\s*- (?=uses:)/m);
+  const checkouts = steps.filter((s) => /^uses:\s*actions\/checkout@/.test(s));
+  expect(checkouts.length).toBeGreaterThan(0);
+  for (const step of checkouts) {
+    expect(step).toMatch(/persist-credentials:\s*false/);
+  }
+});
