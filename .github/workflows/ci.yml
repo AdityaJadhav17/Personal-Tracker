@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 # AC-83.7. CI only reads the code, so its token can only read. CodeQL's first

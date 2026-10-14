@@ -6,7 +6,15 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # AC-102.9. Minor and patch updates arrive as one weekly pull request. A
+  # major version changes how the code is written, so it gets its own story.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

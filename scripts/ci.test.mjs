@@ -32,6 +32,18 @@ test('AC-102.9 Dependabot also watches the npm packages', () => {
   );
 });
 
+test('AC-102.9 npm updates skip major versions and come as one grouped pull request', () => {
+  const npm = read('.github/dependabot.yml').split(/package-ecosystem:/)[2];
+  expect(npm).toMatch(/version-update:semver-major/);
+  expect(npm).toMatch(/groups:/);
+});
+
+test('AC-102.9 CI runs once per change: on main and on pull requests', () => {
+  expect(read('.github/workflows/ci.yml')).toMatch(
+    /on:\n {2}push:\n {4}branches: \[main\]\n {2}pull_request:\n/,
+  );
+});
+
 test('AC-102.9 every checkout in CI keeps no credentials', () => {
   const steps = read('.github/workflows/ci.yml').split(/^\s*- (?=uses:)/m);
   const checkouts = steps.filter((s) => /^uses:\s*actions\/checkout@/.test(s));
