@@ -416,4 +416,5 @@ passed 1,300 lines.
 - [US-101, the laptop and the iPhone keep one set of data](stories/US-101.md)
 - [US-102, tighter edges](stories/US-102.md)
 - [US-103, opens without the laptop](stories/US-103.md)
+- [US-104, sync finishes when the laptop sleeps mid-reply](stories/US-104.md)
 - [US-105, locked stays locked in every copy](stories/US-105.md)

@@ -22,7 +22,10 @@ async function get(url: string, init?: RequestInit): Promise<Response> {
   const stop = new AbortController();
   const timer = setTimeout(() => stop.abort(), REPLY_WITHIN);
   try {
-    return await fetch(url, { ...init, signal: stop.signal });
+    const res = await fetch(url, { ...init, signal: stop.signal });
+    // AC-104.1. The body within the limit too: a reply can stop partway.
+    await res.clone().arrayBuffer();
+    return res;
   } catch {
     throw new Unreachable();
   } finally {
