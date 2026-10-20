@@ -478,3 +478,36 @@ test('AC-103.2 a laptop that never answers is unreachable within 10 seconds', as
   });
   expect(result.current.state).toBe('unreachable');
 });
+
+test('AC-104.1 a laptop that stops partway through its reply is unreachable within 10 seconds', async () => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'Date'],
+    now: TODAY,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_url: string, init: RequestInit = {}) =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream({
+            start(body) {
+              init.signal?.addEventListener('abort', () =>
+                body.error(new DOMException('aborted', 'AbortError')),
+              );
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    ),
+  );
+  const { result } = renderHook(() => useSync(DB, () => true, 0));
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(9_000);
+  });
+  expect(result.current.state).not.toBe('unreachable');
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1_500);
+  });
+  expect(result.current.state).toBe('unreachable');
+});
