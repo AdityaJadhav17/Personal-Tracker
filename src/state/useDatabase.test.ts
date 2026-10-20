@@ -183,6 +183,61 @@ test('AC-105.4 a note locked in another tab counts as a lock change here', () =>
   expect(hook.result.current.lockChanges).toBe(1);
 });
 
+test('AC-106.1 an edit without a seal to a note that is sealed now is not saved', () => {
+  const { hook, id } = withLockedNote();
+  let saved = true;
+  act(() => {
+    saved = hook.result.current.actions.editNote(id, 'typed text');
+  });
+  expect(saved).toBe(false);
+  expect(stored().notes[0]!.sealed).toEqual(OLD);
+  expect(hook.result.current.db?.notes[0]?.body).toBe('Bank details');
+});
+
+test('AC-106.1 a note sealed by a sync adopted meanwhile is not saved readable', () => {
+  const hook = renderHook(() => useDatabase());
+  let id = '';
+  act(() => {
+    id = hook.result.current.actions.addNote('Bank details\nPIN')!;
+  });
+  const LATER = '2026-09-16T10:00:00.000Z';
+  const mine = hook.result.current.db!.notes[0]!;
+  act(() => {
+    hook.result.current.actions.adoptSynced({
+      ...hook.result.current.db!,
+      lock: { ...LOCK, changedAt: LATER },
+      notes: [{ ...mine, body: 'Bank details', sealed: OLD, changedAt: LATER }],
+    });
+  });
+  act(() => {
+    hook.result.current.actions.editNote(id, 'typed text');
+  });
+  expect(stored().notes[0]!.sealed).toEqual(OLD);
+  expect(hook.result.current.db?.notes[0]?.body).toBe('Bank details');
+});
+
+test('AC-106.2 a lock arriving by sync on a device with none clears Undo', () => {
+  const hook = renderHook(() => useDatabase());
+  let id = '';
+  act(() => {
+    id = hook.result.current.actions.addNote('Plain note')!;
+  });
+  act(() => hook.result.current.actions.removeNote(id));
+  expect(hook.result.current.undoMessage).not.toBeNull();
+
+  act(() => {
+    hook.result.current.actions.adoptSynced({
+      ...hook.result.current.db!,
+      lock: { ...LOCK, changedAt: '2026-09-16T10:00:00.000Z' },
+    });
+  });
+  expect(hook.result.current.undoMessage).toBeNull();
+  act(() => hook.result.current.undo());
+  expect(hook.result.current.db?.notes.some((note) => note.id === id)).toBe(
+    false,
+  );
+});
+
 test('AC-105.5 finishing a monthly item due at the end of 9999 makes no next item', () => {
   const hook = renderHook(() => useDatabase());
   act(() => {

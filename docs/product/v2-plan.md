@@ -417,3 +417,4 @@ passed 1,300 lines.
 - [US-102, tighter edges](stories/US-102.md)
 - [US-103, opens without the laptop](stories/US-103.md)
 - [US-105, locked stays locked in every copy](stories/US-105.md)
+- [US-106, locked stays locked, whatever the timing](stories/US-106.md)
