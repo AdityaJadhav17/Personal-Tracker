@@ -159,14 +159,17 @@ export function merge(local: Database, shared: Database): Database {
       return true;
     });
     if (kind === 'notes' && !sameLock) {
-      // AC-101.3: a sealed note is only meaningful under its own lock, so
-      // the lock side's copy is taken whole. A note only the other side
-      // has stays as it was (AC-101.7).
+      // AC-101.3, AC-105.1: a sealed note is only meaningful under its own
+      // lock, so the lock side's copy is taken whole, and a sealed copy there
+      // beats a newer readable one. A note only the other side has stays as
+      // it was (AC-101.7).
       const sealedFrom = new Map(
         (lockSide.notes as unknown as Note[]).map((n) => [n.id, n]),
       );
       records = (records as unknown as Note[]).map((note) =>
-        note.sealed ? (sealedFrom.get(note.id) ?? note) : note,
+        note.sealed || sealedFrom.get(note.id)?.sealed
+          ? (sealedFrom.get(note.id) ?? note)
+          : note,
       ) as unknown as Keyed[];
     }
     (out as Record<Collection, Keyed[]>)[kind] = records;

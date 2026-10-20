@@ -301,6 +301,36 @@ test('AC-101.2 an equal-time tie picks the same winner whatever the key order', 
   expect(canon(merge(a, b))).toEqual(canon(merge(b, a)));
 });
 
+test('AC-105.1 a sealed note on the lock side beats a newer readable copy from a device with no lock', () => {
+  const readable = { ...aNote(null, at(12)), body: 'later edit' };
+  const local = { ...aDatabase([]), lock: null, notes: [readable] };
+  const sealed = aNote('kept', at(10));
+  const shared = {
+    ...aDatabase([]),
+    lock: aLock('lock', at(9)),
+    notes: [sealed],
+  };
+  expect(merge(local, shared).notes).toEqual([sealed]);
+  expect(merge(shared, local).notes).toEqual([sealed]);
+});
+
+test('AC-105.1 a sealed note on the lock side beats a newer readable copy from a device whose lock loses', () => {
+  const readable = { ...aNote(null, at(12)), body: 'later edit' };
+  const local = {
+    ...aDatabase([]),
+    lock: aLock('old', at(8)),
+    notes: [readable],
+  };
+  const sealed = aNote('kept', at(10));
+  const shared = {
+    ...aDatabase([]),
+    lock: aLock('new', at(9)),
+    notes: [sealed],
+  };
+  expect(merge(local, shared).notes).toEqual([sealed]);
+  expect(merge(shared, local).notes).toEqual([sealed]);
+});
+
 test('AC-101.3 the lock side copy of a note is taken whole, even if older and readable', () => {
   const local = {
     ...aDatabase([]),

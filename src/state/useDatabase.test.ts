@@ -161,6 +161,47 @@ test('AC-94.9 a save from another tab is taken up here, not written over', () =>
   expect(stored().notes).toHaveLength(1);
 });
 
+test('AC-105.4 a note locked in another tab counts as a lock change here', () => {
+  const hook = renderHook(() => useDatabase());
+  act(() => {
+    hook.result.current.actions.addNote('Mine');
+  });
+  expect(hook.result.current.lockChanges).toBe(0);
+
+  const theirs = {
+    ...stored(),
+    lock: LOCK,
+    notes: stored().notes.map((note) => ({ ...note, sealed: OLD })),
+  };
+  act(() => {
+    localStorage.setItem('personal-tracker/v1', JSON.stringify(theirs));
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'personal-tracker/v1' }),
+    );
+  });
+
+  expect(hook.result.current.lockChanges).toBe(1);
+});
+
+test('AC-105.5 finishing a monthly item due at the end of 9999 makes no next item', () => {
+  const hook = renderHook(() => useDatabase());
+  act(() => {
+    hook.result.current.actions.addItem({
+      title: 'Rent',
+      dueAt: '9999-12-30T12:00:00.000Z',
+      category: 'personal',
+      priority: 'normal',
+      repeat: 'monthly',
+    });
+  });
+  const id = hook.result.current.db!.items[0]!.id;
+  act(() => hook.result.current.actions.markDone(id));
+
+  const items = hook.result.current.db!.items;
+  expect(items).toHaveLength(1);
+  expect(items[0]).toMatchObject({ id, status: 'done' });
+});
+
 describe('US-97 passcode edges', () => {
   test('AC-97.1 after the passcode changes, Undo does not bring back a locked note deleted before', () => {
     const { hook, id } = withLockedNote();

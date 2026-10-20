@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { deleteCourse } from '../domain/courses';
-import { dayOfMonth, nextOccurrence, now, toDateValue } from '../domain/dates';
+import {
+  dayOfMonth,
+  inRange,
+  nextOccurrence,
+  now,
+  toDateValue,
+} from '../domain/dates';
 import { deleteGoal } from '../domain/goals';
 import type { Resealed } from '../domain/lock';
 import { titleOf } from '../domain/notes';
@@ -229,19 +235,24 @@ export function useDatabase(): {
     setDb(stamped);
     // AC-102.3. Whatever the path, once a note is locked or the passcode
     // changes, no older copy kept here may hold a note readable.
-    const wasSealed = new Set(
-      before?.notes.filter((note) => note.sealed).map((note) => note.id),
-    );
     const saltChanged = before?.lock && before.lock.salt !== stamped.lock?.salt;
-    if (
-      saltChanged ||
-      stamped.notes.some((note) => note.sealed && !wasSealed.has(note.id))
-    ) {
+    if (lockChanged(before, stamped)) {
       forgetBeforeUpgrade();
       if (saltChanged) setUndoable(null);
       setLockChanges((n) => n + 1);
     }
     return true;
+  }
+
+  /** AC-102.3 and AC-105.4. A note newly sealed, or a new passcode. */
+  function lockChanged(before: Database | null, after: Database): boolean {
+    const wasSealed = new Set(
+      before?.notes.filter((note) => note.sealed).map((note) => note.id),
+    );
+    return Boolean(
+      (before?.lock && before.lock.salt !== after.lock?.salt) ||
+      after.notes.some((note) => note.sealed && !wasSealed.has(note.id)),
+    );
   }
 
   /**
@@ -332,6 +343,8 @@ export function useDatabase(): {
     function onStorage(event: StorageEvent) {
       if (event.key !== STORAGE_KEY) return;
       const next = load();
+      // AC-105.4. The other tab already forgot its own pre-upgrade copy.
+      if (lockChanged(latest.current, next)) setLockChanges((n) => n + 1);
       latest.current = next;
       setDb(next);
       setUndoable(null);
@@ -387,17 +400,22 @@ export function useDatabase(): {
         // AC-28.1. The next one is created when the last is finished, rather
         // than a year of them up front: twelve rent rows would bury the list
         // and fill the calendar with work nobody has done.
-        const next =
+        const due =
           finished.repeat === 'none'
+            ? null
+            : nextOccurrence(
+                finished.dueAt,
+                finished.repeat,
+                finished.repeatDay ?? undefined,
+              );
+        // AC-105.5. A series that would run past the year 9999 ends here.
+        const next =
+          due === null || !inRange(due)
             ? null
             : {
                 ...finished,
                 id: crypto.randomUUID(),
-                dueAt: nextOccurrence(
-                  finished.dueAt,
-                  finished.repeat,
-                  finished.repeatDay ?? undefined,
-                ),
+                dueAt: due,
                 // AC-40.6. Remember the day the series aims for, so a clamp
                 // into a short month does not become the new normal.
                 repeatDay:

@@ -138,6 +138,48 @@ describe('US-102 backups follow a lock change', () => {
     expect(relock(file, base).notes).toEqual(file.notes);
   });
 
+  const own = { iv: 'o', data: 'o' };
+  const fileUnderOldLock: Database = {
+    ...base,
+    lock: lock('old'),
+    notes: [note('a', 'Title', own), note('c', 'readable', null)],
+  };
+
+  test('AC-105.2 an older backup under another lock keeps its lock and its own sealed notes', () => {
+    const current: Database = {
+      ...base,
+      lock: lock('new'),
+      notes: [
+        note('a', 'Title', { iv: 'x', data: 'y' }),
+        note('c', 'readable', null),
+      ],
+    };
+    const out = relock(fileUnderOldLock, current);
+    expect(out.lock).toEqual(fileUnderOldLock.lock);
+    expect(out.notes[0]).toEqual(fileUnderOldLock.notes[0]);
+    expect(out.notes[1]).toEqual(fileUnderOldLock.notes[1]);
+  });
+
+  test('AC-105.2 an older backup under another lock leaves out a note it holds readable that is locked now', () => {
+    const current: Database = {
+      ...base,
+      lock: lock('new'),
+      notes: [
+        note('a', 'Title', { iv: 'x', data: 'y' }),
+        note('c', 'Title', { iv: 'p', data: 'q' }),
+      ],
+    };
+    const out = relock(fileUnderOldLock, current);
+    expect(out.lock).toEqual(fileUnderOldLock.lock);
+    expect(out.notes).toEqual([fileUnderOldLock.notes[0]]);
+  });
+
+  test('AC-105.2 with no lock now, a backup holding sealed notes keeps its lock', () => {
+    const out = relock(fileUnderOldLock, base);
+    expect(out.lock).toEqual(fileUnderOldLock.lock);
+    expect(out.notes).toEqual(fileUnderOldLock.notes);
+  });
+
   test('AC-102.3 only backups from other days are candidates', () => {
     expect(
       olderBackups(

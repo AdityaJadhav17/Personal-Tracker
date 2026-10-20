@@ -113,7 +113,7 @@ test('AC-95.3 days past the newest 30 are deleted after writing', async () => {
   for (let day = 1; day <= 31; day += 1) {
     files.set(
       `personal-tracker-backup-2026-08-${String(day).padStart(2, '0')}.json`,
-      '{}',
+      serialize(DB),
     );
   }
   files.set('mine.txt', 'not a backup');
@@ -154,8 +154,8 @@ test('AC-95.5 a folder that cannot be written pauses backups and says why', asyn
 describe('US-102 backups follow a lock change', () => {
   const OLD = 'personal-tracker-backup-2026-09-14.json';
   const LOCK = {
-    salt: 's',
-    check: { iv: 'i', data: 'd' },
+    salt: 'c2Fs',
+    check: { iv: 'aXZ2', data: 'ZGRk' },
     changedAt: '2026-09-15T08:00:00.000Z',
   };
   const note = (body: string, sealed: Note['sealed']): Note => ({
@@ -171,17 +171,21 @@ describe('US-102 backups follow a lock change', () => {
   const locked: Database = {
     ...DB,
     lock: LOCK,
-    notes: [note('Title', { iv: 'x', data: 'y' })],
+    notes: [note('Title', { iv: 'eHh4', data: 'eXl5' })],
   };
 
   /** Mounted on `plain`, today's backup written, then the note is locked. */
-  async function lockAfterwards(files: Map<string, string>) {
+  async function lockAfterwards(
+    files: Map<string, string>,
+    beforeLock: () => void = () => {},
+  ) {
     const { result, rerender } = renderHook(
       ({ db, n }) => useAutoBackup(db, vi.fn(), 0, n),
       { initialProps: { db: plain, n: 0 } },
     );
     await waitFor(() => expect(result.current.state).toBe('on'));
     await waitFor(() => expect(files.size).toBeGreaterThan(1));
+    beforeLock();
     rerender({ db: locked, n: 1 });
     return result;
   }
@@ -195,7 +199,7 @@ describe('US-102 backups follow a lock change', () => {
     await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
     const out = JSON.parse(files.get(OLD)!) as Database;
     expect(out.lock).toEqual(LOCK);
-    expect(out.notes[0]?.sealed).toEqual({ iv: 'x', data: 'y' });
+    expect(out.notes[0]?.sealed).toEqual({ iv: 'eHh4', data: 'eXl5' });
   });
 
   test('AC-102.3 without a lock change older backups are left alone', async () => {
@@ -210,16 +214,56 @@ describe('US-102 backups follow a lock change', () => {
 
   test('AC-102.3 a backup that does not parse is left as it is and the rest are still rewritten', async () => {
     const { folder, files } = aFolder();
-    files.set('personal-tracker-backup-2026-09-13.json', 'not json');
     files.set(OLD, serialize(plain));
     mocked.savedFolder.mockResolvedValue(folder);
-    const result = await lockAfterwards(files);
+    const result = await lockAfterwards(files, () =>
+      files.set('personal-tracker-backup-2026-09-13.json', 'not json'),
+    );
 
     await waitFor(() => expect(files.get(OLD)).not.toContain('secret text'));
     expect(files.get('personal-tracker-backup-2026-09-13.json')).toBe(
       'not json',
     );
-    expect(result.current.state).toBe('on');
+    await waitFor(() => expect(result.current.state).toBe('paused'));
+    expect(result.current.reason).toContain(
+      'personal-tracker-backup-2026-09-13.json',
+    );
+  });
+
+  test('AC-105.3 an older backup that cannot be read pauses backups and names the file', async () => {
+    const { folder, files } = aFolder();
+    const bad = 'personal-tracker-backup-2026-09-13.json';
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    const result = await lockAfterwards(files, () =>
+      files.set(bad, 'not json'),
+    );
+
+    await waitFor(() => expect(result.current.state).toBe('paused'));
+    expect(result.current.reason).toBe(
+      `${bad} could not be read. Move it out of the backup folder, then allow backups again.`,
+    );
+    expect(files.get(bad)).toBe('not json');
+    expect(files.get(OLD)).not.toContain('secret text');
+  });
+
+  test('AC-105.2 a rewrite that would not import again is not written', async () => {
+    const { folder, files } = aFolder();
+    files.set(OLD, serialize(plain));
+    mocked.savedFolder.mockResolvedValue(folder);
+    const sealedNoLock: Database = {
+      ...DB,
+      notes: [note('Title', { iv: 'eHh4', data: 'eXl5' })],
+    };
+    const { result, rerender } = renderHook(
+      ({ db, n }) => useAutoBackup(db, vi.fn(), 0, n),
+      { initialProps: { db: plain, n: 0 } },
+    );
+    await waitFor(() => expect(files.size).toBeGreaterThan(1));
+    rerender({ db: sealedNoLock, n: 1 });
+
+    await waitFor(() => expect(result.current.state).toBe('paused'));
+    expect(files.get(OLD)).toBe(serialize(plain));
   });
 
   test('AC-102.3 a file that cannot be rewritten does not stop the others, and backups pause', async () => {
