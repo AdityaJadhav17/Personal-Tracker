@@ -27,3 +27,6 @@ personal-tracker-*.ics
 
 # Agent working notes, not part of the app.
 .superpowers/
+
+# Local working notes (plans, handoff), kept out of the public repo.
+docs/local/
