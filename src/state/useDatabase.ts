@@ -235,10 +235,11 @@ export function useDatabase(): {
     setDb(stamped);
     // AC-102.3. Whatever the path, once a note is locked or the passcode
     // changes, no older copy kept here may hold a note readable.
-    const saltChanged = before?.lock && before.lock.salt !== stamped.lock?.salt;
+    // AC-106.2. Including a passcode that first arrives, from none.
+    const saltChanged = before && before.lock?.salt !== stamped.lock?.salt;
+    if (saltChanged) setUndoable(null);
     if (lockChanged(before, stamped)) {
       forgetBeforeUpgrade();
-      if (saltChanged) setUndoable(null);
       setLockChanges((n) => n + 1);
     }
     return true;
@@ -606,6 +607,10 @@ export function useDatabase(): {
     },
 
     editNote(id, body, sealed = null, salt) {
+      // AC-106.1. A note sealed now is never saved readable, whenever the
+      // text was typed.
+      if (!sealed && latest.current?.notes.find((n) => n.id === id)?.sealed)
+        return false;
       if (sealed && salt !== latest.current?.lock?.salt) return false;
       return update((current) => ({
         ...current,
