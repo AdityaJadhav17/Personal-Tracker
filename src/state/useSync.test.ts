@@ -3,6 +3,7 @@ import { useDatabase } from './useDatabase';
 import { useSync } from './useSync';
 import { serialize } from '../domain/transfer';
 import type { Database } from '../domain/types';
+import { TODAY } from '../test-setup';
 
 const DB: Database = {
   version: 11,
@@ -449,4 +450,31 @@ test('AC-102.1 a local copy the importer would refuse is not sent', async () => 
   );
   expect(adopt).not.toHaveBeenCalled();
   expect(calls.map((c) => c.method)).toEqual(['GET']);
+});
+
+test('AC-103.2 a laptop that never answers is unreachable within 10 seconds', async () => {
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'Date'],
+    now: TODAY,
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      (_url: string, init: RequestInit = {}) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('aborted', 'AbortError')),
+          );
+        }),
+    ),
+  );
+  const { result } = renderHook(() => useSync(DB, () => true, 0));
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(9_000);
+  });
+  expect(result.current.state).not.toBe('unreachable');
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(1_500);
+  });
+  expect(result.current.state).toBe('unreachable');
 });

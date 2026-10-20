@@ -15,11 +15,18 @@ export type SyncState =
 /** Nobody to talk to: offline, or this server has no sync. */
 class Unreachable extends Error {}
 
+/** AC-103.2. A laptop that does not answer counts as not reachable. */
+const REPLY_WITHIN = 10_000;
+
 async function get(url: string, init?: RequestInit): Promise<Response> {
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), REPLY_WITHIN);
   try {
-    return await fetch(url, init);
+    return await fetch(url, { ...init, signal: stop.signal });
   } catch {
     throw new Unreachable();
+  } finally {
+    clearTimeout(timer);
   }
 }
 

@@ -273,7 +273,8 @@ join without one of them approving it.
 2. On the iPhone, open that address in Safari, then Share, then **Add to Home
    Screen**. Margin opens full screen from its icon, and opens with no
    connection too, from what it kept; a deploy shows the next time it can
-   reach the laptop.
+   reach the laptop. If the laptop is asleep, Margin opens from the copy on
+   the phone after about 3 seconds and syncs when the laptop is back.
 3. The phone keeps its own data, separate from the laptop's. To start it with
    yours: Export on the laptop, send the file with Taildrop (the Share menu,
    then Tailscale), and Import it on the phone, or let Sync do it (below).

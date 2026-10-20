@@ -415,3 +415,4 @@ passed 1,300 lines.
 - [US-100, a shared copy on the laptop that only Margin can reach](stories/US-100.md)
 - [US-101, the laptop and the iPhone keep one set of data](stories/US-101.md)
 - [US-102, tighter edges](stories/US-102.md)
+- [US-103, opens without the laptop](stories/US-103.md)

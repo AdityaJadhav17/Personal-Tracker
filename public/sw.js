@@ -8,6 +8,8 @@
  * request, and this does not start.
  */
 const CACHE = 'margin';
+/** AC-103.1. How long a page waits for the laptop before the kept copy opens. */
+const WAIT_FOR_LAPTOP = 3000;
 const SHELL = [
   '/theme.js',
   '/manifest.webmanifest',
@@ -84,13 +86,28 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
+    // Network first, but not for long: a laptop that is asleep over Tailscale
+    // never answers, and the kept copy should open instead. A page that
+    // arrives late is still kept for next time.
+    let kept = Promise.resolve();
+    const fresh = fetch(request).then((page) => {
+      if (isTheApp(url, page)) kept = keepPage(page.clone());
+      return page;
+    });
+    event.waitUntil(
+      fresh.then(
+        () => kept,
+        () => {},
+      ),
+    );
+    const late = new Promise((_, reject) =>
+      self.setTimeout(reject, WAIT_FOR_LAPTOP),
+    );
     event.respondWith(
-      fetch(request)
-        .then((page) => {
-          if (isTheApp(url, page)) event.waitUntil(keepPage(page.clone()));
-          return page;
-        })
-        .catch(async () => (await caches.match('/')) ?? Response.error()),
+      Promise.race([fresh, late]).catch(
+        async () =>
+          (await caches.match('/')) ?? fresh.catch(() => Response.error()),
+      ),
     );
     return;
   }
