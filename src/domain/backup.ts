@@ -63,11 +63,25 @@ export function olderBackups(names: string[], at: Date): string[] {
 /**
  * AC-102.3. An older backup as it should be kept now: the current lock, and
  * every note that is locked in `current` as it is there.
+ *
+ * AC-105.2. A file that holds locked notes under another passcode keeps that
+ * lock and those notes, so it still opens with the passcode it was made
+ * under, and leaves out a note it holds readable that is locked now.
  */
 export function relock(file: Database, current: Database): Database {
   const sealed = new Map(
     current.notes.filter((n) => n.sealed).map((n) => [n.id, n]),
   );
+  if (
+    file.lock &&
+    file.lock.salt !== current.lock?.salt &&
+    file.notes.some((n) => n.sealed)
+  ) {
+    return {
+      ...file,
+      notes: file.notes.filter((n) => n.sealed || !sealed.has(n.id)),
+    };
+  }
   return {
     ...file,
     lock: current.lock,

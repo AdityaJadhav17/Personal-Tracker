@@ -142,12 +142,23 @@ export function useAutoBackup(
           return;
         }
         let failed = false;
+        let refused = '';
         for (const name of olderBackups(await namesIn(folder), now())) {
           try {
             const read = await readFile(folder, name);
             const parsed = parseImport(read);
-            if (!parsed.ok || !current.current) continue;
+            // AC-105.3. A copy that cannot be read cannot be kept locked.
+            if (!parsed.ok) {
+              refused = name;
+              continue;
+            }
+            if (!current.current) continue;
             const text = serialize(relock(parsed.db, current.current));
+            // AC-105.2. Only a file that would still import is written.
+            if (!parseImport(text).ok) {
+              failed = true;
+              continue;
+            }
             if (text !== read) {
               await writeFile(folder, name, text, false);
             }
@@ -155,7 +166,11 @@ export function useAutoBackup(
             failed = true;
           }
         }
-        if (failed) pause(GONE);
+        if (refused) {
+          pause(
+            `${refused} could not be read. Move it out of the backup folder, then allow backups again.`,
+          );
+        } else if (failed) pause(GONE);
         else relocked.current = lockChanges;
       } catch {
         pause(GONE);
